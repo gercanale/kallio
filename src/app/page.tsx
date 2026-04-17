@@ -84,7 +84,7 @@ export default function LandingPage() {
 
   return (
     <div className={`min-h-screen ${bg} flex flex-col transition-colors duration-300`}>
-      <header className="px-6 py-5 flex items-center justify-between max-w-5xl mx-auto w-full">
+      <header className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-2">
           <img src="/faviconnobg.png" alt="Kallio" className="w-7 h-7" />
           <span className={`font-bold text-xl tracking-tight ${logoColor}`}>Kallio</span>
@@ -118,13 +118,13 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-8 flex flex-col items-center justify-center text-center pb-16">
         <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-xs font-medium mb-8 ${badgeBg}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${badgeDot}`} />
           {t.landing.badge}
         </div>
 
-        <h1 className={`text-4xl sm:text-6xl font-black leading-tight max-w-3xl mb-4 ${heroColor}`}>
+        <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-black leading-tight max-w-5xl mb-4 ${heroColor}`}>
           {t.landing.hero}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
             {t.landing.heroHighlight}
@@ -135,7 +135,7 @@ export default function LandingPage() {
           {t.landing.heroSub}
         </p>
 
-        <p className={`text-lg max-w-xl mb-10 leading-relaxed ${subtitleColor}`}>
+        <p className={`text-lg max-w-2xl mb-10 leading-relaxed ${subtitleColor}`}>
           {t.landing.subtitle}
         </p>
 
@@ -175,22 +175,22 @@ export default function LandingPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-5xl">
           {features.map(({ icon: Icon, title, desc }, i) => (
-            <div key={title} className={`border rounded-2xl p-5 text-left ${cardBg}`}>
-              <div className={`w-10 h-10 rounded-xl ${featureIconColors[i]} flex items-center justify-center mb-3`}>
+            <div key={title} className={`border rounded-2xl p-6 text-left ${cardBg}`}>
+              <div className={`w-11 h-11 rounded-xl ${featureIconColors[i]} flex items-center justify-center mb-4`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <h3 className={`font-semibold text-sm mb-1.5 ${cardTitle}`}>{title}</h3>
-              <p className={`text-xs leading-relaxed ${cardDesc}`}>{desc}</p>
+              <h3 className={`font-semibold text-base mb-2 ${cardTitle}`}>{title}</h3>
+              <p className={`text-sm leading-relaxed ${cardDesc}`}>{desc}</p>
             </div>
           ))}
         </div>
 
-        <div className={`mt-12 flex flex-col sm:flex-row items-center gap-6 text-xs ${trustColor}`}>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{t.landing.trust1}</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{t.landing.trust2}</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{t.landing.trust3}</div>
+        <div className={`mt-12 flex flex-col sm:flex-row items-center gap-8 text-sm ${trustColor}`}>
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust1}</div>
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust2}</div>
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust3}</div>
         </div>
       </main>
 
