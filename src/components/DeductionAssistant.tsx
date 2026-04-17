@@ -33,18 +33,18 @@ export function DeductionAssistant() {
 
   if (pendingPrompts.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-emerald-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-slate-900 text-sm">{t.deduction.title}</h2>
-            <p className="text-xs text-slate-500">{t.deduction.allReviewed}</p>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{t.deduction.title}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t.deduction.allReviewed}</p>
           </div>
         </div>
 
-        <p className="text-slate-600 text-sm">
+        <p className="text-slate-600 dark:text-slate-300 text-sm">
           {t.deduction.noExpensesPending}
         </p>
 
@@ -68,17 +68,17 @@ export function DeductionAssistant() {
   const pendingCount = pendingPrompts.length;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden transition-colors">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-100">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-teal-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-900 text-sm">{t.deduction.title}</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{t.deduction.title}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {pendingCount} {pendingCount !== 1 ? t.deduction.pendingPlural : t.deduction.pendingSingle}
               </p>
             </div>
@@ -102,29 +102,29 @@ export function DeductionAssistant() {
       >
         {/* Transaction info */}
         {tx && (
-          <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 rounded-xl">
-            <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-sm flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 dark:bg-slate-700/60 rounded-xl">
+            <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 font-semibold text-sm flex-shrink-0">
               {(tx.merchant ?? tx.description).charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                 {tx.merchant ?? tx.description}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {new Date(tx.date).toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
                   day: "numeric",
                   month: "short",
                 })}
               </p>
             </div>
-            <span className="text-sm font-semibold text-slate-900 tabular-nums flex-shrink-0">
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums flex-shrink-0">
               {formatCurrency(tx.amount)}
             </span>
           </div>
         )}
 
         {/* Question */}
-        <p className="text-slate-800 text-sm leading-relaxed mb-4">
+        <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed mb-4">
           {current.question}
         </p>
 
@@ -148,14 +148,14 @@ export function DeductionAssistant() {
           </button>
           <button
             onClick={() => handleAnswer(current.transactionId, "rejected")}
-            className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl transition-all"
+            className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-slate-700 dark:text-slate-300 rounded-xl transition-all"
           >
             <X className="w-4 h-4" />
             <span className="text-xs font-medium">{t.deduction.notDeductible}</span>
           </button>
           <button
             onClick={() => handleAnswer(current.transactionId, "later")}
-            className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl transition-all"
+            className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-slate-700 dark:text-slate-300 rounded-xl transition-all"
           >
             <Clock className="w-4 h-4" />
             <span className="text-xs font-medium">{t.deduction.later}</span>

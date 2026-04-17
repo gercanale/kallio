@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { HtmlLangSetter } from "./HtmlLangSetter";
 import { AuthProvider } from "./AuthProvider";
+import { ThemeWrapper } from "./ThemeWrapper";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
       <body className="min-h-full">
         <HtmlLangSetter />
         <AuthProvider>
-          {children}
+          <ThemeWrapper>
+            {children}
+          </ThemeWrapper>
         </AuthProvider>
         <Analytics />
       </body>

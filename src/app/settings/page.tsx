@@ -45,27 +45,27 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 sm:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-slate-900 mb-6">Ajustes</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Ajustes</h1>
 
         {/* Profile section */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-4">
-          <div className="px-5 py-4 border-b border-slate-100">
+        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden mb-4">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center">
-                <User className="w-6 h-6 text-teal-600" />
+              <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
+                <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
-                <p className="font-semibold text-slate-900">{profile.name}</p>
-                <p className="text-xs text-slate-500">{profile.activityType}</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{profile.activityType}</p>
               </div>
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             <SettingsRow label="Régimen fiscal" value="Estimación Directa Simplificada" />
             <SettingsRow
               label="Retención IRPF"
@@ -76,25 +76,24 @@ export default function SettingsPage() {
         </div>
 
         {/* Pricing note */}
-        <div className="bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-100 rounded-2xl p-5 mb-4">
-          <p className="text-sm font-semibold text-teal-800 mb-1">Plan gratuito – MVP</p>
-          <p className="text-xs text-teal-600">
+        <div className="bg-gradient-to-r from-teal-50 to-teal-50 dark:from-teal-900/30 dark:to-teal-900/30 border border-teal-100 dark:border-teal-800 rounded-2xl p-5 mb-4">
+          <p className="text-sm font-semibold text-teal-800 dark:text-teal-300 mb-1">Plan gratuito – MVP</p>
+          <p className="text-xs text-teal-600 dark:text-teal-400">
             Todas las funciones disponibles durante el período de validación.
             La versión Pro estará disponible próximamente desde €9/mes.
           </p>
         </div>
 
         {/* Session / account actions */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          {/* Sign out — keeps all data, just ends the session */}
+        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-5 py-4 text-slate-700 hover:bg-slate-50 transition-colors text-left border-b border-slate-100"
+            className="w-full flex items-center gap-3 px-5 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700"
           >
-            <LogOut className="w-4 h-4 text-slate-500" />
+            <LogOut className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <div>
               <p className="text-sm font-medium">Cerrar sesión</p>
-              <p className="text-xs text-slate-400">Tus datos se conservan. Puedes volver a entrar desde la pantalla de inicio.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Tus datos se conservan. Puedes volver a entrar desde la pantalla de inicio.</p>
             </div>
           </button>
 
@@ -118,8 +117,8 @@ export default function SettingsPage() {
 function SettingsRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between px-5 py-3.5">
-      <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-sm font-medium text-slate-900">{value}</span>
+      <span className="text-sm text-slate-600 dark:text-slate-400">{label}</span>
+      <span className="text-sm font-medium text-slate-900 dark:text-slate-200">{value}</span>
     </div>
   );
 }
