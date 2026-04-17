@@ -470,17 +470,10 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
-      // Exclude sessionActive so it always resets to false on page load
+      // Only persist language preference — all user data comes from Supabase
       partialize: (state) => ({
-        profile: state.profile,
-        transactions: state.transactions,
-        deductionPrompts: state.deductionPrompts,
-        totalSavedThisYear: state.totalSavedThisYear,
         language: state.language,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?._setHasHydrated(true);
-      },
     }
   )
 );

@@ -59,7 +59,7 @@ export default function LandingPage() {
           </button>
         ) : (
           <Link
-            href="/onboarding"
+            href="/login"
             className="text-teal-300 hover:text-white text-sm font-medium transition-colors"
           >
             Acceder →
@@ -107,7 +107,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-16">
           {!hasExistingAccount && (
             <Link
-              href="/onboarding"
+              href="/login"
               className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-lg"
             >
               Empezar gratis

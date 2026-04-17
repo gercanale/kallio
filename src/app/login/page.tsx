@@ -33,11 +33,16 @@ export default function LoginPage() {
         setSuccessMsg(t.auth.checkEmail);
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(t.auth.invalidCredentials);
-      } else {
-        router.push("/dashboard");
+      } else if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_complete")
+          .eq("id", data.user.id)
+          .single();
+        router.push(profile?.onboarding_complete ? "/dashboard" : "/onboarding");
         router.refresh();
       }
     }
