@@ -82,7 +82,7 @@ export default function SettingsPage() {
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Ajustes</h1>
 
         {/* Profile section */}
-        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden mb-4">
+        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mb-4">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function SettingsPage() {
                         <Crown className="w-3 h-3" />
                         Pro MVP
                       </span>
-                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[180px] rounded-lg bg-slate-800 dark:bg-slate-700 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg">
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-max max-w-[180px] rounded-lg bg-slate-800 dark:bg-slate-700 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg">
                         {t.settings.planTooltip}
                         <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
                       </span>
@@ -129,7 +129,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700 overflow-hidden rounded-b-2xl">
             <SettingsRow label="Régimen fiscal" value="Estimación Directa Simplificada" />
             <SettingsRow
               label="Retención IRPF"
