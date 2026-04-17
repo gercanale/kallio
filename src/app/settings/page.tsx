@@ -21,6 +21,9 @@ export default function SettingsPage() {
   const [savingName, setSavingName] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
   useEffect(() => {
     if (!hydrated) return;
     if (!sessionActive) {
@@ -64,10 +67,9 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAll = () => {
-    if (confirm("¿Seguro que quieres borrar todos tus datos? Esta acción no se puede deshacer.")) {
-      resetAll();
-      window.location.href = "/";
-    }
+    if (deleteConfirmText !== "Eliminar") return;
+    resetAll();
+    window.location.href = "/";
   };
 
   return (
@@ -133,10 +135,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Session / account actions */}
-        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden mb-4">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-5 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700"
+            className="w-full flex items-center gap-3 px-5 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
           >
             <LogOut className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <div>
@@ -144,20 +146,67 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-400 dark:text-slate-500">Tus datos se conservan. Puedes volver a entrar desde la pantalla de inicio.</p>
             </div>
           </button>
+        </div>
 
-          {/* Delete all — permanent */}
-          <button
-            onClick={handleDeleteAll}
-            className="w-full flex items-center gap-3 px-5 py-4 text-red-600 hover:bg-red-50 transition-colors text-left"
-          >
-            <Trash2 className="w-4 h-4" />
-            <div>
-              <p className="text-sm font-medium">Borrar todos mis datos</p>
-              <p className="text-xs text-red-400">Permanente. No se puede deshacer.</p>
-            </div>
-          </button>
+        {/* Danger Zone */}
+        <div className="rounded-2xl border border-red-200 dark:border-red-900 overflow-hidden">
+          <div className="px-5 py-3 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-900">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400">Danger Zone</p>
+          </div>
+          <div className="bg-white dark:bg-slate-800/60">
+            <button
+              onClick={() => { setDeleteConfirmText(""); setShowDeleteModal(true); }}
+              className="w-full flex items-center gap-3 px-5 py-4 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+            >
+              <Trash2 className="w-4 h-4 shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Borrar todos mis datos y cerrar cuenta</p>
+                <p className="text-xs text-red-400">Permanente. No se puede deshacer.</p>
+              </div>
+            </button>
+          </div>
         </div>
       </main>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Borrar cuenta</h2>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Esta acción eliminará todos tus datos y cerrará tu cuenta de forma permanente. Para confirmar, escribe <span className="font-semibold text-slate-900 dark:text-slate-100">Eliminar</span>.
+            </p>
+            <input
+              autoFocus
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleDeleteAll(); if (e.key === "Escape") setShowDeleteModal(false); }}
+              placeholder="Eliminar"
+              className="w-full border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-400 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAll}
+                disabled={deleteConfirmText !== "Eliminar"}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+              >
+                Eliminar cuenta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
