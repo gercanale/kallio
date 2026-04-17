@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Trash2, User, Pencil, Check, X } from "lucide-react";
+import { LogOut, Trash2, User, Pencil, Check, X, Crown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Navigation } from "@/components/Navigation";
@@ -105,10 +105,16 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 ) : (
-                  <button onClick={handleStartEditName} className="group flex items-center gap-1.5 text-left">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
-                    <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={handleStartEditName} className="group flex items-center gap-1.5 text-left">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
+                      <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                      <Crown className="w-3 h-3" />
+                      Pro MVP
+                    </span>
+                  </div>
                 )}
                 <p className="text-xs text-slate-500 dark:text-slate-400">{profile.activityType}</p>
               </div>
@@ -123,15 +129,6 @@ export default function SettingsPage() {
             />
             <SettingsRow label="NIF" value={profile.nif ?? "—"} />
           </div>
-        </div>
-
-        {/* Pricing note */}
-        <div className="bg-gradient-to-r from-teal-50 to-teal-50 dark:from-teal-900/30 dark:to-teal-900/30 border border-teal-100 dark:border-teal-800 rounded-2xl p-5 mb-4">
-          <p className="text-sm font-semibold text-teal-800 dark:text-teal-300 mb-1">Plan gratuito – MVP</p>
-          <p className="text-xs text-teal-600 dark:text-teal-400">
-            Todas las funciones disponibles durante el período de validación.
-            La versión Pro estará disponible próximamente desde €9/mes.
-          </p>
         </div>
 
         {/* Session / account actions — solo mobile, desktop usa sidebar */}
