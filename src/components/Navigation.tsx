@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, ArrowLeftRight, Settings } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
+import { APP_VERSION, APP_VARIANT } from "@/lib/version";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -22,8 +23,11 @@ export function Navigation() {
       <div className="max-w-2xl mx-auto px-4">
         <div className="flex items-center justify-around sm:justify-start sm:gap-1 h-16 sm:h-14">
           {/* Logo – desktop only */}
-          <Link href="/dashboard" className="hidden sm:flex items-center gap-2 mr-6 font-bold text-teal-700 text-lg">
-            Kallio
+          <Link href="/dashboard" className="hidden sm:flex items-center gap-2 mr-6">
+            <span className="font-bold text-teal-700 text-lg">Kallio</span>
+            <span className="text-xs font-medium bg-teal-50 text-teal-600 border border-teal-200 rounded-full px-2 py-0.5 tabular-nums">
+              v{APP_VERSION} · {APP_VARIANT}
+            </span>
           </Link>
 
           {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
