@@ -22,6 +22,7 @@ import {
   IVARate,
 } from "./types";
 
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Modelo 130: 20% of net income (estimación directa simplificada) */
@@ -59,7 +60,7 @@ const CATEGORY_RULES: Record<ExpenseCategory, CategoryRule> = {
   bank_fees:               { fullyDeductible: true,  requiresJustification: false, irpfImpactRate: 0.20 },
   other_deductible:        { fullyDeductible: true,  requiresJustification: true,  irpfImpactRate: 0.20 },
   personal:                { fullyDeductible: false, requiresJustification: false, irpfImpactRate: 0 },
-  unclear:                 { fullyDeductible: false, requiresJustification: true,  irpfImpactRate: 0.20 },
+  unclear:                 { fullyDeductible: true,  requiresJustification: true,  irpfImpactRate: 0.20 },
 };
 
 // ─── Classification helpers ──────────────────────────────────────────────────
@@ -290,6 +291,46 @@ export function calculateTaxSnapshot(
   const totalTaxReserve = ivaPayable + irpfAdvancePayable;
   const trueSpendableBalance = netIncome - deductibleExpenses - totalTaxReserve;
 
+  // ── Year-end IRPF gap (Declaración de la Renta) ───────────────────────────
+  // Modelo 130 only pays 20% as advance. At year-end the full bracket rate applies.
+  // We project annual income from YTD data and estimate the gap to reserve.
+
+  const yearIncome = transactions.filter((t) => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && t.type === "income";
+  });
+  const yearExpenses = transactions.filter((t) => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && t.type === "expense" && t.isDeductible;
+  });
+
+  const ytdGrossIncome = yearIncome.reduce((s, t) => s + t.amount, 0);
+  const ytdIvaCollected = yearIncome.reduce((s, t) =>
+    t.ivaRate === 0 ? s : s + ivaAmount(t.amount, t.ivaRate), 0);
+  const ytdDeductibleExpenses = yearExpenses.reduce((s, t) => {
+    const rule = CATEGORY_RULES[t.category];
+    const pct = rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
+    return s + netFromGross(t.amount, t.ivaRate) * pct;
+  }, 0);
+
+  const ytdNetIncome = ytdGrossIncome - ytdIvaCollected - ytdDeductibleExpenses;
+
+  // Project to full year based on months elapsed
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const projectionFactor = currentMonth > 0 ? 12 / currentMonth : 1;
+  const projectedAnnualNetIncome = Math.max(0, ytdNetIncome * projectionFactor);
+
+  // Full IRPF bill at year-end (bracket calculation)
+  const estimatedAnnualIRPF = calculateAnnualIRPF(projectedAnnualNetIncome);
+
+  // What's already been paid via Modelo 130 (20% of YTD net)
+  const irpfPaidViaAdvances = Math.max(0, ytdNetIncome * IRPF_ADVANCE_RATE);
+
+  // Gap = what remains to pay at June declaration
+  const yearEndIRPFGap = Math.max(0, estimatedAnnualIRPF - irpfPaidViaAdvances);
+
+  const effRate = effectiveIRPFRate(projectedAnnualNetIncome);
+
   return {
     quarterLabel: `${quarter}T ${year}`,
     grossIncome,
@@ -302,6 +343,12 @@ export function calculateTaxSnapshot(
     totalTaxReserve,
     trueSpendableBalance,
     totalSavedByDeductions,
+    ytdNetIncome,
+    projectedAnnualNetIncome,
+    estimatedAnnualIRPF,
+    irpfPaidViaAdvances,
+    yearEndIRPFGap,
+    effectiveIRPFRate: effRate,
   };
 }
 
@@ -356,6 +403,8 @@ export function generateDeductionPrompt(
   transaction: Transaction,
   profile: UserProfile
 ): DeductionPrompt | null {
+  // Only expenses can be deductible — never fire on income invoices
+  if (transaction.type !== "expense") return null;
   if (transaction.confidence !== "unclear" && transaction.confidence !== "low") {
     return null;
   }
@@ -416,4 +465,46 @@ export function estimateMarginalRate(annualNetIncome: number): number {
   if (annualNetIncome <= 60000) return 0.37;
   if (annualNetIncome <= 300000) return 0.45;
   return 0.47;
+}
+
+/**
+ * Calculate total IRPF due on an annual net income using Spain 2025 brackets.
+ * Applies the personal allowance (mínimo personal €5,550) before brackets.
+ * Combined state + average regional scale.
+ */
+export function calculateAnnualIRPF(annualNetIncome: number): number {
+  const PERSONAL_ALLOWANCE = 5550;
+  const taxable = Math.max(0, annualNetIncome - PERSONAL_ALLOWANCE);
+
+  const BRACKETS = [
+    { limit: 12450,   rate: 0.19 },
+    { limit: 20200,   rate: 0.24 },
+    { limit: 35200,   rate: 0.30 },
+    { limit: 60000,   rate: 0.37 },
+    { limit: 300000,  rate: 0.45 },
+    { limit: Infinity, rate: 0.47 },
+  ];
+
+  let tax = 0;
+  let prev = 0;
+  let remaining = taxable;
+
+  for (const bracket of BRACKETS) {
+    if (remaining <= 0) break;
+    const slice = Math.min(remaining, bracket.limit - prev);
+    tax += slice * bracket.rate;
+    remaining -= slice;
+    prev = bracket.limit;
+  }
+
+  return tax;
+}
+
+/**
+ * Effective (blended) IRPF rate — tax due / gross income.
+ * Useful for showing "you pay X% overall".
+ */
+export function effectiveIRPFRate(annualNetIncome: number): number {
+  if (annualNetIncome <= 0) return 0;
+  return calculateAnnualIRPF(annualNetIncome) / annualNetIncome;
 }
