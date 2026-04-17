@@ -178,7 +178,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-semibold text-slate-900">{isEditing ? t.form.editTitle ?? "Editar movimiento" : t.form.title}</h2>
+          <h2 className="font-semibold text-slate-900">{isEditing ? "Editar movimiento" : t.form.title}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
@@ -465,7 +465,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
             className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl font-medium transition-all"
           >
             {isEditing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {isEditing ? (t.form.editSubmitButton ?? "Guardar cambios") : t.form.submitButton}
+            {isEditing ? "Guardar cambios" : t.form.submitButton}
           </button>
         </form>
       </div>
