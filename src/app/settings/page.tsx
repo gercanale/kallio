@@ -112,12 +112,15 @@ export default function SettingsPage() {
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
                       <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
-                    <span
-                      title={t.settings.planTooltip}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 cursor-help"
-                    >
-                      <Crown className="w-3 h-3" />
-                      Pro MVP
+                    <span className="relative group cursor-help">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                        <Crown className="w-3 h-3" />
+                        Pro MVP
+                      </span>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[180px] rounded-lg bg-slate-800 dark:bg-slate-700 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg">
+                        {t.settings.planTooltip}
+                        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+                      </span>
                     </span>
                   </div>
                 )}
