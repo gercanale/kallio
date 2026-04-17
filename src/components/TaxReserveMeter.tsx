@@ -50,7 +50,7 @@ export function TaxReserveMeter() {
             style={{ width: `${Math.max(0, spendablePct)}%` }}
           />
           <div
-            className="bg-red-400 h-full transition-all duration-700"
+            className="bg-red-600 h-full transition-all duration-700"
             style={{ width: `${Math.max(0, reservePct)}%` }}
           />
         </div>
@@ -60,7 +60,7 @@ export function TaxReserveMeter() {
             {t.meter.available}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-red-600 inline-block" />
             {t.meter.reservedForTax}
           </span>
         </div>
@@ -93,7 +93,7 @@ export function TaxReserveMeter() {
           className="p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
         >
           <div className="flex items-center justify-between mb-1">
-            <Shield className="w-3.5 h-3.5 text-red-400" />
+            <Shield className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
             {expanded === "reserve" ? (
               <ChevronUp className="w-3 h-3 text-slate-400" />
             ) : (
