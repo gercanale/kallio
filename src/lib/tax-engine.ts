@@ -149,6 +149,25 @@ export function ivaAmount(gross: number, ivaRate: IVARate): number {
   return gross - netFromGross(gross, ivaRate);
 }
 
+// ─── Timezone helper ─────────────────────────────────────────────────────────
+
+/** Returns a Date object whose local-time methods reflect Spain's timezone (Europe/Madrid). */
+export function nowInSpain(): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parseInt(parts.find((p) => p.type === t)!.value);
+  return new Date(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+}
+
+/** Returns "YYYY-MM-DD" for today in Spain's timezone. */
+export function todayInSpain(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
+}
+
 // ─── Quarter helpers ──────────────────────────────────────────────────────────
 
 export function currentQuarter(date: Date = new Date()): number {
@@ -195,7 +214,7 @@ export function getQuarterDeadlines(year: number): QuarterDeadline[] {
 }
 
 export function daysUntilDeadline(deadlineISO: string): number {
-  const today = new Date();
+  const today = nowInSpain();
   today.setHours(0, 0, 0, 0);
   const deadline = new Date(deadlineISO);
   deadline.setHours(0, 0, 0, 0);
@@ -204,7 +223,7 @@ export function daysUntilDeadline(deadlineISO: string): number {
 
 export function nextDeadline(year: number): QuarterDeadline & { daysLeft: number } {
   const deadlines = getQuarterDeadlines(year);
-  const today = new Date();
+  const today = nowInSpain();
 
   for (const d of deadlines) {
     const days = daysUntilDeadline(d.modelo130Deadline);
@@ -316,7 +335,7 @@ export function calculateTaxSnapshot(
   const ytdNetIncome = ytdGrossIncome - ytdIvaCollected - ytdDeductibleExpenses;
 
   // Project to full year based on months elapsed
-  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const currentMonth = nowInSpain().getMonth() + 1; // 1-12
   const projectionFactor = currentMonth > 0 ? 12 / currentMonth : 1;
   const projectedAnnualNetIncome = Math.max(0, ytdNetIncome * projectionFactor);
 

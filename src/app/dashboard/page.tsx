@@ -7,6 +7,7 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import { TaxReserveMeter } from "@/components/TaxReserveMeter";
+import { nowInSpain, todayInSpain } from "@/lib/tax-engine";
 import { DeductionAssistant } from "@/components/DeductionAssistant";
 import { QuarterlyCountdown } from "@/components/QuarterlyCountdown";
 import { Navigation } from "@/components/Navigation";
@@ -40,13 +41,13 @@ export default function DashboardPage() {
 
   if (!profile.onboardingComplete) return null;
 
-  const hour = new Date().getHours();
+  const hour = nowInSpain().getHours();
   const greeting =
     hour < 13 ? t.dashboard.greetingMorning
     : hour < 20 ? t.dashboard.greetingAfternoon
     : t.dashboard.greetingEvening;
 
-  const dateStr = new Date().toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
+  const dateStr = nowInSpain().toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",

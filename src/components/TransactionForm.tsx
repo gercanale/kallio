@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { X, Plus, Pencil, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency, classifyTransaction, netFromGross, ivaAmount } from "@/lib/tax-engine";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain } from "@/lib/tax-engine";
 import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
@@ -50,7 +50,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
   const [description, setDescription] = useState(transaction?.description ?? "");
   const [merchant, setMerchant] = useState(transaction?.merchant ?? "");
   const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
-  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : todayInSpain());
   const [ivaRate, setIvaRate] = useState<IVARate>(transaction?.ivaRate ?? 21);
   const [amountIncludesVAT, setAmountIncludesVAT] = useState(true);
   const [category, setCategory] = useState<ExpenseCategory>(transaction?.category ?? "unclear");
