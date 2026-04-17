@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, House, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
@@ -15,12 +15,10 @@ export function Navigation() {
   const theme = useKallioStore((s) => s.theme);
   const setTheme = useKallioStore((s) => s.setTheme);
   const signOut = useKallioStore((s) => s.signOut);
-  const resetAll = useKallioStore((s) => s.resetAll);
   const t = useT();
 
-  const handleGoHome = async () => {
+  const handleSignOut = async () => {
     await signOut();
-    resetAll();
     router.push("/");
   };
 
@@ -66,13 +64,6 @@ export function Navigation() {
           >
             {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             <span>{theme === "dark" ? "Light" : "Dark"}</span>
-          </button>
-          <button
-            onClick={handleGoHome}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium transition-all ${btnInactive}`}
-          >
-            <House className="w-5 h-5" />
-            <span>{language === "es" ? "Inicio" : "Home"}</span>
           </button>
         </div>
       </nav>
@@ -121,9 +112,9 @@ export function Navigation() {
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             <span>{theme === "dark" ? (language === "es" ? "Modo claro" : "Light mode") : (language === "es" ? "Modo oscuro" : "Dark mode")}</span>
           </button>
-          <button onClick={handleGoHome} className={sidebarBtn}>
-            <House className="w-4 h-4" />
-            <span>{language === "es" ? "Volver al inicio" : "Back to home"}</span>
+          <button onClick={handleSignOut} className={sidebarBtn}>
+            <LogOut className="w-4 h-4" />
+            <span>{language === "es" ? "Cerrar sesión" : "Sign out"}</span>
           </button>
         </div>
       </aside>

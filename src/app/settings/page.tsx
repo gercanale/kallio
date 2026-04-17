@@ -134,8 +134,8 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        {/* Session / account actions */}
-        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden mb-4">
+        {/* Session / account actions — solo mobile, desktop usa sidebar */}
+        <div className="lg:hidden bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden mb-4">
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-5 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
