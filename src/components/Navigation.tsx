@@ -1,11 +1,21 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun, ChevronDown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
+import type { Language } from "@/lib/i18n";
+
+const LANGS: { code: Language; flag: string; label: string; short: string }[] = [
+  { code: "es", flag: "🇪🇸", label: "Español", short: "ES" },
+  { code: "en", flag: "🇬🇧", label: "English", short: "EN" },
+  { code: "it", flag: "🇮🇹", label: "Italiano", short: "IT" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch", short: "DE" },
+  { code: "fr", flag: "🇫🇷", label: "Français", short: "FR" },
+];
 
 export function Navigation() {
   const pathname = usePathname();
@@ -17,9 +27,29 @@ export function Navigation() {
   const signOut = useKallioStore((s) => s.signOut);
   const t = useT();
 
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [langOpen]);
+
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
+  };
+
+  const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
+  const cycleLang = () => {
+    const idx = LANGS.findIndex((l) => l.code === language);
+    setLanguage(LANGS[(idx + 1) % LANGS.length].code);
   };
 
   const NAV_ITEMS = [
@@ -52,18 +82,18 @@ export function Navigation() {
             );
           })}
           <button
-            onClick={() => setLanguage(language === "es" ? "en" : "es")}
+            onClick={cycleLang}
             className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${btnInactive}`}
           >
-            <span className="text-base leading-none">{language === "es" ? "🇪🇸" : "🇬🇧"}</span>
-            <span>{language === "es" ? "ES" : "EN"}</span>
+            <span className="text-base leading-none">{currentLang.flag}</span>
+            <span>{currentLang.short}</span>
           </button>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium transition-all ${btnInactive}`}
           >
             {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            <span>{theme === "dark" ? "Light" : "Dark"}</span>
+            <span>{theme === "dark" ? t.nav.themeLight : t.nav.themeDark}</span>
           </button>
         </div>
       </nav>
@@ -104,17 +134,40 @@ export function Navigation() {
 
         {/* Bottom actions */}
         <div className="px-3 pb-5 space-y-1 border-t border-slate-100 dark:border-slate-700 pt-3">
-          <button onClick={() => setLanguage(language === "es" ? "en" : "es")} className={sidebarBtn}>
-            <span className="text-base leading-none">{language === "es" ? "🇪🇸" : "🇬🇧"}</span>
-            <span>{language === "es" ? "Español" : "English"}</span>
-          </button>
+          {/* Language dropdown */}
+          <div className="relative" ref={langRef}>
+            <button onClick={() => setLangOpen((o) => !o)} className={sidebarBtn}>
+              <span className="text-base leading-none">{currentLang.flag}</span>
+              <span className="flex-1 text-left">{currentLang.label}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+            </button>
+            {langOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-50">
+                {LANGS.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLanguage(lang.code); setLangOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
+                      lang.code === language
+                        ? "bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span>{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className={sidebarBtn}>
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span>{theme === "dark" ? (language === "es" ? "Modo claro" : "Light mode") : (language === "es" ? "Modo oscuro" : "Dark mode")}</span>
+            <span>{theme === "dark" ? t.nav.themeLight : t.nav.themeDark}</span>
           </button>
           <button onClick={handleSignOut} className={sidebarBtn}>
             <LogOut className="w-4 h-4" />
-            <span>{language === "es" ? "Cerrar sesión" : "Sign out"}</span>
+            <span>{t.settings.signOut}</span>
           </button>
         </div>
       </aside>
