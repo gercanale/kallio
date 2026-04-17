@@ -1,17 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, ArrowLeftRight, Settings, House } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
 
 export function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
+  const signOut = useKallioStore((s) => s.signOut);
+  const resetAll = useKallioStore((s) => s.resetAll);
   const t = useT();
+
+  const handleGoHome = async () => {
+    await signOut();
+    resetAll();
+    router.push("/");
+  };
 
   const NAV_ITEMS = [
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
@@ -64,6 +73,16 @@ export function Navigation() {
           >
             <span className="text-base leading-none">{language === "es" ? "🇪🇸" : "🇬🇧"}</span>
             <span className="hidden sm:inline">{language === "es" ? "ES" : "EN"}</span>
+          </button>
+
+          {/* Exit to home */}
+          <button
+            onClick={handleGoHome}
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-700 transition-all"
+            title={language === "es" ? "Volver al inicio" : "Back to home"}
+          >
+            <House className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">{language === "es" ? "Inicio" : "Home"}</span>
           </button>
         </div>
       </div>
