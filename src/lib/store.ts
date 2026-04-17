@@ -14,6 +14,7 @@ import {
   TransactionType,
 } from "./types";
 import type { Language } from "./i18n";
+import { createClient } from "./supabase";
 import {
   calculateTaxSnapshot,
   classifyTransaction,
@@ -144,8 +145,12 @@ interface KallioState {
   // Session is intentionally NOT persisted — resets on every browser open
   sessionActive: boolean;
   activateSession: () => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
+  clearSession: () => void;  // resets state only, no Supabase call
   resetAll: () => void;
+
+  // Supabase auth
+  loadUserData: () => Promise<void>;
 
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -157,7 +162,7 @@ interface KallioState {
 
   // Actions – profile
   setProfile: (profile: Partial<UserProfile>) => void;
-  completeOnboarding: (profile: UserProfile) => void;
+  completeOnboarding: (profile: UserProfile) => Promise<void>;
 
   // Actions – transactions
   addTransaction: (tx: Omit<Transaction, "id" | "confidence" | "deductionPromptShown" | "deductionPromptAnswered"> & { category?: Transaction["category"] }) => void;
@@ -184,7 +189,12 @@ export const useKallioStore = create<KallioState>()(
 
       sessionActive: false,
       activateSession: () => set({ sessionActive: true }),
-      signOut: () => set({ sessionActive: false }),
+      clearSession: () => set({ sessionActive: false, profile: DEFAULT_PROFILE, transactions: [], deductionPrompts: [], totalSavedThisYear: 0 }),
+      signOut: async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        set({ sessionActive: false, profile: DEFAULT_PROFILE, transactions: [], deductionPrompts: [], totalSavedThisYear: 0 });
+      },
       resetAll: () => {
         set({
           profile: DEFAULT_PROFILE,
@@ -195,6 +205,48 @@ export const useKallioStore = create<KallioState>()(
           language: "es",
         });
         localStorage.removeItem("kallio-storage");
+      },
+
+      loadUserData: async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { set({ _hasHydrated: true }); return; }
+
+        const [{ data: profileRow }, { data: txRows }, { data: promptRows }] = await Promise.all([
+          supabase.from("profiles").select("*").eq("id", user.id).single(),
+          supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false }),
+          supabase.from("deduction_prompts").select("*").eq("user_id", user.id),
+        ]);
+
+        if (profileRow) {
+          set({
+            profile: {
+              name: profileRow.name ?? "",
+              nif: profileRow.nif ?? undefined,
+              fiscalRegime: profileRow.fiscal_regime,
+              activityType: profileRow.activity_type,
+              ivaRetention: profileRow.iva_retention,
+              irpfRetentionRate: profileRow.irpf_retention_rate,
+              onboardingComplete: profileRow.onboarding_complete,
+            },
+            transactions: (txRows ?? []).map((r: any) => ({
+              id: r.id, date: r.date, description: r.description,
+              merchant: r.merchant ?? undefined, amount: r.amount, type: r.type,
+              ivaRate: r.iva_rate, category: r.category, confidence: r.confidence,
+              isDeductible: r.is_deductible, deductionPromptShown: r.deduction_prompt_shown,
+              deductionPromptAnswered: r.deduction_prompt_answered, notes: r.notes ?? undefined,
+            })),
+            deductionPrompts: (promptRows ?? []).map((r: any) => ({
+              transactionId: r.transaction_id, question: r.question,
+              promptKey: r.prompt_key ?? undefined, promptVars: r.prompt_vars ?? undefined,
+              projectedSaving: r.projected_saving, status: r.status,
+            })),
+            sessionActive: true,
+            _hasHydrated: true,
+          });
+        } else {
+          set({ _hasHydrated: true });
+        }
       },
 
       language: "es" as Language,
@@ -209,8 +261,19 @@ export const useKallioStore = create<KallioState>()(
       setProfile: (updates) =>
         set((s) => ({ profile: { ...s.profile, ...updates } })),
 
-      completeOnboarding: (profile) =>
-        set({ profile: { ...profile, onboardingComplete: true } }),
+      completeOnboarding: async (profile) => {
+        const fullProfile = { ...profile, onboardingComplete: true };
+        set({ profile: fullProfile });
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from("profiles").upsert({
+          id: user.id, name: fullProfile.name, nif: fullProfile.nif ?? null,
+          fiscal_regime: fullProfile.fiscalRegime, activity_type: fullProfile.activityType,
+          iva_retention: fullProfile.ivaRetention, irpf_retention_rate: fullProfile.irpfRetentionRate,
+          onboarding_complete: true,
+        });
+      },
 
       // ── Transactions ───────────────────────────────────────────────────────
       addTransaction: (rawTx) => {
@@ -240,6 +303,26 @@ export const useKallioStore = create<KallioState>()(
           transactions: [tx, ...s.transactions],
           deductionPrompts: newPrompts,
         }));
+
+        // Sync to Supabase
+        createClient().auth.getUser().then(({ data: { user } }) => {
+          if (!user) return;
+          const sb = createClient();
+          sb.from("transactions").insert({
+            id: tx.id, user_id: user.id, date: tx.date, description: tx.description,
+            merchant: tx.merchant ?? null, amount: tx.amount, type: tx.type,
+            iva_rate: tx.ivaRate, category: tx.category, confidence: tx.confidence,
+            is_deductible: tx.isDeductible, deduction_prompt_shown: tx.deductionPromptShown,
+            deduction_prompt_answered: tx.deductionPromptAnswered, notes: tx.notes ?? null,
+          });
+          if (prompt) {
+            sb.from("deduction_prompts").insert({
+              transaction_id: prompt.transactionId, user_id: user.id, question: prompt.question,
+              prompt_key: prompt.promptKey ?? null, prompt_vars: prompt.promptVars ?? null,
+              projected_saving: prompt.projectedSaving, status: prompt.status,
+            });
+          }
+        });
       },
 
       updateTransaction: (id, updates) =>
@@ -249,13 +332,18 @@ export const useKallioStore = create<KallioState>()(
           ),
         })),
 
-      deleteTransaction: (id) =>
+      deleteTransaction: (id) => {
         set((s) => ({
           transactions: s.transactions.filter((t) => t.id !== id),
           deductionPrompts: s.deductionPrompts.filter(
             (p) => p.transactionId !== id
           ),
-        })),
+        }));
+        createClient().auth.getUser().then(({ data: { user } }) => {
+          if (!user) return;
+          createClient().from("transactions").delete().eq("id", id);
+        });
+      },
 
       importTransactions: (rawTxs) => {
         const profile = get().profile;
@@ -384,17 +472,10 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
-      // Exclude sessionActive so it always resets to false on page load
+      // Only persist language preference — all user data comes from Supabase
       partialize: (state) => ({
-        profile: state.profile,
-        transactions: state.transactions,
-        deductionPrompts: state.deductionPrompts,
-        totalSavedThisYear: state.totalSavedThisYear,
         language: state.language,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?._setHasHydrated(true);
-      },
     }
   )
 );

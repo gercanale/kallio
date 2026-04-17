@@ -39,8 +39,8 @@ export default function OnboardingPage() {
 
   const progress = step === 0 ? 0 : (step / 3) * 100;
 
-  const handleFinish = () => {
-    completeOnboarding({
+  const handleFinish = async () => {
+    await completeOnboarding({
       name: name.trim(),
       nif: nif.trim() || undefined,
       activityType,
