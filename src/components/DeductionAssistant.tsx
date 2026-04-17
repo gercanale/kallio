@@ -15,6 +15,7 @@ export function DeductionAssistant() {
   const answerDeductionPrompt = useKallioStore((s) => s.answerDeductionPrompt);
   const totalSavedThisYear = useKallioStore((s) => s.totalSavedThisYear);
   const transactions = useKallioStore((s) => s.transactions);
+  const language = useKallioStore((s) => s.language);
   const t = useT();
 
   const [animating, setAnimating] = useState<string | null>(null);
@@ -110,7 +111,7 @@ export function DeductionAssistant() {
                 {tx.merchant ?? tx.description}
               </p>
               <p className="text-xs text-slate-500">
-                {new Date(tx.date).toLocaleDateString("es-ES", {
+                {new Date(tx.date).toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
                   day: "numeric",
                   month: "short",
                 })}
