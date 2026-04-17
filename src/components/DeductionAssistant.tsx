@@ -123,9 +123,18 @@ export function DeductionAssistant() {
           </div>
         )}
 
-        {/* Question */}
+        {/* Question — resolved from promptKey+vars for i18n, fallback to stored string */}
         <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed mb-4">
-          {current.question}
+          {(() => {
+            const key = current.promptKey as keyof typeof t.deduction.promptTemplates | undefined;
+            if (key && t.deduction.promptTemplates[key] && current.promptVars) {
+              return t.deduction.promptTemplates[key](
+                current.promptVars.amount as string,
+                current.promptVars.merchant as string
+              );
+            }
+            return current.question;
+          })()}
         </p>
 
         {/* Saving preview */}

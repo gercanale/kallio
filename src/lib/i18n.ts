@@ -204,6 +204,14 @@ export const translations = {
       confirmDeductible: "Sí, deducible",
       notDeductible: "No deducible",
       later: "Luego",
+      promptTemplates: {
+        meals: (amount: string, merchant: string) => `¿El pago de ${amount} en "${merchant}" fue para una reunión o comida de trabajo con un cliente o proveedor?`,
+        travel: (amount: string, merchant: string) => `¿El desplazamiento de ${amount} en "${merchant}" fue exclusivamente por motivos profesionales?`,
+        phone: (amount: string, merchant: string) => `¿Usas tu ${merchant} principalmente para el trabajo? Si es así, podemos deducir parte de este gasto de ${amount}.`,
+        hardware: (amount: string, merchant: string) => `¿El equipo de ${amount} en "${merchant}" lo usas exclusivamente o principalmente para tu actividad profesional?`,
+        homeOffice: (amount: string, _merchant: string) => `¿Tienes una parte de tu vivienda dedicada como oficina profesional? Este gasto de ${amount} podría ser parcialmente deducible.`,
+        unclear: (amount: string, merchant: string) => `No hemos podido clasificar automáticamente el gasto de ${amount} en "${merchant}". ¿Es un gasto de tu actividad profesional?`,
+      },
     },
     settings: {
       title: "Ajustes",
@@ -496,6 +504,14 @@ export const translations = {
       confirmDeductible: "Yes, deductible",
       notDeductible: "Not deductible",
       later: "Later",
+      promptTemplates: {
+        meals: (amount: string, merchant: string) => `Was the payment of ${amount} at "${merchant}" for a business meeting or meal with a client or supplier?`,
+        travel: (amount: string, merchant: string) => `Was the ${amount} trip at "${merchant}" exclusively for professional purposes?`,
+        phone: (amount: string, merchant: string) => `Do you use your ${merchant} mainly for work? If so, we can deduct part of this ${amount} expense.`,
+        hardware: (amount: string, merchant: string) => `Do you use the ${amount} equipment from "${merchant}" exclusively or mainly for your professional activity?`,
+        homeOffice: (amount: string, _merchant: string) => `Do you have a dedicated home office space? This ${amount} expense could be partially deductible.`,
+        unclear: (amount: string, merchant: string) => `We couldn't automatically classify the ${amount} expense at "${merchant}". Is it a professional business expense?`,
+      },
     },
     settings: {
       title: "Settings",
