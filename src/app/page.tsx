@@ -85,7 +85,10 @@ export default function LandingPage() {
   return (
     <div className={`min-h-screen ${bg} flex flex-col transition-colors duration-300`}>
       <header className="px-6 py-5 flex items-center justify-between max-w-5xl mx-auto w-full">
-        <span className={`font-bold text-xl tracking-tight ${logoColor}`}>Kallio</span>
+        <div className="flex items-center gap-2">
+          <img src="/faviconnobg.png" alt="Kallio" className="w-7 h-7" />
+          <span className={`font-bold text-xl tracking-tight ${logoColor}`}>Kallio</span>
+        </div>
         <div className="flex items-center gap-3">
           {/* Theme toggle */}
           <button
