@@ -1,19 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn } from "lucide-react";
+import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, Globe } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useT } from "@/lib/useT";
 
 export default function LandingPage() {
   const hydrated = useHydrated();
   const profile = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const activateSession = useKallioStore((s) => s.activateSession);
+  const language = useKallioStore((s) => s.language);
+  const setLanguage = useKallioStore((s) => s.setLanguage);
   const router = useRouter();
+  const t = useT();
 
   // Redirect if session is active or Supabase user exists
   useEffect(() => {
@@ -50,21 +54,30 @@ export default function LandingPage() {
       {/* Nav */}
       <header className="px-6 py-5 flex items-center justify-between max-w-5xl mx-auto w-full">
         <span className="text-white font-bold text-xl tracking-tight">Kallio</span>
-        {hasExistingAccount ? (
+        <div className="flex items-center gap-4">
           <button
-            onClick={handleContinue}
-            className="text-teal-300 hover:text-white text-sm font-medium transition-colors"
+            onClick={() => setLanguage(language === "es" ? "en" : "es")}
+            className="flex items-center gap-1.5 text-teal-300 hover:text-white text-sm font-semibold transition-colors"
           >
-            Continuar →
+            <Globe className="w-4 h-4" />
+            <span>{language === "es" ? "EN" : "ES"}</span>
           </button>
-        ) : (
-          <Link
-            href="/login"
-            className="text-teal-300 hover:text-white text-sm font-medium transition-colors"
-          >
-            Acceder →
-          </Link>
-        )}
+          {hasExistingAccount ? (
+            <button
+              onClick={handleContinue}
+              className="text-teal-300 hover:text-white text-sm font-medium transition-colors"
+            >
+              Continuar →
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="text-teal-300 hover:text-white text-sm font-medium transition-colors"
+            >
+              Acceder →
+            </Link>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
