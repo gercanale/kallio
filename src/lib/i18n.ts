@@ -12,7 +12,7 @@ export const translations = {
       settings: "Ajustes",
     },
     landing: {
-      badge: "MVP · España 2025",
+      badge: "MVP · España 2026",
       hero: "Tus impuestos,",
       heroHighlight: "sin sorpresas",
       subtitle: "Kallio calcula en tiempo real cuánto del saldo de tu cuenta es realmente tuyo. IVA, IRPF, deducciones y deadlines, todo en un vistazo.",
@@ -167,6 +167,12 @@ export const translations = {
       deductibleExpenses: "Gastos deducibles",
       fiscalReserve: "Reserva fiscal",
       realAvailable: "Disponible real",
+      irpfGapTitle: "Declaración anual estimada (IRPF)",
+      irpfGapDesc: "El Modelo 130 paga un 20% adelantado, pero tu tipo efectivo estimado es {{rate}}%. Reserva la diferencia para la declaración de junio.",
+      irpfGapExtra: "reserva adicional",
+      irpfAnnualNet: "Ingreso neto anual est.",
+      irpfAnnualTotal: "IRPF total estimado",
+      irpfPaidMod130: "Pagado Mod. 130",
     },
     countdown: {
       nextDeclaration: "Próxima declaración",
@@ -296,7 +302,7 @@ export const translations = {
       settings: "Settings",
     },
     landing: {
-      badge: "MVP · Spain 2025",
+      badge: "MVP · Spain 2026",
       hero: "Your taxes,",
       heroHighlight: "no surprises",
       subtitle: "Kallio calculates in real time how much of your account balance is actually yours. VAT, income tax, deductions and deadlines — all at a glance.",
@@ -451,6 +457,12 @@ export const translations = {
       deductibleExpenses: "Deductible expenses",
       fiscalReserve: "Tax reserve",
       realAvailable: "Real spendable",
+      irpfGapTitle: "Estimated annual tax return (IRPF)",
+      irpfGapDesc: "Modelo 130 pays 20% in advance, but your estimated effective rate is {{rate}}%. Set aside the difference for the June tax return.",
+      irpfGapExtra: "additional reserve",
+      irpfAnnualNet: "Est. annual net income",
+      irpfAnnualTotal: "Estimated total IRPF",
+      irpfPaidMod130: "Paid via Mod. 130",
     },
     countdown: {
       nextDeclaration: "Next filing deadline",

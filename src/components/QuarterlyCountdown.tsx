@@ -11,6 +11,7 @@ export function QuarterlyCountdown() {
   const [exported, setExported] = useState(false);
   const transactions = useKallioStore((s) => s.transactions);
   const profile = useKallioStore((s) => s.profile);
+  const language = useKallioStore((s) => s.language);
   const t = useT();
 
   const year = new Date().getFullYear();
@@ -79,10 +80,10 @@ export function QuarterlyCountdown() {
               <span className={`text-lg font-medium ${urgencyText} opacity-70`}>{t.countdown.days}</span>
             </div>
             <p className="text-slate-600 text-sm mt-0.5">
-              Modelo 130 y 303 – {deadline.label} {deadline.year}
+              Modelo 130 {language === "es" ? "y" : "&"} 303 – {deadline.label} {deadline.year}
             </p>
             <p className="text-slate-500 text-xs">
-              {t.countdown.expiresOn} {new Date(deadline.modelo130Deadline).toLocaleDateString("es-ES", {
+              {t.countdown.expiresOn} {new Date(deadline.modelo130Deadline).toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
