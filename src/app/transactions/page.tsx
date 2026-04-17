@@ -118,7 +118,7 @@ export default function TransactionsPage() {
           </div>
           <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+              <TrendingDown className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
               <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.expenseLabel}</span>
             </div>
             <p className="text-sm font-bold text-red-600 tabular-nums">
@@ -317,7 +317,7 @@ function TransactionRow({
         onClick={onDelete}
         className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors group flex-shrink-0"
       >
-        <Trash2 className="w-3.5 h-3.5 text-slate-300 group-hover:text-red-500 transition-colors" />
+        <Trash2 className="w-3.5 h-3.5 text-slate-300 group-hover:text-red-600 transition-colors" />
       </button>
     </div>
   );
