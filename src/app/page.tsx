@@ -124,12 +124,16 @@ export default function LandingPage() {
           {t.landing.badge}
         </div>
 
-        <h1 className={`text-4xl sm:text-6xl font-black leading-tight max-w-3xl mb-6 ${heroColor}`}>
+        <h1 className={`text-4xl sm:text-6xl font-black leading-tight max-w-3xl mb-4 ${heroColor}`}>
           {t.landing.hero}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
             {t.landing.heroHighlight}
           </span>
         </h1>
+
+        <p className={`text-xl sm:text-2xl font-semibold mb-6 ${dark ? "text-slate-300" : "text-slate-600"}`}>
+          {t.landing.heroSub}
+        </p>
 
         <p className={`text-lg max-w-xl mb-10 leading-relaxed ${subtitleColor}`}>
           {t.landing.subtitle}
