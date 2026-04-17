@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import {
   Plus,
   Trash2,
+  Pencil,
   ArrowUpRight,
   ArrowDownLeft,
   Filter,
@@ -46,6 +47,7 @@ export default function TransactionsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [defaultType, setDefaultType] = useState<TransactionType>("expense");
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -183,6 +185,7 @@ export default function TransactionsPage() {
                 key={tx.id}
                 tx={tx}
                 onDelete={() => setDeleteConfirm(tx.id)}
+                onEdit={() => setEditingTx(tx)}
                 categoryLabels={t.transactions.categories}
                 vatLabel={t.transactions.vatLabel}
                 deductibleBadge={t.transactions.deductibleBadge}
@@ -226,6 +229,13 @@ export default function TransactionsPage() {
           defaultType={defaultType}
         />
       )}
+
+      {editingTx && (
+        <TransactionForm
+          onClose={() => setEditingTx(null)}
+          transaction={editingTx}
+        />
+      )}
     </div>
   );
 }
@@ -233,6 +243,7 @@ export default function TransactionsPage() {
 function TransactionRow({
   tx,
   onDelete,
+  onEdit,
   categoryLabels,
   vatLabel,
   deductibleBadge,
@@ -240,6 +251,7 @@ function TransactionRow({
 }: {
   tx: Transaction;
   onDelete: () => void;
+  onEdit: () => void;
   categoryLabels: Record<string, string>;
   vatLabel: string;
   deductibleBadge: string;
@@ -295,6 +307,12 @@ function TransactionRow({
         <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
       </div>
 
+      <button
+        onClick={onEdit}
+        className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors group flex-shrink-0"
+      >
+        <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+      </button>
       <button
         onClick={onDelete}
         className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors group flex-shrink-0"

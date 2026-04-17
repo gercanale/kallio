@@ -340,12 +340,28 @@ export const useKallioStore = create<KallioState>()(
         });
       },
 
-      updateTransaction: (id, updates) =>
+      updateTransaction: (id, updates) => {
         set((s) => ({
           transactions: s.transactions.map((t) =>
             t.id === id ? { ...t, ...updates } : t
           ),
-        })),
+        }));
+        createClient().auth.getUser().then(({ data: { user } }) => {
+          if (!user) return;
+          const mapped: Record<string, unknown> = {};
+          if (updates.date !== undefined) mapped.date = updates.date;
+          if (updates.description !== undefined) mapped.description = updates.description;
+          if (updates.merchant !== undefined) mapped.merchant = updates.merchant ?? null;
+          if (updates.amount !== undefined) mapped.amount = updates.amount;
+          if (updates.type !== undefined) mapped.type = updates.type;
+          if (updates.ivaRate !== undefined) mapped.iva_rate = updates.ivaRate;
+          if (updates.category !== undefined) mapped.category = updates.category;
+          if (updates.isDeductible !== undefined) mapped.is_deductible = updates.isDeductible;
+          if (updates.notes !== undefined) mapped.notes = updates.notes ?? null;
+          if (Object.keys(mapped).length > 0)
+            createClient().from("transactions").update(mapped).eq("id", id);
+        });
+      },
 
       deleteTransaction: (id) => {
         set((s) => ({

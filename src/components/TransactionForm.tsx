@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Plus, Sparkles } from "lucide-react";
+import { X, Plus, Pencil, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { formatCurrency, classifyTransaction, netFromGross, ivaAmount } from "@/lib/tax-engine";
-import type { IVARate, TransactionType, ExpenseCategory } from "@/lib/types";
+import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
   onClose: () => void;
   defaultType?: TransactionType;
+  transaction?: Transaction;
 }
 
 const CATEGORY_DEDUCTIBILITY: Record<ExpenseCategory, { type: "full" | "partial" | "none" | "unclear"; rate?: number }> = {
@@ -39,22 +40,24 @@ const PARTIAL_RATES: Record<ExpenseCategory, number> = {
   other_deductible: 1, personal: 0, unclear: 1,
 };
 
-export function TransactionForm({ onClose, defaultType = "expense" }: TransactionFormProps) {
+export function TransactionForm({ onClose, defaultType = "expense", transaction }: TransactionFormProps) {
   const addTransaction = useKallioStore((s) => s.addTransaction);
+  const updateTransaction = useKallioStore((s) => s.updateTransaction);
   const t = useT();
+  const isEditing = !!transaction;
 
-  const [type, setType] = useState<TransactionType>(defaultType);
-  const [description, setDescription] = useState("");
-  const [merchant, setMerchant] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [ivaRate, setIvaRate] = useState<IVARate>(21);
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? defaultType);
+  const [description, setDescription] = useState(transaction?.description ?? "");
+  const [merchant, setMerchant] = useState(transaction?.merchant ?? "");
+  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
+  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : new Date().toISOString().split("T")[0]);
+  const [ivaRate, setIvaRate] = useState<IVARate>(transaction?.ivaRate ?? 21);
   const [amountIncludesVAT, setAmountIncludesVAT] = useState(true);
-  const [category, setCategory] = useState<ExpenseCategory>("unclear");
-  const [isDeductible, setIsDeductible] = useState(true);
+  const [category, setCategory] = useState<ExpenseCategory>(transaction?.category ?? "unclear");
+  const [isDeductible, setIsDeductible] = useState(transaction?.isDeductible ?? true);
   const [error, setError] = useState("");
-  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
-  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+  const [categoryManuallySet, setCategoryManuallySet] = useState(isEditing);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(isEditing);
 
   const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
     { value: "software_subscriptions", label: t.form.categories.software_subscriptions },
@@ -143,16 +146,29 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
 
     const storedAmount = ivaRate > 0 && !amountIncludesVAT ? grossAmount : parsed;
 
-    addTransaction({
-      date: new Date(date).toISOString(),
-      description: description.trim(),
-      merchant: merchant.trim() || undefined,
-      amount: storedAmount,
-      type,
-      ivaRate,
-      category,
-      isDeductible: type === "income" ? false : isDeductible,
-    });
+    if (isEditing) {
+      updateTransaction(transaction.id, {
+        date: new Date(date).toISOString(),
+        description: description.trim(),
+        merchant: merchant.trim() || undefined,
+        amount: storedAmount,
+        type,
+        ivaRate,
+        category,
+        isDeductible: type === "income" ? false : isDeductible,
+      });
+    } else {
+      addTransaction({
+        date: new Date(date).toISOString(),
+        description: description.trim(),
+        merchant: merchant.trim() || undefined,
+        amount: storedAmount,
+        type,
+        ivaRate,
+        category,
+        isDeductible: type === "income" ? false : isDeductible,
+      });
+    }
 
     onClose();
   };
@@ -162,7 +178,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-semibold text-slate-900">{t.form.title}</h2>
+          <h2 className="font-semibold text-slate-900">{isEditing ? t.form.editTitle ?? "Editar movimiento" : t.form.title}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
@@ -448,8 +464,8 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
             type="submit"
             className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl font-medium transition-all"
           >
-            <Plus className="w-4 h-4" />
-            {t.form.submitButton}
+            {isEditing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {isEditing ? (t.form.editSubmitButton ?? "Guardar cambios") : t.form.submitButton}
           </button>
         </form>
       </div>
