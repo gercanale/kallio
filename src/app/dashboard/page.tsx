@@ -56,7 +56,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="lg:ml-56 px-4 lg:px-8 py-6 max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
         <div className="space-y-4">
           <TaxReserveMeter />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <DeductionAssistant />
             <QuarterlyCountdown />
           </div>

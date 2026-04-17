@@ -48,7 +48,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="lg:ml-56 px-4 lg:px-8 py-6 max-w-6xl">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Ajustes</h1>
 
         {/* Profile section */}
