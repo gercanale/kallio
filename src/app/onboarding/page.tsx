@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Globe } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Globe, Moon, Sun } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import type { FiscalRegime } from "@/lib/types";
@@ -15,6 +15,9 @@ export default function OnboardingPage() {
   const activateSession = useKallioStore((s) => s.activateSession);
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
+  const theme = useKallioStore((s) => s.theme);
+  const setTheme = useKallioStore((s) => s.setTheme);
+  const dark = theme === "dark";
   const t = useT();
 
   const [step, setStep] = useState<Step>(0);
@@ -55,21 +58,52 @@ export default function OnboardingPage() {
     t.onboarding.actOther,
   ];
 
+  // Theme tokens
+  const bg = dark ? "bg-slate-950" : "bg-slate-50";
+  const progressTrack = dark ? "bg-slate-800" : "bg-slate-200";
+  const textPrimary = dark ? "text-slate-100" : "text-slate-900";
+  const textSecondary = dark ? "text-slate-400" : "text-slate-600";
+  const textMuted = dark ? "text-slate-500" : "text-slate-500";
+  const inputBg = dark
+    ? "bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-teal-500"
+    : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-teal-400";
+  const cardActive = dark ? "border-teal-500 bg-teal-900/40" : "border-teal-500 bg-teal-50";
+  const cardActiveText = "text-teal-400";
+  const cardInactive = dark ? "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300";
+  const cardInactiveTitle = dark ? "text-slate-100" : "text-slate-900";
+  const summaryBg = dark ? "bg-teal-900/30 border-teal-800" : "bg-gradient-to-r from-teal-50 to-teal-50 border-teal-100";
+  const summaryTitle = dark ? "text-teal-400" : "text-teal-700";
+  const summaryLabel = dark ? "text-slate-500" : "text-slate-500";
+  const summaryValue = dark ? "text-slate-200" : "text-slate-700";
+  const irpfSubBg = dark ? "bg-slate-800/60 rounded-xl p-4 mb-6" : "bg-slate-50 rounded-xl p-4 mb-6";
+  const irpfRateActive = dark ? "border-teal-500 bg-teal-900/40" : "border-teal-500 bg-teal-50";
+  const irpfRateInactive = dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white";
+  const stepDotInactive = dark ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-500";
+  const stepConnector = dark ? "bg-slate-700" : "bg-slate-200";
+  const stepConnectorActive = "bg-teal-600";
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className={`min-h-screen ${bg} flex flex-col transition-colors duration-300`}>
       {/* Progress bar */}
-      <div className="h-1 bg-slate-200">
+      <div className={`h-1 ${progressTrack}`}>
         <div
           className="h-full bg-teal-600 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Language toggle */}
-      <div className="flex justify-end px-6 pt-4">
+      {/* Top bar: theme + language toggles */}
+      <div className="flex justify-end items-center gap-3 px-6 pt-4">
+        <button
+          onClick={() => setTheme(dark ? "light" : "dark")}
+          className={`transition-colors ${dark ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}
+          aria-label="Toggle theme"
+        >
+          {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
         <button
           onClick={() => setLanguage(language === "es" ? "en" : "es")}
-          className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 text-sm font-semibold transition-colors"
+          className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${dark ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}
         >
           <Globe className="w-4 h-4" />
           <span>{language === "es" ? "EN" : "ES"}</span>
@@ -89,21 +123,17 @@ export default function OnboardingPage() {
                         ? "bg-teal-600 text-white"
                         : s === step
                         ? "bg-teal-600 text-white ring-4 ring-teal-100"
-                        : "bg-slate-200 text-slate-500"
+                        : stepDotInactive
                     }`}
                   >
                     {s < step ? <CheckCircle2 className="w-4 h-4" /> : s}
                   </div>
                   {s < 3 && (
-                    <div
-                      className={`flex-1 h-0.5 w-12 ${
-                        s < step ? "bg-teal-600" : "bg-slate-200"
-                      }`}
-                    />
+                    <div className={`flex-1 h-0.5 w-12 ${s < step ? stepConnectorActive : stepConnector}`} />
                   )}
                 </div>
               ))}
-              <span className="ml-2 text-xs text-slate-500">
+              <span className={`ml-2 text-xs ${textMuted}`}>
                 {t.onboarding.stepOf.replace("{{step}}", String(step))}
               </span>
             </div>
@@ -112,10 +142,10 @@ export default function OnboardingPage() {
           {/* Step 0 – Intro slide */}
           {step === 0 && (
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-1 text-center">
+              <h1 className={`text-2xl font-bold mb-1 text-center ${textPrimary}`}>
                 {t.onboarding.introTitle}
               </h1>
-              <p className="text-slate-500 text-sm mb-8 text-center">
+              <p className={`text-sm mb-8 text-center ${textSecondary}`}>
                 {t.onboarding.introSubtitle}
               </p>
 
@@ -168,16 +198,16 @@ export default function OnboardingPage() {
           {/* Step 1 – Datos personales */}
           {step === 1 && (
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>
                 {t.onboarding.welcomeTitle}
               </h1>
-              <p className="text-slate-600 text-sm mb-8">
+              <p className={`text-sm mb-8 ${textSecondary}`}>
                 {t.onboarding.welcomeSubtitle}
               </p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${textSecondary}`}>
                     {t.onboarding.nameLabel}
                   </label>
                   <input
@@ -185,12 +215,12 @@ export default function OnboardingPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t.onboarding.namePlaceholder}
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
+                    className={`w-full px-3 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 ${inputBg}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${textSecondary}`}>
                     {t.onboarding.nifLabel}
                   </label>
                   <input
@@ -198,12 +228,12 @@ export default function OnboardingPage() {
                     value={nif}
                     onChange={(e) => setNif(e.target.value)}
                     placeholder={t.onboarding.nifPlaceholder}
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
+                    className={`w-full px-3 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 ${inputBg}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${textSecondary}`}>
                     {t.onboarding.activityLabel}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -213,9 +243,7 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => setActivityType(opt)}
                         className={`px-3 py-2.5 rounded-xl text-xs font-medium text-left transition-all border ${
-                          activityType === opt
-                            ? "border-teal-500 bg-teal-50 text-teal-700"
-                            : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
+                          activityType === opt ? `${cardActive} ${cardActiveText}` : cardInactive
                         }`}
                       >
                         {opt}
@@ -236,7 +264,7 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   onClick={() => setStep(0)}
-                  className="w-full flex items-center justify-center gap-1.5 text-slate-500 text-sm hover:text-slate-700"
+                  className={`w-full flex items-center justify-center gap-1.5 text-sm ${textMuted} hover:${textSecondary}`}
                 >
                   <ArrowLeft className="w-4 h-4" /> {t.onboarding.back}
                 </button>
@@ -249,15 +277,15 @@ export default function OnboardingPage() {
             <div>
               <button
                 onClick={() => setStep(1)}
-                className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
+                className={`flex items-center gap-1.5 text-sm mb-6 ${textMuted}`}
               >
                 <ArrowLeft className="w-4 h-4" /> {t.onboarding.back}
               </button>
 
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>
                 {t.onboarding.regimeTitle}
               </h1>
-              <p className="text-slate-600 text-sm mb-8">
+              <p className={`text-sm mb-8 ${textSecondary}`}>
                 {t.onboarding.regimeSubtitle}
               </p>
 
@@ -287,17 +315,11 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => setFiscalRegime(value)}
                     className={`w-full p-4 rounded-xl text-left border transition-all ${
-                      fiscalRegime === value
-                        ? "border-teal-500 bg-teal-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                      fiscalRegime === value ? cardActive : cardInactive
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span
-                        className={`text-sm font-semibold ${
-                          fiscalRegime === value ? "text-teal-700" : "text-slate-900"
-                        }`}
-                      >
+                      <span className={`text-sm font-semibold ${fiscalRegime === value ? cardActiveText : cardInactiveTitle}`}>
                         {label}
                       </span>
                       {recommended && (
@@ -306,7 +328,7 @@ export default function OnboardingPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500">{desc}</p>
+                    <p className={`text-xs ${textMuted}`}>{desc}</p>
                   </button>
                 ))}
               </div>
@@ -326,15 +348,15 @@ export default function OnboardingPage() {
             <div>
               <button
                 onClick={() => setStep(2)}
-                className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
+                className={`flex items-center gap-1.5 text-sm mb-6 ${textMuted}`}
               >
                 <ArrowLeft className="w-4 h-4" /> {t.onboarding.back}
               </button>
 
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>
                 {t.onboarding.irpfTitle}
               </h1>
-              <p className="text-slate-600 text-sm mb-8">
+              <p className={`text-sm mb-8 ${textSecondary}`}>
                 {t.onboarding.irpfSubtitle}
               </p>
 
@@ -342,40 +364,28 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => setIvaRetention(false)}
-                  className={`w-full p-4 rounded-xl text-left border transition-all ${
-                    !ivaRetention
-                      ? "border-teal-500 bg-teal-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
+                  className={`w-full p-4 rounded-xl text-left border transition-all ${!ivaRetention ? cardActive : cardInactive}`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
+                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? cardActiveText : cardInactiveTitle}`}>
                     {t.onboarding.irpfNo}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {t.onboarding.irpfNoDesc}
-                  </p>
+                  <p className={`text-xs ${textMuted}`}>{t.onboarding.irpfNoDesc}</p>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIvaRetention(true)}
-                  className={`w-full p-4 rounded-xl text-left border transition-all ${
-                    ivaRetention
-                      ? "border-teal-500 bg-teal-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
+                  className={`w-full p-4 rounded-xl text-left border transition-all ${ivaRetention ? cardActive : cardInactive}`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
+                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? cardActiveText : cardInactiveTitle}`}>
                     {t.onboarding.irpfYes}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {t.onboarding.irpfYesDesc}
-                  </p>
+                  <p className={`text-xs ${textMuted}`}>{t.onboarding.irpfYesDesc}</p>
                 </button>
               </div>
 
               {ivaRetention && (
-                <div className="bg-slate-50 rounded-xl p-4 mb-6">
-                  <p className="text-xs font-medium text-slate-700 mb-3">
+                <div className={irpfSubBg}>
+                  <p className={`text-xs font-medium mb-3 ${textSecondary}`}>
                     {t.onboarding.irpfRateLabel}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -387,36 +397,32 @@ export default function OnboardingPage() {
                         key={rate}
                         type="button"
                         onClick={() => setIrpfRetentionRate(rate)}
-                        className={`p-3 rounded-xl text-left border transition-all ${
-                          irpfRetentionRate === rate
-                            ? "border-teal-500 bg-teal-50"
-                            : "border-slate-200 bg-white"
-                        }`}
+                        className={`p-3 rounded-xl text-left border transition-all ${irpfRetentionRate === rate ? irpfRateActive : irpfRateInactive}`}
                       >
-                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? "text-teal-700" : "text-slate-900"}`}>
+                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? cardActiveText : cardInactiveTitle}`}>
                           {label}
                         </p>
-                        <p className="text-xs text-slate-500">{desc}</p>
+                        <p className={`text-xs ${textMuted}`}>{desc}</p>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-100 rounded-xl p-4 mb-6">
-                <p className="text-xs font-semibold text-teal-700 mb-2">{t.onboarding.summaryTitle}</p>
-                <div className="space-y-1 text-xs text-slate-700">
+              <div className={`border rounded-xl p-4 mb-6 ${summaryBg}`}>
+                <p className={`text-xs font-semibold mb-2 ${summaryTitle}`}>{t.onboarding.summaryTitle}</p>
+                <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t.onboarding.summaryName}</span>
-                    <span className="font-medium">{name}</span>
+                    <span className={summaryLabel}>{t.onboarding.summaryName}</span>
+                    <span className={`font-medium ${summaryValue}`}>{name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t.onboarding.summaryActivity}</span>
-                    <span className="font-medium">{activityType}</span>
+                    <span className={summaryLabel}>{t.onboarding.summaryActivity}</span>
+                    <span className={`font-medium ${summaryValue}`}>{activityType}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t.onboarding.summaryRegime}</span>
-                    <span className="font-medium">EDS</span>
+                    <span className={summaryLabel}>{t.onboarding.summaryRegime}</span>
+                    <span className={`font-medium ${summaryValue}`}>EDS</span>
                   </div>
                 </div>
               </div>
