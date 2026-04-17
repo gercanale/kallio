@@ -82,6 +82,7 @@ export function Navigation() {
         {/* Logo */}
         <div className="px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700">
           <Link href="/dashboard" className="flex items-center gap-2">
+            <img src="/faviconnobg.png" alt="Kallio" className="w-7 h-7" />
             <span className="font-bold text-teal-700 dark:text-teal-400 text-xl">Kallio</span>
           </Link>
           <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums mt-0.5 block">
