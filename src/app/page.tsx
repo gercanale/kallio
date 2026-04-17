@@ -118,79 +118,87 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-8 flex flex-col items-center justify-center text-center pb-16">
-        <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-xs font-medium mb-8 ${badgeBg}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${badgeDot}`} />
-          {t.landing.badge}
-        </div>
-
-        <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-black leading-tight max-w-5xl mb-4 ${heroColor}`}>
-          {t.landing.hero}{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
-            {t.landing.heroHighlight}
-          </span>
-        </h1>
-
-        <p className={`text-xl sm:text-2xl font-semibold mb-6 ${dark ? "text-slate-300" : "text-slate-600"}`}>
-          {t.landing.heroSub}
-        </p>
-
-        <p className={`text-lg max-w-2xl mb-10 leading-relaxed ${subtitleColor}`}>
-          {t.landing.subtitle}
-        </p>
-
-        {hasExistingAccount && (
-          <div className="w-full max-w-sm mb-6">
-            <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 ${welcomeCardBg}`}>
-              <div className="text-left">
-                <p className={`text-sm font-semibold ${welcomeTitle}`}>{t.landing.welcomeBack}</p>
-                <p className={`text-xs ${welcomeSub}`}>{profile.name} · {profile.activityType}</p>
-              </div>
-              <button
-                onClick={handleContinue}
-                className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex-shrink-0"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                {t.landing.enter}
-              </button>
-            </div>
+      <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-12 lg:py-0 lg:flex lg:items-center lg:gap-16">
+        {/* Left column: hero */}
+        <div className="flex-1 flex flex-col items-start text-left pb-12 lg:pb-0">
+          <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-xs font-medium mb-8 ${badgeBg}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${badgeDot}`} />
+            {t.landing.badge}
           </div>
-        )}
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-16">
-          {!hasExistingAccount && (
-            <Link
-              href="/login"
-              className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-lg"
-            >
-              {t.landing.startFree}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+          <h1 className={`text-5xl lg:text-6xl xl:text-7xl font-black leading-tight mb-4 ${heroColor}`}>
+            {t.landing.hero}{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
+              {t.landing.heroHighlight}
+            </span>
+          </h1>
+
+          <p className={`text-xl lg:text-2xl font-semibold mb-5 ${dark ? "text-slate-300" : "text-slate-600"}`}>
+            {t.landing.heroSub}
+          </p>
+
+          <p className={`text-base lg:text-lg leading-relaxed mb-10 max-w-lg ${subtitleColor}`}>
+            {t.landing.subtitle}
+          </p>
+
+          {hasExistingAccount && (
+            <div className="w-full max-w-sm mb-6">
+              <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 ${welcomeCardBg}`}>
+                <div className="text-left">
+                  <p className={`text-sm font-semibold ${welcomeTitle}`}>{t.landing.welcomeBack}</p>
+                  <p className={`text-xs ${welcomeSub}`}>{profile.name} · {profile.activityType}</p>
+                </div>
+                <button
+                  onClick={handleContinue}
+                  className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex-shrink-0"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  {t.landing.enter}
+                </button>
+              </div>
+            </div>
           )}
-          <button
-            onClick={handleDemo}
-            className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all border ${demoBtnBg}`}
-          >
-            {t.landing.viewDemo}
-          </button>
+
+          <div className="flex flex-col sm:flex-row gap-3 mb-10">
+            {!hasExistingAccount && (
+              <Link
+                href="/login"
+                className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-lg"
+              >
+                {t.landing.startFree}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
+            <button
+              onClick={handleDemo}
+              className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all border ${demoBtnBg}`}
+            >
+              {t.landing.viewDemo}
+            </button>
+          </div>
+
+          <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm ${trustColor}`}>
+            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust1}</div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust2}</div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust3}</div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-5xl">
+        {/* Right column: feature cards */}
+        <div className="w-full lg:w-96 xl:w-[440px] flex-shrink-0 flex flex-col gap-4 pb-12 lg:pb-0">
           {features.map(({ icon: Icon, title, desc }, i) => (
-            <div key={title} className={`border rounded-2xl p-6 text-left ${cardBg}`}>
-              <div className={`w-11 h-11 rounded-xl ${featureIconColors[i]} flex items-center justify-center mb-4`}>
-                <Icon className="w-5 h-5" />
+            <div key={title} className={`border rounded-2xl p-6 ${cardBg}`}>
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-xl ${featureIconColors[i]} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className={`font-semibold text-base mb-1 ${cardTitle}`}>{title}</h3>
+                  <p className={`text-sm leading-relaxed ${cardDesc}`}>{desc}</p>
+                </div>
               </div>
-              <h3 className={`font-semibold text-base mb-2 ${cardTitle}`}>{title}</h3>
-              <p className={`text-sm leading-relaxed ${cardDesc}`}>{desc}</p>
             </div>
           ))}
-        </div>
-
-        <div className={`mt-12 flex flex-col sm:flex-row items-center gap-8 text-sm ${trustColor}`}>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust1}</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust2}</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" />{t.landing.trust3}</div>
         </div>
       </main>
 
