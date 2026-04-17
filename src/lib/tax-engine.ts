@@ -308,37 +308,44 @@ export function calculateTaxSnapshot(
 // ─── Deduction prompt generator ──────────────────────────────────────────────
 
 interface PromptTemplate {
+  key: string;
   question: (t: Transaction) => string;
   applicableCategories: ExpenseCategory[];
 }
 
 const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
+    key: "meals",
     applicableCategories: ["unclear", "meals_entertainment"],
     question: (t) =>
       `¿El pago de ${formatCurrency(t.amount)} en "${t.merchant ?? t.description}" fue para una reunión o comida de trabajo con un cliente o proveedor?`,
   },
   {
+    key: "travel",
     applicableCategories: ["travel_transport"],
     question: (t) =>
       `¿El desplazamiento de ${formatCurrency(t.amount)} en "${t.merchant ?? t.description}" fue exclusivamente por motivos profesionales?`,
   },
   {
+    key: "phone",
     applicableCategories: ["phone_internet"],
     question: (t) =>
       `¿Usas tu ${t.merchant ?? "teléfono/internet"} principalmente para el trabajo? Si es así, podemos deducir parte de este gasto de ${formatCurrency(t.amount)}.`,
   },
   {
+    key: "hardware",
     applicableCategories: ["hardware_equipment"],
     question: (t) =>
       `¿El equipo de ${formatCurrency(t.amount)} en "${t.merchant ?? t.description}" lo usas exclusivamente o principalmente para tu actividad profesional?`,
   },
   {
+    key: "homeOffice",
     applicableCategories: ["home_office"],
     question: (t) =>
       `¿Tienes una parte de tu vivienda dedicada como oficina profesional? Este gasto de ${formatCurrency(t.amount)} podría ser parcialmente deducible.`,
   },
   {
+    key: "unclear",
     applicableCategories: ["unclear"],
     question: (t) =>
       `No hemos podido clasificar automáticamente el gasto de ${formatCurrency(t.amount)} en "${t.merchant ?? t.description}". ¿Es un gasto de tu actividad profesional?`,
@@ -368,6 +375,11 @@ export function generateDeductionPrompt(
   return {
     transactionId: transaction.id,
     question: template.question(transaction),
+    promptKey: template.key,
+    promptVars: {
+      amount: formatCurrency(transaction.amount),
+      merchant: transaction.merchant ?? transaction.description,
+    },
     projectedSaving: Math.round(projectedSaving * 100) / 100,
     status: "pending",
   };
