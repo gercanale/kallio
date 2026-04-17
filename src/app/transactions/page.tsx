@@ -164,7 +164,7 @@ export default function TransactionsPage() {
           </button>
           <button
             onClick={() => openForm("expense")}
-            className="flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-medium transition-all"
+            className="flex items-center justify-center gap-2 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all"
           >
             <ArrowDownLeft className="w-4 h-4" />
             {t.transactions.addExpense}

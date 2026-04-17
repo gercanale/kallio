@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Info, TrendingUp, Shield, Wallet } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { calculateTaxSnapshot, formatCurrency, currentQuarter } from "@/lib/tax-engine";
+import { calculateTaxSnapshot, formatCurrency, currentQuarter, nowInSpain } from "@/lib/tax-engine";
 
 export function TaxReserveMeter() {
   const [expanded, setExpanded] = useState<null | "gross" | "reserve" | "spendable">(null);
@@ -13,7 +13,7 @@ export function TaxReserveMeter() {
   const language = useKallioStore((s) => s.language);
   const t = useT();
   const snap = useMemo(
-    () => calculateTaxSnapshot(transactions, profile, currentQuarter(), new Date().getFullYear()),
+    () => calculateTaxSnapshot(transactions, profile, currentQuarter(nowInSpain()), nowInSpain().getFullYear()),
     [transactions, profile]
   );
 

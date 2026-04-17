@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Calendar, Bell, FileDown, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { calculateTaxSnapshot, nextDeadline, formatCurrency } from "@/lib/tax-engine";
+import { calculateTaxSnapshot, nextDeadline, formatCurrency, nowInSpain } from "@/lib/tax-engine";
 import { generateGestorPDF } from "@/lib/pdf-export";
 
 export function QuarterlyCountdown() {
@@ -14,7 +14,7 @@ export function QuarterlyCountdown() {
   const language = useKallioStore((s) => s.language);
   const t = useT();
 
-  const year = new Date().getFullYear();
+  const year = nowInSpain().getFullYear();
   const deadline = useMemo(() => nextDeadline(year), [year]);
   const snap = useMemo(
     () => calculateTaxSnapshot(transactions, profile, deadline.quarter, deadline.year),

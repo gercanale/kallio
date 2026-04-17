@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { X, Plus, Pencil, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency, classifyTransaction, netFromGross, ivaAmount } from "@/lib/tax-engine";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain } from "@/lib/tax-engine";
 import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
@@ -50,7 +50,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
   const [description, setDescription] = useState(transaction?.description ?? "");
   const [merchant, setMerchant] = useState(transaction?.merchant ?? "");
   const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
-  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : todayInSpain());
   const [ivaRate, setIvaRate] = useState<IVARate>(transaction?.ivaRate ?? 21);
   const [amountIncludesVAT, setAmountIncludesVAT] = useState(true);
   const [category, setCategory] = useState<ExpenseCategory>(transaction?.category ?? "unclear");
@@ -175,7 +175,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-semibold text-slate-900">{isEditing ? "Editar movimiento" : t.form.title}</h2>
@@ -200,7 +200,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
                     type === txType
                       ? txType === "income"
                         ? "bg-emerald-600 text-white shadow-sm"
-                        : "bg-red-500 text-white shadow-sm"
+                        : "bg-red-600 text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -368,60 +368,57 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
             </div>
           )}
 
-          {/* Category (expenses only) */}
-          {type === "expense" && (
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                {t.form.categoryLabel}
-              </label>
-              <select
-                value={category}
-                onChange={(e) => {
-                  setCategory(e.target.value as ExpenseCategory);
-                  setCategoryManuallySet(true);
-                  setSuggestionDismissed(true);
-                }}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
+          {/* Category — always rendered; invisible for income to keep layout stable */}
+          <div className={type !== "expense" ? "invisible" : ""}>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              {t.form.categoryLabel}
+            </label>
+            <select
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value as ExpenseCategory);
+                setCategoryManuallySet(true);
+                setSuggestionDismissed(true);
+              }}
+              disabled={type !== "expense"}
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
 
-              {/* Deductibility badge */}
-              {deductibilityInfo && (
-                <div className="mt-2">
-                  {deductibilityInfo.type === "full" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {t.form.categoryHintFull}
-                    </span>
-                  )}
-                  {deductibilityInfo.type === "partial" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                      {deductibilityInfo.rate}% deducible
-                    </span>
-                  )}
-                  {deductibilityInfo.type === "none" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                      {t.form.categoryHintNone}
-                    </span>
-                  )}
-                  {deductibilityInfo.type === "unclear" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                      {t.form.categoryHintUnclear}
-                    </span>
-                  )}
-                  {/* Unclear helper note */}
-                  {category === "unclear" && (
-                    <p className="text-xs text-slate-500 mt-1.5">{t.form.categoryHintUnclearNote}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+            {deductibilityInfo && (
+              <div className="mt-2">
+                {deductibilityInfo.type === "full" && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {t.form.categoryHintFull}
+                  </span>
+                )}
+                {deductibilityInfo.type === "partial" && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    {deductibilityInfo.rate}% deducible
+                  </span>
+                )}
+                {deductibilityInfo.type === "none" && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                    {t.form.categoryHintNone}
+                  </span>
+                )}
+                {deductibilityInfo.type === "unclear" && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                    {t.form.categoryHintUnclear}
+                  </span>
+                )}
+                {category === "unclear" && (
+                  <p className="text-xs text-slate-500 mt-1.5">{t.form.categoryHintUnclearNote}</p>
+                )}
+              </div>
+            )}
+          </div>
 
-          {/* Deductible toggle (expenses only) */}
-          {type === "expense" && category !== "personal" && (
+          {/* Deductible toggle — always rendered; invisible when not applicable */}
+          <div className={type !== "expense" || category === "personal" ? "invisible" : ""}>
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
               <div>
                 <p className="text-sm font-medium text-slate-800">{t.form.deductibleLabel}</p>
@@ -432,6 +429,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
               <button
                 type="button"
                 onClick={() => setIsDeductible(!isDeductible)}
+                disabled={type !== "expense"}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
                   isDeductible ? "bg-teal-600" : "bg-slate-300"
                 }`}
@@ -443,17 +441,17 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
                 />
               </button>
             </div>
-          )}
+          </div>
 
-          {/* Live fiscal impact preview */}
-          {fiscalImpact !== null && fiscalImpact > 0 && (
+          {/* Live fiscal impact preview — always rendered; invisible when not applicable */}
+          <div className={fiscalImpact !== null && fiscalImpact > 0 ? "" : "invisible"}>
             <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
               <span className="text-xs text-emerald-800">
                 {t.form.impactLabel}{" "}
-                <span className="font-semibold">{formatCurrency(fiscalImpact)}</span>
+                <span className="font-semibold">{formatCurrency(fiscalImpact ?? 0)}</span>
               </span>
             </div>
-          )}
+          </div>
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
