@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, House } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, House, Moon, Sun } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
@@ -12,6 +12,8 @@ export function Navigation() {
   const router = useRouter();
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
+  const theme = useKallioStore((s) => s.theme);
+  const setTheme = useKallioStore((s) => s.setTheme);
   const signOut = useKallioStore((s) => s.signOut);
   const resetAll = useKallioStore((s) => s.resetAll);
   const t = useT();
@@ -54,6 +56,13 @@ export function Navigation() {
           >
             <span className="text-base leading-none">{language === "es" ? "🇪🇸" : "🇬🇧"}</span>
             <span>{language === "es" ? "ES" : "EN"}</span>
+          </button>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 transition-all"
+          >
+            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <span>{theme === "dark" ? "Light" : "Dark"}</span>
           </button>
           <button
             onClick={handleGoHome}
@@ -106,6 +115,13 @@ export function Navigation() {
           >
             <span className="text-base leading-none">{language === "es" ? "🇪🇸" : "🇬🇧"}</span>
             <span>{language === "es" ? "Español" : "English"}</span>
+          </button>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span>{theme === "dark" ? (language === "es" ? "Modo claro" : "Light mode") : (language === "es" ? "Modo oscuro" : "Dark mode")}</span>
           </button>
           <button
             onClick={handleGoHome}
