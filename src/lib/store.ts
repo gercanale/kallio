@@ -165,6 +165,7 @@ interface KallioState {
 
   // Actions – profile
   setProfile: (profile: Partial<UserProfile>) => void;
+  updateName: (name: string) => Promise<void>;
   completeOnboarding: (profile: UserProfile) => Promise<void>;
 
   // Actions – transactions
@@ -266,6 +267,14 @@ export const useKallioStore = create<KallioState>()(
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
         set((s) => ({ profile: { ...s.profile, ...updates } })),
+
+      updateName: async (name) => {
+        set((s) => ({ profile: { ...s.profile, name } }));
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from("profiles").update({ name }).eq("id", user.id);
+      },
 
       completeOnboarding: async (profile) => {
         const fullProfile = { ...profile, onboardingComplete: true };

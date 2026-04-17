@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Trash2, User } from "lucide-react";
+import { LogOut, Trash2, User, Pencil, Check, X } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Navigation } from "@/components/Navigation";
@@ -14,6 +14,12 @@ export default function SettingsPage() {
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const signOut = useKallioStore((s) => s.signOut);
   const resetAll = useKallioStore((s) => s.resetAll);
+  const updateName = useKallioStore((s) => s.updateName);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -31,6 +37,26 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  const handleStartEditName = () => {
+    setNameValue(profile.name);
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameValue.trim();
+    if (!trimmed || trimmed === profile.name) { setEditingName(false); return; }
+    setSavingName(true);
+    await updateName(trimmed);
+    setSavingName(false);
+    setEditingName(false);
+  };
+
+  const handleCancelName = () => {
+    setEditingName(false);
+    setNameValue("");
+  };
 
   const handleSignOut = () => {
     signOut();
@@ -58,8 +84,30 @@ export default function SettingsPage() {
               <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
                 <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
-              <div>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
+              <div className="flex-1 min-w-0">
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={nameInputRef}
+                      value={nameValue}
+                      onChange={(e) => setNameValue(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") handleCancelName(); }}
+                      className="text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-teal-500 w-40"
+                      disabled={savingName}
+                    />
+                    <button onClick={handleSaveName} disabled={savingName} className="text-teal-600 dark:text-teal-400 hover:text-teal-700 disabled:opacity-50">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={handleCancelName} disabled={savingName} className="text-slate-400 hover:text-slate-600">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={handleStartEditName} className="group flex items-center gap-1.5 text-left">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
+                    <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                )}
                 <p className="text-xs text-slate-500 dark:text-slate-400">{profile.activityType}</p>
               </div>
             </div>
