@@ -23,17 +23,17 @@ export function QuarterlyCountdown() {
 
   const urgencyColor =
     deadline.daysLeft <= 7
-      ? "bg-red-50 border-red-200"
+      ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900"
       : deadline.daysLeft <= 15
-      ? "bg-amber-50 border-amber-200"
-      : "bg-teal-50 border-teal-100";
+      ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900"
+      : "bg-teal-50 dark:bg-teal-950/40 border-teal-100 dark:border-teal-900";
 
   const urgencyText =
     deadline.daysLeft <= 7
-      ? "text-red-600"
+      ? "text-red-600 dark:text-red-400"
       : deadline.daysLeft <= 15
-      ? "text-amber-600"
-      : "text-teal-600";
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-teal-600 dark:text-teal-400";
 
   const urgencyIcon =
     deadline.daysLeft <= 15 ? (
@@ -64,7 +64,7 @@ export function QuarterlyCountdown() {
               {t.countdown.nextDeclaration}
             </span>
           </div>
-          <div className={`flex items-center gap-1.5 bg-white/60 rounded-full px-3 py-1 ${urgencyText}`}>
+          <div className={`flex items-center gap-1.5 bg-white/60 dark:bg-slate-800/60 rounded-full px-3 py-1 ${urgencyText}`}>
             <Bell className="w-3.5 h-3.5" />
             <span className="text-xs font-medium">{t.countdown.activeAlerts}</span>
           </div>
@@ -79,10 +79,10 @@ export function QuarterlyCountdown() {
               </span>
               <span className={`text-lg font-medium ${urgencyText} opacity-70`}>{t.countdown.days}</span>
             </div>
-            <p className="text-slate-600 text-sm mt-0.5">
+            <p className="text-slate-600 dark:text-slate-300 text-sm mt-0.5">
               Modelo 130 {language === "es" ? "y" : "&"} 303 – {deadline.label} {deadline.year}
             </p>
-            <p className="text-slate-500 text-xs">
+            <p className="text-slate-500 dark:text-slate-400 text-xs">
               {t.countdown.expiresOn} {new Date(deadline.modelo130Deadline).toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
                 day: "numeric",
                 month: "long",
@@ -94,20 +94,20 @@ export function QuarterlyCountdown() {
 
         {/* Liability breakdown */}
         <div className="bg-white/70 dark:bg-slate-800/70 rounded-xl p-4 space-y-2.5">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-3">
             {t.countdown.estimatedPayment}
           </p>
 
           <div className="flex justify-between items-center">
-            <p className="text-xs text-slate-500">{t.countdown.vatModel303}</p>
-            <span className="text-sm font-semibold text-slate-900 tabular-nums">
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t.countdown.vatModel303}</p>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
               {formatCurrency(snap.ivaPayable)}
             </span>
           </div>
 
           <div className="flex justify-between items-center">
-            <p className="text-xs text-slate-500">{t.countdown.irpfModel130}</p>
-            <span className="text-sm font-semibold text-slate-900 tabular-nums">
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t.countdown.irpfModel130}</p>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
               {formatCurrency(snap.irpfAdvancePayable)}
             </span>
           </div>
@@ -131,9 +131,9 @@ export function QuarterlyCountdown() {
               {triggered ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
               ) : (
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300" />
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
               )}
-              <span className={`text-xs ${triggered ? "text-slate-700 font-medium" : "text-slate-400"}`}>
+              <span className={`text-xs ${triggered ? "text-slate-700 dark:text-slate-200 font-medium" : "text-slate-400 dark:text-slate-500"}`}>
                 {label}{triggered && ` ${t.countdown.alertSent}`}
               </span>
             </div>
