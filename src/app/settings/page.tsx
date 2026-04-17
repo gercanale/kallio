@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Trash2, User, Pencil, Check, X, Crown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
+import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
 
 export default function SettingsPage() {
@@ -15,6 +16,7 @@ export default function SettingsPage() {
   const signOut = useKallioStore((s) => s.signOut);
   const resetAll = useKallioStore((s) => s.resetAll);
   const updateName = useKallioStore((s) => s.updateName);
+  const t = useT();
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState("");
@@ -110,7 +112,10 @@ export default function SettingsPage() {
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.name}</p>
                       <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <span
+                      title={t.settings.planTooltip}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 cursor-help"
+                    >
                       <Crown className="w-3 h-3" />
                       Pro MVP
                     </span>
