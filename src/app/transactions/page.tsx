@@ -289,7 +289,7 @@ function TransactionRow({
       </div>
 
       <div className="text-right flex-shrink-0">
-        <p className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600" : "text-slate-800 dark:text-slate-200"}`}>
+        <p className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
           {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
