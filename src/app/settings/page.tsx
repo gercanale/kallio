@@ -69,7 +69,7 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAll = () => {
-    if (deleteConfirmText !== "Eliminar") return;
+    if (deleteConfirmText !== t.settings.deleteAccountConfirmWord) return;
     resetAll();
     window.location.href = "/";
   };
@@ -79,7 +79,7 @@ export default function SettingsPage() {
       <Navigation />
 
       <main className="lg:ml-56 px-4 lg:px-8 py-6">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Ajustes</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">{t.settings.title}</h1>
 
         {/* Profile section */}
         <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mb-4">
@@ -130,10 +130,10 @@ export default function SettingsPage() {
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-700 overflow-hidden rounded-b-2xl">
-            <SettingsRow label="Régimen fiscal" value="Estimación Directa Simplificada" />
+            <SettingsRow label={t.settings.fiscalRegime} value={t.settings.fiscalRegimeValue} />
             <SettingsRow
-              label="Retención IRPF"
-              value={profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : "Sin retención"}
+              label={t.settings.irpfRetention}
+              value={profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : t.settings.noRetention}
             />
             <SettingsRow label="NIF" value={profile.nif ?? "—"} />
           </div>
@@ -147,8 +147,8 @@ export default function SettingsPage() {
           >
             <LogOut className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <div>
-              <p className="text-sm font-medium">Cerrar sesión</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Tus datos se conservan. Puedes volver a entrar desde la pantalla de inicio.</p>
+              <p className="text-sm font-medium">{t.settings.signOut}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t.settings.signOutSubtitle}</p>
             </div>
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
         {/* Danger Zone */}
         <div className="rounded-2xl border border-red-200 dark:border-red-900 overflow-hidden">
           <div className="px-5 py-3 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-900">
-            <p className="text-sm font-semibold text-red-700 dark:text-red-400">Danger Zone</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400">{t.settings.dangerZone}</p>
           </div>
           <div className="bg-white dark:bg-slate-800/60">
             <button
@@ -165,8 +165,8 @@ export default function SettingsPage() {
             >
               <Trash2 className="w-4 h-4 shrink-0" />
               <div>
-                <p className="text-sm font-medium">Borrar todos mis datos y cerrar cuenta</p>
-                <p className="text-xs text-red-400">Permanente. No se puede deshacer.</p>
+                <p className="text-sm font-medium">{t.settings.deleteAccountButton}</p>
+                <p className="text-xs text-red-400">{t.settings.deleteAccountPermanent}</p>
               </div>
             </button>
           </div>
@@ -181,17 +181,18 @@ export default function SettingsPage() {
               <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Borrar cuenta</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{t.settings.deleteAccountModalTitle}</h2>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Esta acción eliminará todos tus datos y cerrará tu cuenta de forma permanente. Para confirmar, escribe <span className="font-semibold text-slate-900 dark:text-slate-100">Eliminar</span>.
+              {t.settings.deleteAccountModalDesc}{" "}
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{t.settings.deleteAccountConfirmWord}</span>.
             </p>
             <input
               autoFocus
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleDeleteAll(); if (e.key === "Escape") setShowDeleteModal(false); }}
-              placeholder="Eliminar"
+              placeholder={t.settings.deleteAccountConfirmWord}
               className="w-full border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-400 mb-4"
             />
             <div className="flex gap-3">
@@ -199,14 +200,14 @@ export default function SettingsPage() {
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
-                Cancelar
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleDeleteAll}
-                disabled={deleteConfirmText !== "Eliminar"}
+                disabled={deleteConfirmText !== t.settings.deleteAccountConfirmWord}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
               >
-                Eliminar cuenta
+                {t.settings.deleteAccountConfirmButton}
               </button>
             </div>
           </div>
