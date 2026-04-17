@@ -4,6 +4,7 @@ import { HtmlLangSetter } from "./HtmlLangSetter";
 import { AuthProvider } from "./AuthProvider";
 import { ThemeWrapper } from "./ThemeWrapper";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Kallio – Tu copiloto fiscal",
@@ -26,6 +27,7 @@ export default function RootLayout({
           </ThemeWrapper>
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
