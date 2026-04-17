@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { HtmlLangSetter } from "./HtmlLangSetter";
+import { AuthProvider } from "./AuthProvider";
 
 export const metadata: Metadata = {
   title: "Kallio – Tu copiloto fiscal",
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="es" className="h-full">
       <body className="min-h-full">
         <HtmlLangSetter />
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

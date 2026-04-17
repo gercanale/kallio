@@ -6,6 +6,7 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 
 export default function LandingPage() {
   const hydrated = useHydrated();
@@ -14,13 +15,13 @@ export default function LandingPage() {
   const activateSession = useKallioStore((s) => s.activateSession);
   const router = useRouter();
 
-  // Only auto-redirect if there's already an active session
+  // Redirect if session is active or Supabase user exists
   useEffect(() => {
-    if (!hydrated) return;
-    if (sessionActive) {
-      router.replace("/dashboard");
-    }
-  }, [hydrated, sessionActive, router]);
+    if (sessionActive) { router.replace("/dashboard"); return; }
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace("/dashboard");
+    });
+  }, [sessionActive, router]);
 
   const handleDemo = () => {
     useKallioStore.getState().loadDemo();
