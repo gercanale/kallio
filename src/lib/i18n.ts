@@ -12,7 +12,7 @@ export const translations = {
       settings: "Ajustes",
     },
     landing: {
-      badge: "MVP · España 2025",
+      badge: "MVP · España 2026",
       hero: "Tus impuestos,",
       heroHighlight: "sin sorpresas",
       subtitle: "Kallio calcula en tiempo real cuánto del saldo de tu cuenta es realmente tuyo. IVA, IRPF, deducciones y deadlines, todo en un vistazo.",
@@ -302,7 +302,7 @@ export const translations = {
       settings: "Settings",
     },
     landing: {
-      badge: "MVP · Spain 2025",
+      badge: "MVP · Spain 2026",
       hero: "Your taxes,",
       heroHighlight: "no surprises",
       subtitle: "Kallio calculates in real time how much of your account balance is actually yours. VAT, income tax, deductions and deadlines — all at a glance.",
