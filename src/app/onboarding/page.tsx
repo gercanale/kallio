@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
+import { useT } from "@/lib/useT";
 import type { FiscalRegime } from "@/lib/types";
 
-type Step = 1 | 2 | 3;
+type Step = 0 | 1 | 2 | 3;
 
 const ACTIVITY_OPTIONS = [
   "Programador / Consultor IT",
@@ -24,8 +25,9 @@ export default function OnboardingPage() {
   const router = useRouter();
   const completeOnboarding = useKallioStore((s) => s.completeOnboarding);
   const activateSession = useKallioStore((s) => s.activateSession);
+  const t = useT();
 
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(0);
   const [name, setName] = useState("");
   const [nif, setNif] = useState("");
   const [activityType, setActivityType] = useState("");
@@ -35,7 +37,7 @@ export default function OnboardingPage() {
   const [ivaRetention, setIvaRetention] = useState(false);
   const [irpfRetentionRate, setIrpfRetentionRate] = useState(0.15);
 
-  const progress = (step / 3) * 100;
+  const progress = step === 0 ? 0 : (step / 3) * 100;
 
   const handleFinish = () => {
     completeOnboarding({
@@ -63,32 +65,92 @@ export default function OnboardingPage() {
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          {/* Step indicator */}
-          <div className="flex items-center gap-2 mb-8">
-            {([1, 2, 3] as Step[]).map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    s < step
-                      ? "bg-teal-600 text-white"
-                      : s === step
-                      ? "bg-teal-600 text-white ring-4 ring-teal-100"
-                      : "bg-slate-200 text-slate-500"
-                  }`}
-                >
-                  {s < step ? <CheckCircle2 className="w-4 h-4" /> : s}
-                </div>
-                {s < 3 && (
+          {/* Step indicator — only when step > 0 */}
+          {step > 0 && (
+            <div className="flex items-center gap-2 mb-8">
+              {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
+                <div key={s} className="flex items-center gap-2">
                   <div
-                    className={`flex-1 h-0.5 w-12 ${
-                      s < step ? "bg-teal-600" : "bg-slate-200"
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      s < step
+                        ? "bg-teal-600 text-white"
+                        : s === step
+                        ? "bg-teal-600 text-white ring-4 ring-teal-100"
+                        : "bg-slate-200 text-slate-500"
                     }`}
-                  />
-                )}
+                  >
+                    {s < step ? <CheckCircle2 className="w-4 h-4" /> : s}
+                  </div>
+                  {s < 3 && (
+                    <div
+                      className={`flex-1 h-0.5 w-12 ${
+                        s < step ? "bg-teal-600" : "bg-slate-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+              <span className="ml-2 text-xs text-slate-500">Paso {step} de 3</span>
+            </div>
+          )}
+
+          {/* Step 0 – Intro slide */}
+          {step === 0 && (
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-1 text-center">
+                {t.onboarding.introTitle}
+              </h1>
+              <p className="text-slate-500 text-sm mb-8 text-center">
+                {t.onboarding.introSubtitle}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {/* Income card */}
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <ArrowUpRight className="w-4 h-4 text-emerald-700" />
+                    </div>
+                    <span className="text-sm font-bold text-emerald-800">
+                      {t.onboarding.introIncomeTitle}
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-700 leading-relaxed">
+                    {t.onboarding.introIncomeDesc}
+                  </p>
+                  <p className="text-xs text-emerald-500 italic">
+                    {t.onboarding.introIncomeExample}
+                  </p>
+                </div>
+
+                {/* Expense card */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <ArrowDownLeft className="w-4 h-4 text-red-600" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">
+                      {t.onboarding.introExpenseTitle}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t.onboarding.introExpenseDesc}
+                  </p>
+                  <p className="text-xs text-slate-400 italic">
+                    {t.onboarding.introExpenseExample}
+                  </p>
+                </div>
               </div>
-            ))}
-            <span className="ml-2 text-xs text-slate-500">Paso {step} de 3</span>
-          </div>
+
+              <button
+                onClick={() => setStep(1)}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-all"
+              >
+                {t.onboarding.introContinue}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Step 1 – Datos personales */}
           {step === 1 && (
@@ -150,14 +212,22 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setStep(2)}
-                disabled={!name.trim() || !activityType}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
-              >
-                Siguiente
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="mt-8 space-y-3">
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={!name.trim() || !activityType}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+                >
+                  Siguiente
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setStep(0)}
+                  className="w-full flex items-center justify-center gap-1.5 text-slate-500 text-sm hover:text-slate-700"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Atrás
+                </button>
+              </div>
             </div>
           )}
 

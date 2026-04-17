@@ -125,6 +125,44 @@ export function TaxReserveMeter() {
         </button>
       </div>
 
+      {/* Year-end IRPF gap banner */}
+      {snap.yearEndIRPFGap > 0 && (
+        <div className="border-t border-slate-100 px-6 py-4 bg-amber-50">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">
+                Declaración anual estimada (IRPF)
+              </p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                El Modelo 130 paga un 20% adelantado, pero tu tipo efectivo estimado es{" "}
+                <span className="font-bold">{(snap.effectiveIRPFRate * 100).toFixed(1)}%</span>.
+                Reserva la diferencia para la declaración de junio.
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-lg font-black text-amber-700 tabular-nums">
+                {formatCurrency(snap.yearEndIRPFGap)}
+              </p>
+              <p className="text-xs text-amber-600">reserva adicional</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="bg-white/60 rounded-lg p-2 text-center">
+              <p className="text-xs font-medium text-amber-600 tabular-nums">{formatCurrency(snap.projectedAnnualNetIncome)}</p>
+              <p className="text-xs text-amber-500">Ingreso neto anual est.</p>
+            </div>
+            <div className="bg-white/60 rounded-lg p-2 text-center">
+              <p className="text-xs font-medium text-amber-600 tabular-nums">{formatCurrency(snap.estimatedAnnualIRPF)}</p>
+              <p className="text-xs text-amber-500">IRPF total estimado</p>
+            </div>
+            <div className="bg-white/60 rounded-lg p-2 text-center">
+              <p className="text-xs font-medium text-amber-600 tabular-nums">−{formatCurrency(snap.irpfPaidViaAdvances)}</p>
+              <p className="text-xs text-amber-500">Pagado Mod. 130</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Expandable breakdown */}
       {expanded && (
         <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 text-sm">

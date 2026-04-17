@@ -1,16 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import { X, Plus } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { X, Plus, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency } from "@/lib/tax-engine";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount } from "@/lib/tax-engine";
 import type { IVARate, TransactionType, ExpenseCategory } from "@/lib/types";
 
 interface TransactionFormProps {
   onClose: () => void;
   defaultType?: TransactionType;
 }
+
+const CATEGORY_DEDUCTIBILITY: Record<ExpenseCategory, { type: "full" | "partial" | "none" | "unclear"; rate?: number }> = {
+  software_subscriptions: { type: "full" },
+  hardware_equipment: { type: "full" },
+  office_supplies: { type: "full" },
+  professional_services: { type: "full" },
+  marketing_advertising: { type: "full" },
+  travel_transport: { type: "partial", rate: 70 },
+  meals_entertainment: { type: "partial", rate: 50 },
+  phone_internet: { type: "partial", rate: 50 },
+  training_education: { type: "full" },
+  home_office: { type: "partial", rate: 30 },
+  rent_utilities: { type: "full" },
+  insurance: { type: "full" },
+  bank_fees: { type: "full" },
+  other_deductible: { type: "full" },
+  personal: { type: "none" },
+  unclear: { type: "unclear" },
+};
+
+const PARTIAL_RATES: Record<ExpenseCategory, number> = {
+  software_subscriptions: 1, hardware_equipment: 1, office_supplies: 1,
+  professional_services: 1, marketing_advertising: 1, travel_transport: 0.7,
+  meals_entertainment: 0.5, phone_internet: 0.5, training_education: 1,
+  home_office: 0.3, rent_utilities: 1, insurance: 1, bank_fees: 1,
+  other_deductible: 1, personal: 0, unclear: 1,
+};
 
 export function TransactionForm({ onClose, defaultType = "expense" }: TransactionFormProps) {
   const addTransaction = useKallioStore((s) => s.addTransaction);
@@ -26,6 +53,8 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
   const [category, setCategory] = useState<ExpenseCategory>("unclear");
   const [isDeductible, setIsDeductible] = useState(true);
   const [error, setError] = useState("");
+  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
 
   const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
     { value: "software_subscriptions", label: t.form.categories.software_subscriptions },
@@ -46,6 +75,23 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
     { value: "unclear", label: t.form.categories.unclear },
   ];
 
+  // Reset manual flag and suggestion when type changes
+  useEffect(() => {
+    setCategoryManuallySet(false);
+    setSuggestionDismissed(false);
+  }, [type]);
+
+  // Live auto-suggest
+  const suggestion = useMemo(() => {
+    if (type !== "expense") return null;
+    if (description.length <= 3) return null;
+    if (categoryManuallySet) return null;
+    if (suggestionDismissed) return null;
+    const result = classifyTransaction(description, merchant);
+    if (result.confidence === "unclear") return null;
+    return result;
+  }, [type, description, merchant, categoryManuallySet, suggestionDismissed]);
+
   // Compute live VAT breakdown
   const parsed = parseFloat(amount.replace(",", "."));
   const hasVAT = ivaRate > 0 && !isNaN(parsed) && parsed > 0;
@@ -56,24 +102,45 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
 
   if (hasVAT) {
     if (amountIncludesVAT) {
-      // Amount entered IS gross (VAT included)
       grossAmount = parsed;
       netAmount = parsed / (1 + ivaRate / 100);
       vatAmount = parsed - netAmount;
     } else {
-      // Amount entered is net (VAT NOT included) → calculate gross
       netAmount = parsed;
       vatAmount = parsed * (ivaRate / 100);
       grossAmount = parsed + vatAmount;
     }
   }
 
+  // Fiscal impact preview
+  const fiscalImpact = useMemo(() => {
+    if (type !== "expense") return null;
+    if (isNaN(parsed) || parsed <= 0) return null;
+    if (category === "personal") return null;
+    if (!isDeductible) return null;
+    const gross = hasVAT ? (amountIncludesVAT ? parsed : parsed + parsed * (ivaRate / 100)) : parsed;
+    const partialRate = PARTIAL_RATES[category];
+    const vatRec = ivaRate > 0 ? ivaAmount(gross, ivaRate) * partialRate : 0;
+    const net = ivaRate > 0 ? netFromGross(gross, ivaRate) : gross;
+    const irpfSaving = net * partialRate * 0.2;
+    return Math.round((vatRec + irpfSaving) * 100) / 100;
+  }, [type, parsed, category, isDeductible, hasVAT, amountIncludesVAT, ivaRate]);
+
+  // Deductibility badge info
+  const deductibilityInfo = useMemo(() => {
+    if (type !== "expense") return null;
+    return CATEGORY_DEDUCTIBILITY[category];
+  }, [type, category]);
+
+  const getCategoryLabel = (cat: ExpenseCategory): string => {
+    return CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) { setError(t.form.errorDescription); return; }
     if (isNaN(parsed) || parsed <= 0) { setError(t.form.errorAmount); return; }
 
-    // Always store the gross (VAT-inclusive) amount
     const storedAmount = ivaRate > 0 && !amountIncludesVAT ? grossAmount : parsed;
 
     addTransaction({
@@ -106,23 +173,28 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Type toggle */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-            {(["income", "expense"] as TransactionType[]).map((txType) => (
-              <button
-                key={txType}
-                type="button"
-                onClick={() => setType(txType)}
-                className={`py-2 rounded-lg text-sm font-medium transition-all ${
-                  type === txType
-                    ? txType === "income"
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "bg-red-500 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {txType === "income" ? t.form.income : t.form.expense}
-              </button>
-            ))}
+          <div>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              {(["income", "expense"] as TransactionType[]).map((txType) => (
+                <button
+                  key={txType}
+                  type="button"
+                  onClick={() => setType(txType)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-all ${
+                    type === txType
+                      ? txType === "income"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "bg-red-500 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {txType === "income" ? t.form.incomeTypeLabel : t.form.expenseTypeLabel}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5 text-center">
+              {type === "income" ? t.form.incomeTypeHint : t.form.expenseTypeHint}
+            </p>
           </div>
 
           {/* Description */}
@@ -137,6 +209,27 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
               placeholder={type === "income" ? t.form.descriptionPlaceholderIncome : t.form.descriptionPlaceholderExpense}
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
             />
+            {/* Auto-suggest chip */}
+            {suggestion && (
+              <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-xl">
+                <Sparkles className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                <span className="text-xs text-teal-800 flex-1">
+                  <span className="font-medium">{t.form.autoDetectedLabel}</span>{" "}
+                  {getCategoryLabel(suggestion.category)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategory(suggestion.category);
+                    setCategoryManuallySet(true);
+                    setSuggestionDismissed(true);
+                  }}
+                  className="text-xs font-semibold text-teal-700 hover:text-teal-900 transition-colors shrink-0"
+                >
+                  {t.form.autoDetectUse}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Merchant / client */}
@@ -267,13 +360,47 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
+                onChange={(e) => {
+                  setCategory(e.target.value as ExpenseCategory);
+                  setCategoryManuallySet(true);
+                  setSuggestionDismissed(true);
+                }}
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
+
+              {/* Deductibility badge */}
+              {deductibilityInfo && (
+                <div className="mt-2">
+                  {deductibilityInfo.type === "full" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {t.form.categoryHintFull}
+                    </span>
+                  )}
+                  {deductibilityInfo.type === "partial" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                      {deductibilityInfo.rate}% deducible
+                    </span>
+                  )}
+                  {deductibilityInfo.type === "none" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                      {t.form.categoryHintNone}
+                    </span>
+                  )}
+                  {deductibilityInfo.type === "unclear" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                      {t.form.categoryHintUnclear}
+                    </span>
+                  )}
+                  {/* Unclear helper note */}
+                  {category === "unclear" && (
+                    <p className="text-xs text-slate-500 mt-1.5">{t.form.categoryHintUnclearNote}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -299,6 +426,16 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
                   }`}
                 />
               </button>
+            </div>
+          )}
+
+          {/* Live fiscal impact preview */}
+          {fiscalImpact !== null && fiscalImpact > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <span className="text-xs text-emerald-800">
+                {t.form.impactLabel}{" "}
+                <span className="font-semibold">{formatCurrency(fiscalImpact)}</span>
+              </span>
             </div>
           )}
 

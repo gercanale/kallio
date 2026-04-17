@@ -73,6 +73,15 @@ export interface TaxSnapshot {
   totalTaxReserve: number;      // ivaPayable + irpfAdvancePayable
   trueSpendableBalance: number; // grossIncome - deductibleExpenses base - totalTaxReserve
   totalSavedByDeductions: number; // tax impact of confirmed deductions
+
+  // Year-end IRPF gap (Declaración de la Renta, filed ~June)
+  // Modelo 130 only pays 20% advance — effective rate is typically 25-40%+
+  ytdNetIncome: number;               // Net income across all quarters this year
+  projectedAnnualNetIncome: number;   // YTD extrapolated to 12 months
+  estimatedAnnualIRPF: number;        // Full IRPF bill (bracket calculation)
+  irpfPaidViaAdvances: number;        // Already paid via Modelo 130 (20% × YTD)
+  yearEndIRPFGap: number;             // Extra to reserve for June declaration
+  effectiveIRPFRate: number;          // Blended rate (for display)
 }
 
 export interface DeductionPrompt {
