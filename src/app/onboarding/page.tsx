@@ -23,6 +23,7 @@ const ACTIVITY_OPTIONS = [
 export default function OnboardingPage() {
   const router = useRouter();
   const completeOnboarding = useKallioStore((s) => s.completeOnboarding);
+  const activateSession = useKallioStore((s) => s.activateSession);
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
@@ -46,6 +47,7 @@ export default function OnboardingPage() {
       irpfRetentionRate,
       onboardingComplete: true,
     });
+    activateSession();
     router.push("/dashboard");
   };
 
@@ -54,7 +56,7 @@ export default function OnboardingPage() {
       {/* Progress bar */}
       <div className="h-1 bg-slate-200">
         <div
-          className="h-full bg-indigo-600 transition-all duration-500"
+          className="h-full bg-teal-600 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -68,9 +70,9 @@ export default function OnboardingPage() {
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                     s < step
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-teal-600 text-white"
                       : s === step
-                      ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                      ? "bg-teal-600 text-white ring-4 ring-teal-100"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
@@ -79,7 +81,7 @@ export default function OnboardingPage() {
                 {s < 3 && (
                   <div
                     className={`flex-1 h-0.5 w-12 ${
-                      s < step ? "bg-indigo-600" : "bg-slate-200"
+                      s < step ? "bg-teal-600" : "bg-slate-200"
                     }`}
                   />
                 )}
@@ -108,7 +110,7 @@ export default function OnboardingPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ej: Facundo García"
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
+                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
                   />
                 </div>
 
@@ -121,7 +123,7 @@ export default function OnboardingPage() {
                     value={nif}
                     onChange={(e) => setNif(e.target.value)}
                     placeholder="12345678A"
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
+                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
                   />
                 </div>
 
@@ -137,7 +139,7 @@ export default function OnboardingPage() {
                         onClick={() => setActivityType(opt)}
                         className={`px-3 py-2.5 rounded-xl text-xs font-medium text-left transition-all border ${
                           activityType === opt
-                            ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                            ? "border-teal-500 bg-teal-50 text-teal-700"
                             : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                         }`}
                       >
@@ -151,7 +153,7 @@ export default function OnboardingPage() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!name.trim() || !activityType}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
               >
                 Siguiente
                 <ArrowRight className="w-4 h-4" />
@@ -203,14 +205,14 @@ export default function OnboardingPage() {
                     onClick={() => setFiscalRegime(value)}
                     className={`w-full p-4 rounded-xl text-left border transition-all ${
                       fiscalRegime === value
-                        ? "border-indigo-500 bg-indigo-50"
+                        ? "border-teal-500 bg-teal-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className={`text-sm font-semibold ${
-                          fiscalRegime === value ? "text-indigo-700" : "text-slate-900"
+                          fiscalRegime === value ? "text-teal-700" : "text-slate-900"
                         }`}
                       >
                         {label}
@@ -228,7 +230,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={() => setStep(3)}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all"
+                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-all"
               >
                 Siguiente
                 <ArrowRight className="w-4 h-4" />
@@ -259,11 +261,11 @@ export default function OnboardingPage() {
                   onClick={() => setIvaRetention(false)}
                   className={`w-full p-4 rounded-xl text-left border transition-all ${
                     !ivaRetention
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-teal-500 bg-teal-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
+                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
                     No, mis clientes no me retienen
                   </p>
                   <p className="text-xs text-slate-500">
@@ -275,11 +277,11 @@ export default function OnboardingPage() {
                   onClick={() => setIvaRetention(true)}
                   className={`w-full p-4 rounded-xl text-left border transition-all ${
                     ivaRetention
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-teal-500 bg-teal-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
+                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
                     Sí, me aplican retención
                   </p>
                   <p className="text-xs text-slate-500">
@@ -304,11 +306,11 @@ export default function OnboardingPage() {
                         onClick={() => setIrpfRetentionRate(rate)}
                         className={`p-3 rounded-xl text-left border transition-all ${
                           irpfRetentionRate === rate
-                            ? "border-indigo-500 bg-indigo-50"
+                            ? "border-teal-500 bg-teal-50"
                             : "border-slate-200 bg-white"
                         }`}
                       >
-                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? "text-indigo-700" : "text-slate-900"}`}>
+                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? "text-teal-700" : "text-slate-900"}`}>
                           {label}
                         </p>
                         <p className="text-xs text-slate-500">{desc}</p>
@@ -319,8 +321,8 @@ export default function OnboardingPage() {
               )}
 
               {/* Summary */}
-              <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-4 mb-6">
-                <p className="text-xs font-semibold text-indigo-700 mb-2">Resumen de tu configuración</p>
+              <div className="bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-100 rounded-xl p-4 mb-6">
+                <p className="text-xs font-semibold text-teal-700 mb-2">Resumen de tu configuración</p>
                 <div className="space-y-1 text-xs text-slate-700">
                   <div className="flex justify-between">
                     <span className="text-slate-500">Nombre</span>
@@ -339,7 +341,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={handleFinish}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold transition-all shadow-lg"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Ir a mi dashboard

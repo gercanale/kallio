@@ -26,7 +26,7 @@ export async function generateGestorPDF(
   const contentWidth = pageWidth - margin * 2;
   let y = margin;
 
-  const PRIMARY = [79, 70, 229] as [number, number, number]; // indigo-600
+  const PRIMARY = [79, 70, 229] as [number, number, number]; // teal-600
   const DARK = [15, 23, 42] as [number, number, number];     // slate-900
   const MID = [100, 116, 139] as [number, number, number];   // slate-500
   const LIGHT = [241, 245, 249] as [number, number, number]; // slate-100
