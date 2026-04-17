@@ -13,7 +13,7 @@ import {
   IVARate,
   TransactionType,
 } from "./types";
-import type { Locale } from "@/i18n";
+import type { Language } from "./i18n";
 import {
   calculateTaxSnapshot,
   classifyTransaction,
@@ -141,6 +141,15 @@ interface KallioState {
   _hasHydrated: boolean;
   _setHasHydrated: (v: boolean) => void;
 
+  // Session is intentionally NOT persisted — resets on every browser open
+  sessionActive: boolean;
+  activateSession: () => void;
+  signOut: () => void;
+  resetAll: () => void;
+
+  language: Language;
+  setLanguage: (lang: Language) => void;
+
   profile: UserProfile;
   transactions: Transaction[];
   deductionPrompts: DeductionPrompt[];
@@ -159,10 +168,6 @@ interface KallioState {
   // Actions – deductions
   answerDeductionPrompt: (transactionId: string, answer: "confirmed" | "rejected" | "later") => void;
 
-  // i18n
-  locale: Locale;
-  setLocale: (locale: Locale) => void;
-
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getPendingPrompts: () => DeductionPrompt[];
@@ -177,12 +182,28 @@ export const useKallioStore = create<KallioState>()(
       _hasHydrated: false,
       _setHasHydrated: (v) => set({ _hasHydrated: v }),
 
+      sessionActive: false,
+      activateSession: () => set({ sessionActive: true }),
+      signOut: () => set({ sessionActive: false }),
+      resetAll: () => {
+        set({
+          profile: DEFAULT_PROFILE,
+          transactions: [],
+          deductionPrompts: [],
+          totalSavedThisYear: 0,
+          sessionActive: false,
+          language: "es",
+        });
+        localStorage.removeItem("kallio-storage");
+      },
+
+      language: "es" as Language,
+      setLanguage: (lang) => set({ language: lang }),
+
       profile: DEFAULT_PROFILE,
       transactions: [],
       deductionPrompts: [],
       totalSavedThisYear: 0,
-      locale: "es",
-      setLocale: (locale) => set({ locale }),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -363,6 +384,14 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
+      // Exclude sessionActive so it always resets to false on page load
+      partialize: (state) => ({
+        profile: state.profile,
+        transactions: state.transactions,
+        deductionPrompts: state.deductionPrompts,
+        totalSavedThisYear: state.totalSavedThisYear,
+        language: state.language,
+      }),
       onRehydrateStorage: () => (state) => {
         state?._setHasHydrated(true);
       },

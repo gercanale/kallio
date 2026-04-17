@@ -5,14 +5,25 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import type { FiscalRegime } from "@/lib/types";
-import { useT } from "@/i18n";
 
 type Step = 1 | 2 | 3;
 
+const ACTIVITY_OPTIONS = [
+  "Programador / Consultor IT",
+  "Diseñador / UX",
+  "Redactor / Copywriter",
+  "Marketing / Growth",
+  "Consultor de negocio",
+  "Fotógrafo / Videógrafo",
+  "Traductor / Intérprete",
+  "Docente / Formador",
+  "Otro",
+];
+
 export default function OnboardingPage() {
-  const { t } = useT();
   const router = useRouter();
   const completeOnboarding = useKallioStore((s) => s.completeOnboarding);
+  const activateSession = useKallioStore((s) => s.activateSession);
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
@@ -36,48 +47,16 @@ export default function OnboardingPage() {
       irpfRetentionRate,
       onboardingComplete: true,
     });
+    activateSession();
     router.push("/dashboard");
   };
-
-  const ACTIVITY_OPTIONS = [
-    { key: "dev", label: t("onboarding.activities.dev") },
-    { key: "design", label: t("onboarding.activities.design") },
-    { key: "copy", label: t("onboarding.activities.copy") },
-    { key: "marketing", label: t("onboarding.activities.marketing") },
-    { key: "consultant", label: t("onboarding.activities.consultant") },
-    { key: "photo", label: t("onboarding.activities.photo") },
-    { key: "translator", label: t("onboarding.activities.translator") },
-    { key: "teacher", label: t("onboarding.activities.teacher") },
-    { key: "other", label: t("onboarding.activities.other") },
-  ];
-
-  const REGIME_OPTIONS = [
-    {
-      value: "estimacion_directa_simplificada" as FiscalRegime,
-      label: t("onboarding.regime_eds_label"),
-      desc: t("onboarding.regime_eds_desc"),
-      recommended: true,
-    },
-    {
-      value: "estimacion_directa_normal" as FiscalRegime,
-      label: t("onboarding.regime_edn_label"),
-      desc: t("onboarding.regime_edn_desc"),
-      recommended: false,
-    },
-    {
-      value: "estimacion_objetiva" as FiscalRegime,
-      label: t("onboarding.regime_eo_label"),
-      desc: t("onboarding.regime_eo_desc"),
-      recommended: false,
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Progress bar */}
       <div className="h-1 bg-slate-200">
         <div
-          className="h-full bg-indigo-600 transition-all duration-500"
+          className="h-full bg-teal-600 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -91,9 +70,9 @@ export default function OnboardingPage() {
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                     s < step
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-teal-600 text-white"
                       : s === step
-                      ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                      ? "bg-teal-600 text-white ring-4 ring-teal-100"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
@@ -102,71 +81,69 @@ export default function OnboardingPage() {
                 {s < 3 && (
                   <div
                     className={`flex-1 h-0.5 w-12 ${
-                      s < step ? "bg-indigo-600" : "bg-slate-200"
+                      s < step ? "bg-teal-600" : "bg-slate-200"
                     }`}
                   />
                 )}
               </div>
             ))}
-            <span className="ml-2 text-xs text-slate-500">
-              {t("onboarding.stepOf", { step, total: 3 })}
-            </span>
+            <span className="ml-2 text-xs text-slate-500">Paso {step} de 3</span>
           </div>
 
-          {/* Step 1 – Personal data */}
+          {/* Step 1 – Datos personales */}
           {step === 1 && (
             <div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                {t("onboarding.step1Title")}
+                ¡Bienvenido a Kallio!
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                {t("onboarding.step1Subtitle")}
+                Cuéntanos un poco sobre ti para personalizar tu dashboard fiscal.
               </p>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    {t("onboarding.nameLabel")}
+                    Tu nombre *
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={t("onboarding.namePlaceholder")}
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
+                    placeholder="Ej: Facundo García"
+                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    {t("onboarding.nifLabel")}
+                    NIF / DNI (opcional)
                   </label>
                   <input
                     type="text"
                     value={nif}
                     onChange={(e) => setNif(e.target.value)}
-                    placeholder={t("onboarding.nifPlaceholder")}
-                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
+                    placeholder="12345678A"
+                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    {t("onboarding.activityLabel")}
+                    Tipo de actividad *
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {ACTIVITY_OPTIONS.map(({ key, label }) => (
+                    {ACTIVITY_OPTIONS.map((opt) => (
                       <button
-                        key={key}
+                        key={opt}
                         type="button"
-                        onClick={() => setActivityType(label)}
+                        onClick={() => setActivityType(opt)}
                         className={`px-3 py-2.5 rounded-xl text-xs font-medium text-left transition-all border ${
-                          activityType === label
-                            ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                          activityType === opt
+                            ? "border-teal-500 bg-teal-50 text-teal-700"
                             : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                         }`}
                       >
-                        {label}
+                        {opt}
                       </button>
                     ))}
                   </div>
@@ -176,54 +153,73 @@ export default function OnboardingPage() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!name.trim() || !activityType}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
               >
-                {t("onboarding.next")}
+                Siguiente
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Step 2 – Fiscal regime */}
+          {/* Step 2 – Régimen fiscal */}
           {step === 2 && (
             <div>
               <button
                 onClick={() => setStep(1)}
                 className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
               >
-                <ArrowLeft className="w-4 h-4" /> {t("onboarding.back")}
+                <ArrowLeft className="w-4 h-4" /> Atrás
               </button>
 
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                {t("onboarding.step2Title")}
+                Tu régimen fiscal
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                {t("onboarding.step2Subtitle")}
+                Esto determina cómo calculamos tu IRPF trimestral. La mayoría de autónomos digitales usan Estimación Directa Simplificada.
               </p>
 
               <div className="space-y-3">
-                {REGIME_OPTIONS.map(({ value, label, desc, recommended }) => (
+                {[
+                  {
+                    value: "estimacion_directa_simplificada" as FiscalRegime,
+                    label: "Estimación Directa Simplificada",
+                    desc: "La opción más común para autónomos. Kallio calcula el 20% del rendimiento neto.",
+                    recommended: true,
+                  },
+                  {
+                    value: "estimacion_directa_normal" as FiscalRegime,
+                    label: "Estimación Directa Normal",
+                    desc: "Para ingresos > €600.000/año o si renunciaste a simplificada.",
+                    recommended: false,
+                  },
+                  {
+                    value: "estimacion_objetiva" as FiscalRegime,
+                    label: "Estimación Objetiva (Módulos)",
+                    desc: "Solo para actividades específicas según la AEAT.",
+                    recommended: false,
+                  },
+                ].map(({ value, label, desc, recommended }) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => setFiscalRegime(value)}
                     className={`w-full p-4 rounded-xl text-left border transition-all ${
                       fiscalRegime === value
-                        ? "border-indigo-500 bg-indigo-50"
+                        ? "border-teal-500 bg-teal-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className={`text-sm font-semibold ${
-                          fiscalRegime === value ? "text-indigo-700" : "text-slate-900"
+                          fiscalRegime === value ? "text-teal-700" : "text-slate-900"
                         }`}
                       >
                         {label}
                       </span>
                       {recommended && (
                         <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                          {t("onboarding.recommended")}
+                          Recomendado
                         </span>
                       )}
                     </div>
@@ -234,29 +230,29 @@ export default function OnboardingPage() {
 
               <button
                 onClick={() => setStep(3)}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all"
+                className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-all"
               >
-                {t("onboarding.next")}
+                Siguiente
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Step 3 – IRPF retention */}
+          {/* Step 3 – Retención IRPF */}
           {step === 3 && (
             <div>
               <button
                 onClick={() => setStep(2)}
                 className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
               >
-                <ArrowLeft className="w-4 h-4" /> {t("onboarding.back")}
+                <ArrowLeft className="w-4 h-4" /> Atrás
               </button>
 
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                {t("onboarding.step3Title")}
+                Retención IRPF
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                {t("onboarding.step3Subtitle")}
+                ¿Tus clientes te retienen IRPF en las facturas? Esto reduce el pago trimestral del Modelo 130.
               </p>
 
               <div className="space-y-3 mb-6">
@@ -265,40 +261,44 @@ export default function OnboardingPage() {
                   onClick={() => setIvaRetention(false)}
                   className={`w-full p-4 rounded-xl text-left border transition-all ${
                     !ivaRetention
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-teal-500 bg-teal-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
-                    {t("onboarding.noRetentionLabel")}
+                  <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
+                    No, mis clientes no me retienen
                   </p>
-                  <p className="text-xs text-slate-500">{t("onboarding.noRetentionDesc")}</p>
+                  <p className="text-xs text-slate-500">
+                    Pagaré el 100% del Modelo 130 trimestralmente.
+                  </p>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIvaRetention(true)}
                   className={`w-full p-4 rounded-xl text-left border transition-all ${
                     ivaRetention
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-teal-500 bg-teal-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
-                    {t("onboarding.yesRetentionLabel")}
+                  <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-teal-700" : "text-slate-900"}`}>
+                    Sí, me aplican retención
                   </p>
-                  <p className="text-xs text-slate-500">{t("onboarding.yesRetentionDesc")}</p>
+                  <p className="text-xs text-slate-500">
+                    Mis clientes ya retienen parte del IRPF en cada factura.
+                  </p>
                 </button>
               </div>
 
               {ivaRetention && (
                 <div className="bg-slate-50 rounded-xl p-4 mb-6">
                   <p className="text-xs font-medium text-slate-700 mb-3">
-                    {t("onboarding.retentionRateQuestion")}
+                    ¿Qué tipo de retención aplican?
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { rate: 0.15, label: "15%", desc: t("onboarding.rate15Desc") },
-                      { rate: 0.07, label: "7%", desc: t("onboarding.rate7Desc") },
+                      { rate: 0.15, label: "15%", desc: "General" },
+                      { rate: 0.07, label: "7%", desc: "Primeros 3 años" },
                     ].map(({ rate, label, desc }) => (
                       <button
                         key={rate}
@@ -306,11 +306,11 @@ export default function OnboardingPage() {
                         onClick={() => setIrpfRetentionRate(rate)}
                         className={`p-3 rounded-xl text-left border transition-all ${
                           irpfRetentionRate === rate
-                            ? "border-indigo-500 bg-indigo-50"
+                            ? "border-teal-500 bg-teal-50"
                             : "border-slate-200 bg-white"
                         }`}
                       >
-                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? "text-indigo-700" : "text-slate-900"}`}>
+                        <p className={`text-sm font-bold ${irpfRetentionRate === rate ? "text-teal-700" : "text-slate-900"}`}>
                           {label}
                         </p>
                         <p className="text-xs text-slate-500">{desc}</p>
@@ -321,19 +321,19 @@ export default function OnboardingPage() {
               )}
 
               {/* Summary */}
-              <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-4 mb-6">
-                <p className="text-xs font-semibold text-indigo-700 mb-2">{t("onboarding.summaryTitle")}</p>
+              <div className="bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-100 rounded-xl p-4 mb-6">
+                <p className="text-xs font-semibold text-teal-700 mb-2">Resumen de tu configuración</p>
                 <div className="space-y-1 text-xs text-slate-700">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t("onboarding.summaryName")}</span>
+                    <span className="text-slate-500">Nombre</span>
                     <span className="font-medium">{name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t("onboarding.summaryActivity")}</span>
+                    <span className="text-slate-500">Actividad</span>
                     <span className="font-medium">{activityType}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">{t("onboarding.summaryRegime")}</span>
+                    <span className="text-slate-500">Régimen</span>
                     <span className="font-medium">EDS</span>
                   </div>
                 </div>
@@ -341,10 +341,10 @@ export default function OnboardingPage() {
 
               <button
                 onClick={handleFinish}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold transition-all shadow-lg"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                {t("onboarding.goToDashboard")}
+                Ir a mi dashboard
               </button>
             </div>
           )}
