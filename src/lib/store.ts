@@ -320,22 +320,24 @@ export const useKallioStore = create<KallioState>()(
         }));
 
         // Sync to Supabase
-        createClient().auth.getUser().then(({ data: { user } }) => {
+        createClient().auth.getUser().then(async ({ data: { user } }) => {
           if (!user) return;
           const sb = createClient();
-          sb.from("transactions").insert({
+          const { error: txError } = await sb.from("transactions").insert({
             id: tx.id, user_id: user.id, date: tx.date, description: tx.description,
             merchant: tx.merchant ?? null, amount: tx.amount, type: tx.type,
             iva_rate: tx.ivaRate, category: tx.category, confidence: tx.confidence,
             is_deductible: tx.isDeductible, deduction_prompt_shown: tx.deductionPromptShown,
             deduction_prompt_answered: tx.deductionPromptAnswered, notes: tx.notes ?? null,
           });
+          if (txError) console.error("Transaction insert failed:", txError);
           if (prompt) {
-            sb.from("deduction_prompts").insert({
+            const { error: promptError } = await sb.from("deduction_prompts").insert({
               transaction_id: prompt.transactionId, user_id: user.id, question: prompt.question,
               prompt_key: prompt.promptKey ?? null, prompt_vars: prompt.promptVars ?? null,
               projected_saving: prompt.projectedSaving, status: prompt.status,
             });
+            if (promptError) console.error("Deduction prompt insert failed:", promptError);
           }
         });
       },
@@ -346,7 +348,7 @@ export const useKallioStore = create<KallioState>()(
             t.id === id ? { ...t, ...updates } : t
           ),
         }));
-        createClient().auth.getUser().then(({ data: { user } }) => {
+        createClient().auth.getUser().then(async ({ data: { user } }) => {
           if (!user) return;
           const mapped: Record<string, unknown> = {};
           if (updates.date !== undefined) mapped.date = updates.date;
@@ -358,8 +360,10 @@ export const useKallioStore = create<KallioState>()(
           if (updates.category !== undefined) mapped.category = updates.category;
           if (updates.isDeductible !== undefined) mapped.is_deductible = updates.isDeductible;
           if (updates.notes !== undefined) mapped.notes = updates.notes ?? null;
-          if (Object.keys(mapped).length > 0)
-            createClient().from("transactions").update(mapped).eq("id", id);
+          if (Object.keys(mapped).length > 0) {
+            const { error } = await createClient().from("transactions").update(mapped).eq("id", id);
+            if (error) console.error("Transaction update failed:", error);
+          }
         });
       },
 
@@ -370,9 +374,10 @@ export const useKallioStore = create<KallioState>()(
             (p) => p.transactionId !== id
           ),
         }));
-        createClient().auth.getUser().then(({ data: { user } }) => {
+        createClient().auth.getUser().then(async ({ data: { user } }) => {
           if (!user) return;
-          createClient().from("transactions").delete().eq("id", id);
+          const { error } = await createClient().from("transactions").delete().eq("id", id);
+          if (error) console.error("Transaction delete failed:", error);
         });
       },
 
