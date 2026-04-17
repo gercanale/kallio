@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUserData = useKallioStore((s) => s.loadUserData);
-  const signOut = useKallioStore((s) => s.signOut);
+  const clearSession = useKallioStore((s) => s.clearSession);
 
   useEffect(() => {
     loadUserData();
@@ -14,11 +14,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") loadUserData();
-      else if (event === "SIGNED_OUT") signOut();
+      else if (event === "SIGNED_OUT") clearSession();
     });
 
     return () => subscription.unsubscribe();
-  }, [loadUserData, signOut]);
+  }, [loadUserData, clearSession]);
 
   return <>{children}</>;
 }

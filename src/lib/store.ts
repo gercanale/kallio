@@ -146,6 +146,7 @@ interface KallioState {
   sessionActive: boolean;
   activateSession: () => void;
   signOut: () => Promise<void>;
+  clearSession: () => void;  // resets state only, no Supabase call
   resetAll: () => void;
 
   // Supabase auth
@@ -188,6 +189,7 @@ export const useKallioStore = create<KallioState>()(
 
       sessionActive: false,
       activateSession: () => set({ sessionActive: true }),
+      clearSession: () => set({ sessionActive: false, profile: DEFAULT_PROFILE, transactions: [], deductionPrompts: [], totalSavedThisYear: 0 }),
       signOut: async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
