@@ -28,7 +28,7 @@ export function TaxReserveMeter() {
     : 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800/60 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors">
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-800 px-6 py-5">
         <div className="flex items-center gap-2 mb-1">
@@ -44,7 +44,7 @@ export function TaxReserveMeter() {
 
       {/* Progress bar */}
       <div className="px-6 pt-5 pb-2">
-        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex gap-0.5">
+        <div className="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex gap-0.5">
           <div
             className="bg-emerald-400 h-full rounded-l-full transition-all duration-700"
             style={{ width: `${Math.max(0, spendablePct)}%` }}
@@ -67,11 +67,11 @@ export function TaxReserveMeter() {
       </div>
 
       {/* Three figures */}
-      <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
+      <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-700 border-t border-slate-100 dark:border-slate-700">
         {/* Gross income */}
         <button
           onClick={() => toggle("gross")}
-          className="p-4 text-left hover:bg-slate-50 transition-colors group"
+          className="p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
         >
           <div className="flex items-center justify-between mb-1">
             <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
@@ -81,16 +81,16 @@ export function TaxReserveMeter() {
               <ChevronDown className="w-3 h-3 text-slate-400" />
             )}
           </div>
-          <p className="text-lg font-bold text-slate-900 tabular-nums">
+          <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">
             {formatCurrency(snap.grossIncome)}
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">{t.meter.grossIncome}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.grossIncome}</p>
         </button>
 
         {/* Tax reserve */}
         <button
           onClick={() => toggle("reserve")}
-          className="p-4 text-left hover:bg-slate-50 transition-colors group"
+          className="p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
         >
           <div className="flex items-center justify-between mb-1">
             <Shield className="w-3.5 h-3.5 text-red-400" />
@@ -103,13 +103,13 @@ export function TaxReserveMeter() {
           <p className="text-lg font-bold text-red-600 tabular-nums">
             {formatCurrency(snap.totalTaxReserve)}
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">{t.meter.taxReserve}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.taxReserve}</p>
         </button>
 
         {/* Spendable */}
         <button
           onClick={() => toggle("spendable")}
-          className="p-4 text-left hover:bg-slate-50 transition-colors group"
+          className="p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
         >
           <div className="flex items-center justify-between mb-1">
             <Wallet className="w-3.5 h-3.5 text-emerald-500" />
@@ -122,7 +122,7 @@ export function TaxReserveMeter() {
           <p className="text-lg font-bold text-emerald-600 tabular-nums">
             {formatCurrency(Math.max(0, snap.trueSpendableBalance))}
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">{t.meter.spendable}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.spendable}</p>
         </button>
       </div>
 
@@ -164,7 +164,7 @@ export function TaxReserveMeter() {
 
       {/* Expandable breakdown */}
       {expanded && (
-        <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 text-sm">
+        <div className="border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-6 py-4 text-sm">
           {expanded === "gross" && (
             <div className="space-y-2">
               <p className="font-semibold text-slate-700 flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export function TaxReserveMeter() {
               <p className="text-slate-600">
                 {t.meter.grossDetail}
               </p>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 space-y-1.5">
+              <div className="bg-white dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 space-y-1.5">
                 <Row label={t.meter.netWithoutVat} value={snap.grossIncome - snap.ivaCollected} />
                 <Row label={t.meter.vatCollected} value={snap.ivaCollected} highlight />
                 <RowTotal label={t.meter.totalBilled} value={snap.grossIncome} />
@@ -183,13 +183,13 @@ export function TaxReserveMeter() {
 
           {expanded === "reserve" && (
             <div className="space-y-2">
-              <p className="font-semibold text-slate-700 flex items-center gap-1.5">
+              <p className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5" /> {t.meter.taxBreakdown}
               </p>
-              <p className="text-slate-600">
+              <p className="text-slate-600 dark:text-slate-400">
                 {t.meter.taxDetail}
               </p>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 space-y-1.5">
+              <div className="bg-white dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 space-y-1.5">
                 <Row label={t.meter.vatPayable} value={snap.ivaPayable} />
                 <p className="text-xs text-slate-400 pl-2">
                   {formatCurrency(snap.ivaCollected)} − {formatCurrency(snap.ivaDeductible)}
@@ -211,7 +211,7 @@ export function TaxReserveMeter() {
               <p className="text-slate-600">
                 {t.meter.spendableDetail}
               </p>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 space-y-1.5">
+              <div className="bg-white dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 space-y-1.5">
                 <Row label={t.meter.netIncomeNoVat} value={snap.grossIncome - snap.ivaCollected} />
                 <Row label={t.meter.deductibleExpenses} value={-snap.deductibleExpenses} />
                 <Row label={t.meter.fiscalReserve} value={-snap.totalTaxReserve} />
@@ -228,8 +228,8 @@ export function TaxReserveMeter() {
 function Row({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-slate-600 text-xs">{label}</span>
-      <span className={`text-xs font-medium tabular-nums ${highlight ? "text-slate-900" : "text-slate-700"}`}>
+      <span className="text-slate-600 dark:text-slate-300 text-xs">{label}</span>
+      <span className={`text-xs font-medium tabular-nums ${highlight ? "text-slate-900 dark:text-slate-100" : "text-slate-700 dark:text-slate-200"}`}>
         {formatCurrency(value)}
       </span>
     </div>
@@ -238,8 +238,8 @@ function Row({ label, value, highlight }: { label: string; value: number; highli
 
 function RowTotal({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="flex justify-between items-center border-t border-slate-100 pt-1.5 mt-1.5">
-      <span className="text-slate-800 text-xs font-semibold">{label}</span>
+    <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-600 pt-1.5 mt-1.5">
+      <span className="text-slate-800 dark:text-slate-100 text-xs font-semibold">{label}</span>
       <span className={`text-sm font-bold tabular-nums ${highlight ? "text-teal-700" : "text-slate-900"}`}>
         {formatCurrency(value)}
       </span>

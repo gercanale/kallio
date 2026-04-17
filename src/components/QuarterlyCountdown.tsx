@@ -93,7 +93,7 @@ export function QuarterlyCountdown() {
         </div>
 
         {/* Liability breakdown */}
-        <div className="bg-white/70 rounded-xl p-4 space-y-2.5">
+        <div className="bg-white/70 dark:bg-slate-800/70 rounded-xl p-4 space-y-2.5">
           <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
             {t.countdown.estimatedPayment}
           </p>
@@ -112,8 +112,8 @@ export function QuarterlyCountdown() {
             </span>
           </div>
 
-          <div className="border-t border-slate-200 pt-2.5 flex justify-between items-center">
-            <span className="text-sm font-bold text-slate-800">{t.countdown.totalEstimated}</span>
+          <div className="border-t border-slate-200 dark:border-slate-600 pt-2.5 flex justify-between items-center">
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{t.countdown.totalEstimated}</span>
             <span className={`text-lg font-black tabular-nums ${urgencyText}`}>
               {formatCurrency(snap.totalTaxReserve)}
             </span>
@@ -145,7 +145,7 @@ export function QuarterlyCountdown() {
       <div className="px-6 pb-5">
         <button
           onClick={handleExport}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-800 rounded-xl transition-all shadow-sm text-sm font-medium"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-xl transition-all shadow-sm text-sm font-medium"
         >
           {exported ? (
             <>

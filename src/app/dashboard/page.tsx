@@ -53,16 +53,16 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 sm:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               {greeting}, {profile.name.split(" ")[0]} 👋
             </h1>
-            <p className="text-slate-500 text-sm">{dateStr}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{dateStr}</p>
           </div>
           <button
             onClick={() => setShowForm(true)}

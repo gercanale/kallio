@@ -88,12 +88,12 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 sm:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-slate-900">{t.transactions.title}</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t.transactions.title}</h1>
           <button
             onClick={() => openForm("expense")}
             className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
@@ -105,28 +105,28 @@ export default function TransactionsPage() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-xs text-slate-500">{t.transactions.incomeLabel}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.incomeLabel}</span>
             </div>
             <p className="text-sm font-bold text-emerald-600 tabular-nums">
               {formatCurrency(totalIncome)}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-xs text-slate-500">{t.transactions.expenseLabel}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.expenseLabel}</span>
             </div>
             <p className="text-sm font-bold text-red-600 tabular-nums">
               {formatCurrency(totalExpenses)}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-              <span className="text-xs text-slate-500">{t.transactions.deductibleLabel}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.deductibleLabel}</span>
             </div>
             <p className="text-sm font-bold text-teal-700 tabular-nums">
               {deductibleCount}
@@ -135,15 +135,15 @@ export default function TransactionsPage() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl mb-4">
+        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
           {(["all", "income", "expense"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 filter === f
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               {f === "all" ? t.transactions.filterAll : f === "income" ? t.transactions.filterIncome : t.transactions.filterExpense}
@@ -173,8 +173,8 @@ export default function TransactionsPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-slate-400">
             <Filter className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">{t.transactions.emptyTitle}</p>
-            <p className="text-xs mt-1">{t.transactions.emptySubtitle}</p>
+            <p className="text-sm dark:text-slate-400">{t.transactions.emptyTitle}</p>
+            <p className="text-xs mt-1 dark:text-slate-500">{t.transactions.emptySubtitle}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -196,13 +196,13 @@ export default function TransactionsPage() {
       {/* Delete confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-semibold text-slate-900 mb-2">{t.transactions.deleteTitle}</h3>
-            <p className="text-slate-600 text-sm mb-5">{t.transactions.deleteBody}</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">{t.transactions.deleteTitle}</h3>
+            <p className="text-slate-600 dark:text-slate-300 text-sm mb-5">{t.transactions.deleteBody}</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                className="py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
                 {t.common.cancel}
               </button>
@@ -251,10 +251,10 @@ function TransactionRow({
   const categoryLabel = categoryLabels[tx.category] ?? tx.category;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
+    <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm px-4 py-3 flex items-center gap-3">
       <div
         className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          isIncome ? "bg-emerald-50" : "bg-slate-100"
+          isIncome ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-slate-100 dark:bg-slate-700"
         }`}
       >
         {isIncome ? (
@@ -266,7 +266,7 @@ function TransactionRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-slate-900 truncate">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
             {tx.merchant ?? tx.description}
           </p>
           {!isIncome && (
@@ -285,14 +285,14 @@ function TransactionRow({
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-400 mt-0.5">{formatDate(tx.date)}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(tx.date)}</p>
       </div>
 
       <div className="text-right flex-shrink-0">
-        <p className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600" : "text-slate-800"}`}>
+        <p className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600" : "text-slate-800 dark:text-slate-200"}`}>
           {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
         </p>
-        <p className="text-xs text-slate-400">{vatLabel} {tx.ivaRate}%</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
       </div>
 
       <button
