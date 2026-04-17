@@ -35,7 +35,7 @@ export function DeductionAssistant() {
     return (
       <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-emerald-600" />
           </div>
           <div>
@@ -49,11 +49,11 @@ export function DeductionAssistant() {
         </p>
 
         {totalSavedThisYear > 0 && (
-          <div className="mt-4 bg-emerald-50 rounded-xl p-3 flex items-center gap-3">
-            <Euro className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl p-3 flex items-center gap-3">
+            <Euro className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <div>
-              <p className="text-xs text-emerald-700">{t.deduction.savedThisYear}</p>
-              <p className="text-lg font-bold text-emerald-700 tabular-nums">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">{t.deduction.savedThisYear}</p>
+              <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                 {formatCurrency(totalSavedThisYear)}
               </p>
             </div>
@@ -73,7 +73,7 @@ export function DeductionAssistant() {
       <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-teal-600" />
             </div>
             <div>
@@ -85,8 +85,8 @@ export function DeductionAssistant() {
           </div>
           {totalSavedThisYear > 0 && (
             <div className="text-right">
-              <p className="text-xs text-emerald-600 font-medium">{t.deduction.accumulatedSaving}</p>
-              <p className="text-sm font-bold text-emerald-700 tabular-nums">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{t.deduction.accumulatedSaving}</p>
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                 {formatCurrency(totalSavedThisYear)}
               </p>
             </div>
@@ -129,12 +129,12 @@ export function DeductionAssistant() {
         </p>
 
         {/* Saving preview */}
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-3 mb-5">
-          <p className="text-xs text-emerald-700 mb-0.5">{t.deduction.ifDeductible}</p>
-          <p className="text-xl font-bold text-emerald-700 tabular-nums">
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border border-emerald-100 dark:border-emerald-800 rounded-xl p-3 mb-5">
+          <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-0.5">{t.deduction.ifDeductible}</p>
+          <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
             {formatCurrency(current.projectedSaving)}
           </p>
-          <p className="text-xs text-emerald-600 mt-0.5">{t.deduction.taxThisQuarter}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">{t.deduction.taxThisQuarter}</p>
         </div>
 
         {/* Action buttons */}
