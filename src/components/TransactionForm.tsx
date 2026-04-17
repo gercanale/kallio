@@ -200,7 +200,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
                     type === txType
                       ? txType === "income"
                         ? "bg-emerald-600 text-white shadow-sm"
-                        : "bg-red-500 text-white shadow-sm"
+                        : "bg-red-600 text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
