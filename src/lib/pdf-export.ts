@@ -4,7 +4,10 @@
  */
 
 import { Transaction, TaxSnapshot, UserProfile, QuarterDeadline } from "./types";
-import { formatCurrency, formatDate, netFromGross } from "./tax-engine";
+import { formatCurrency, netFromGross } from "./tax-engine";
+
+type TFunc = (key: string, vars?: Record<string, string | number>) => string;
+type FormatPdfFn = (date: Date) => string;
 
 // Dynamic import to avoid SSR issues
 async function getJsPDF() {
@@ -16,7 +19,9 @@ export async function generateGestorPDF(
   transactions: Transaction[],
   snap: TaxSnapshot,
   profile: UserProfile,
-  deadline: QuarterDeadline & { daysLeft: number }
+  deadline: QuarterDeadline & { daysLeft: number },
+  t: TFunc,
+  formatPdf: FormatPdfFn
 ): Promise<void> {
   const jsPDF = await getJsPDF();
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -26,10 +31,10 @@ export async function generateGestorPDF(
   const contentWidth = pageWidth - margin * 2;
   let y = margin;
 
-  const PRIMARY = [79, 70, 229] as [number, number, number]; // indigo-600
-  const DARK = [15, 23, 42] as [number, number, number];     // slate-900
-  const MID = [100, 116, 139] as [number, number, number];   // slate-500
-  const LIGHT = [241, 245, 249] as [number, number, number]; // slate-100
+  const PRIMARY = [79, 70, 229] as [number, number, number];
+  const DARK = [15, 23, 42] as [number, number, number];
+  const MID = [100, 116, 139] as [number, number, number];
+  const LIGHT = [241, 245, 249] as [number, number, number];
 
   // ── Header ────────────────────────────────────────────────────────────────
   doc.setFillColor(...PRIMARY);
@@ -42,26 +47,22 @@ export async function generateGestorPDF(
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Informe trimestral de actividad para gestor", margin, 21);
-  doc.text(
-    `Generado el ${new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}`,
-    margin,
-    27
-  );
+  doc.text(t("pdf.reportSubtitle"), margin, 21);
+  doc.text(t("pdf.generatedOn", { date: formatPdf(new Date()) }), margin, 27);
 
   y = 42;
   doc.setTextColor(...DARK);
 
   // ── Datos del autónomo ─────────────────────────────────────────────────────
-  section(doc, "Datos del autónomo", y, margin, contentWidth, LIGHT, PRIMARY);
+  section(doc, t("pdf.autonomoSection"), y, margin, contentWidth, LIGHT, PRIMARY);
   y += 8;
 
-  const profileData = [
-    ["Nombre", profile.name || "—"],
-    ["NIF", profile.nif || "—"],
-    ["Régimen fiscal", regimeLabel(profile.fiscalRegime)],
-    ["Actividad", profile.activityType || "—"],
-    ["Retención IRPF", profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : "No aplica"],
+  const profileData: [string, string][] = [
+    [t("pdf.nameLabel"), profile.name || "—"],
+    [t("pdf.nifLabel"), profile.nif || "—"],
+    [t("pdf.regimeLabel"), t(`pdf.regimes.${profile.fiscalRegime}`) || profile.fiscalRegime],
+    [t("pdf.activityLabel"), profile.activityType || "—"],
+    [t("pdf.irpfRetentionLabel"), profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : t("pdf.notApplicable")],
   ];
   profileData.forEach(([label, value]) => {
     twoCol(doc, label, value, y, margin, contentWidth, MID);
@@ -71,12 +72,12 @@ export async function generateGestorPDF(
   y += 6;
 
   // ── Período ────────────────────────────────────────────────────────────────
-  section(doc, `Período: ${snap.quarterLabel}`, y, margin, contentWidth, LIGHT, PRIMARY);
+  section(doc, t("pdf.periodSection", { quarter: snap.quarterLabel }), y, margin, contentWidth, LIGHT, PRIMARY);
   y += 8;
 
-  const periodData = [
-    ["Trimestre", snap.quarterLabel],
-    ["Fecha límite declaración", new Date(deadline.modelo130Deadline).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })],
+  const periodData: [string, string][] = [
+    [t("pdf.quarterLabel"), snap.quarterLabel],
+    [t("pdf.deadlineLabel"), formatPdf(new Date(deadline.modelo130Deadline))],
   ];
   periodData.forEach(([label, value]) => {
     twoCol(doc, label, value, y, margin, contentWidth, MID);
@@ -86,20 +87,20 @@ export async function generateGestorPDF(
   y += 6;
 
   // ── Resumen fiscal ─────────────────────────────────────────────────────────
-  section(doc, "Resumen fiscal estimado", y, margin, contentWidth, LIGHT, PRIMARY);
+  section(doc, t("pdf.fiscalSummary"), y, margin, contentWidth, LIGHT, PRIMARY);
   y += 8;
 
   const fiscalData: [string, string, boolean][] = [
-    ["Ingresos brutos (base + IVA)", formatCurrency(snap.grossIncome), false],
-    ["Ingresos netos (sin IVA)", formatCurrency(snap.grossIncome - snap.ivaCollected), false],
-    ["Gastos deducibles (neto)", formatCurrency(snap.deductibleExpenses), false],
-    ["Rendimiento neto", formatCurrency(snap.netTaxableIncome), false],
+    [t("pdf.grossIncomeLabel"), formatCurrency(snap.grossIncome), false],
+    [t("pdf.netIncomeLabel"), formatCurrency(snap.grossIncome - snap.ivaCollected), false],
+    [t("pdf.deductibleExpensesLabel"), formatCurrency(snap.deductibleExpenses), false],
+    [t("pdf.netTaxableLabel"), formatCurrency(snap.netTaxableIncome), false],
     ["", "", false],
-    ["IVA repercutido (cobrado)", formatCurrency(snap.ivaCollected), false],
-    ["IVA soportado deducible", formatCurrency(snap.ivaDeductible), false],
-    ["IVA a ingresar (Modelo 303)", formatCurrency(snap.ivaPayable), true],
-    ["IRPF adelantado (Modelo 130)", formatCurrency(snap.irpfAdvancePayable), true],
-    ["TOTAL A INGRESAR", formatCurrency(snap.totalTaxReserve), true],
+    [t("pdf.ivaCollectedLabel"), formatCurrency(snap.ivaCollected), false],
+    [t("pdf.ivaDeductibleLabel"), formatCurrency(snap.ivaDeductible), false],
+    [t("pdf.ivaPayableLabel"), formatCurrency(snap.ivaPayable), true],
+    [t("pdf.irpfPayableLabel"), formatCurrency(snap.irpfAdvancePayable), true],
+    [t("pdf.totalPayableLabel"), formatCurrency(snap.totalTaxReserve), true],
   ];
 
   fiscalData.forEach(([label, value, bold]) => {
@@ -111,30 +112,28 @@ export async function generateGestorPDF(
   y += 8;
 
   // ── Ingresos ───────────────────────────────────────────────────────────────
-  const income = transactions.filter((t) => t.type === "income");
+  const income = transactions.filter((tx) => tx.type === "income");
   if (income.length > 0) {
-    section(doc, `Ingresos (${income.length})`, y, margin, contentWidth, LIGHT, PRIMARY);
+    section(doc, t("pdf.incomeSection", { count: income.length }), y, margin, contentWidth, LIGHT, PRIMARY);
     y += 8;
 
-    // Table header
-    tableHeader(doc, ["Fecha", "Descripción / Cliente", "Base", "IVA", "Total"], y, margin, contentWidth);
+    tableHeader(doc, [t("pdf.colDate"), t("pdf.colDescription"), t("pdf.colBase"), t("pdf.colIva"), t("pdf.colTotal")], y, margin, contentWidth);
     y += 7;
 
-    income.forEach((t, i) => {
+    income.forEach((tx, i) => {
       if (y > 260) { doc.addPage(); y = margin; }
-      const base = netFromGross(t.amount, t.ivaRate);
-      const iva = t.amount - base;
+      const base = netFromGross(tx.amount, tx.ivaRate);
       const bg = i % 2 === 0 ? ([248, 250, 252] as [number, number, number]) : ([255, 255, 255] as [number, number, number]);
       doc.setFillColor(...bg);
       doc.rect(margin, y - 4, contentWidth, 6, "F");
       tableRow(
         doc,
         [
-          formatDate(t.date),
-          t.description.length > 35 ? t.description.slice(0, 33) + "…" : t.description,
+          formatPdf(new Date(tx.date)),
+          tx.description.length > 35 ? tx.description.slice(0, 33) + "…" : tx.description,
           formatCurrency(base),
-          `${t.ivaRate}%`,
-          formatCurrency(t.amount),
+          `${tx.ivaRate}%`,
+          formatCurrency(tx.amount),
         ],
         y,
         margin,
@@ -146,30 +145,30 @@ export async function generateGestorPDF(
   }
 
   // ── Gastos deducibles ─────────────────────────────────────────────────────
-  const deductible = transactions.filter((t) => t.type === "expense" && t.isDeductible);
+  const deductible = transactions.filter((tx) => tx.type === "expense" && tx.isDeductible);
   if (deductible.length > 0) {
     if (y > 220) { doc.addPage(); y = margin; }
 
-    section(doc, `Gastos deducibles (${deductible.length})`, y, margin, contentWidth, LIGHT, PRIMARY);
+    section(doc, t("pdf.deductibleSection", { count: deductible.length }), y, margin, contentWidth, LIGHT, PRIMARY);
     y += 8;
 
-    tableHeader(doc, ["Fecha", "Descripción", "Categoría", "Base", "Total"], y, margin, contentWidth);
+    tableHeader(doc, [t("pdf.colDate"), t("pdf.colDescriptionShort"), t("pdf.colCategory"), t("pdf.colBase"), t("pdf.colTotal")], y, margin, contentWidth);
     y += 7;
 
-    deductible.forEach((t, i) => {
+    deductible.forEach((tx, i) => {
       if (y > 260) { doc.addPage(); y = margin; }
-      const base = netFromGross(t.amount, t.ivaRate);
+      const base = netFromGross(tx.amount, tx.ivaRate);
       const bg = i % 2 === 0 ? ([248, 250, 252] as [number, number, number]) : ([255, 255, 255] as [number, number, number]);
       doc.setFillColor(...bg);
       doc.rect(margin, y - 4, contentWidth, 6, "F");
       tableRow(
         doc,
         [
-          formatDate(t.date),
-          t.description.length > 28 ? t.description.slice(0, 26) + "…" : t.description,
-          categoryLabel(t.category as string),
+          formatPdf(new Date(tx.date)),
+          tx.description.length > 28 ? tx.description.slice(0, 26) + "…" : tx.description,
+          t(`pdf.categories.${tx.category}`) || tx.category,
           formatCurrency(base),
-          formatCurrency(t.amount),
+          formatCurrency(tx.amount),
         ],
         y,
         margin,
@@ -183,15 +182,9 @@ export async function generateGestorPDF(
   // ── Footer ─────────────────────────────────────────────────────────────────
   doc.setFontSize(7);
   doc.setTextColor(...MID);
-  doc.text(
-    "Generado por Kallio · Las cifras son estimadas basadas en los datos introducidos. Consulte con su gestor para la presentación oficial.",
-    margin,
-    287,
-    { maxWidth: contentWidth }
-  );
+  doc.text(t("pdf.footer"), margin, 287, { maxWidth: contentWidth });
 
-  // Save
-  doc.save(`kallio-informe-${snap.quarterLabel.replace(" ", "-")}.pdf`);
+  doc.save(t("pdf.filename", { quarter: snap.quarterLabel.replace(" ", "-") }));
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -264,35 +257,4 @@ function tableRow(
   cells.forEach((cell, i) => {
     doc.text(cell, margin + i * colW + 2, y);
   });
-}
-
-function regimeLabel(regime: string): string {
-  const map: Record<string, string> = {
-    estimacion_directa_simplificada: "Estimación Directa Simplificada",
-    estimacion_directa_normal: "Estimación Directa Normal",
-    estimacion_objetiva: "Estimación Objetiva (Módulos)",
-  };
-  return map[regime] ?? regime;
-}
-
-function categoryLabel(cat: string): string {
-  const map: Record<string, string> = {
-    software_subscriptions: "Software / SaaS",
-    hardware_equipment: "Hardware",
-    office_supplies: "Material oficina",
-    professional_services: "Servicios prof.",
-    marketing_advertising: "Marketing",
-    travel_transport: "Transporte",
-    meals_entertainment: "Comidas trabajo",
-    phone_internet: "Teléfono/Internet",
-    training_education: "Formación",
-    home_office: "Oficina en casa",
-    rent_utilities: "Alquiler/Suministros",
-    insurance: "Seguros",
-    bank_fees: "Comisiones bancarias",
-    other_deductible: "Otros deducibles",
-    personal: "Personal",
-    unclear: "Sin clasificar",
-  };
-  return map[cat] ?? cat;
 }

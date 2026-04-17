@@ -17,27 +17,10 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
-import { formatCurrency, formatDate } from "@/lib/tax-engine";
+import { formatCurrency } from "@/lib/tax-engine";
 import type { Transaction, TransactionType } from "@/lib/types";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  software_subscriptions: "Software",
-  hardware_equipment: "Hardware",
-  office_supplies: "Oficina",
-  professional_services: "Servicios prof.",
-  marketing_advertising: "Marketing",
-  travel_transport: "Transporte",
-  meals_entertainment: "Comidas",
-  phone_internet: "Tel/Internet",
-  training_education: "Formación",
-  home_office: "Oficina casa",
-  rent_utilities: "Alquiler",
-  insurance: "Seguros",
-  bank_fees: "Comisiones",
-  other_deductible: "Otros",
-  personal: "Personal",
-  unclear: "Sin clasificar",
-};
+import { useT } from "@/i18n";
+import { useFormatDate } from "@/i18n/useFormatDate";
 
 const CATEGORY_COLORS: Record<string, string> = {
   software_subscriptions: "bg-violet-100 text-violet-700",
@@ -54,6 +37,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function TransactionsPage() {
+  const { t } = useT();
   const router = useRouter();
   const hydrated = useHydrated();
   const profile = useKallioStore((s) => s.profile);
@@ -83,18 +67,17 @@ export default function TransactionsPage() {
   if (!profile.onboardingComplete) return null;
 
   const filtered = transactions.filter(
-    (t) => filter === "all" || t.type === filter
+    (tx) => filter === "all" || tx.type === filter
   );
 
-  // Summary stats
   const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((s, t) => s + t.amount, 0);
+    .filter((tx) => tx.type === "income")
+    .reduce((s, tx) => s + tx.amount, 0);
   const totalExpenses = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((s, t) => s + t.amount, 0);
+    .filter((tx) => tx.type === "expense")
+    .reduce((s, tx) => s + tx.amount, 0);
   const deductibleCount = transactions.filter(
-    (t) => t.type === "expense" && t.isDeductible
+    (tx) => tx.type === "expense" && tx.isDeductible
   ).length;
 
   const openForm = (type: TransactionType) => {
@@ -108,13 +91,13 @@ export default function TransactionsPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-slate-900">Movimientos</h1>
+          <h1 className="text-xl font-bold text-slate-900">{t("transactions.title")}</h1>
           <button
             onClick={() => openForm("expense")}
             className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
           >
             <Plus className="w-4 h-4" />
-            Añadir
+            {t("transactions.add")}
           </button>
         </div>
 
@@ -123,7 +106,7 @@ export default function TransactionsPage() {
           <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-xs text-slate-500">Ingresos</span>
+              <span className="text-xs text-slate-500">{t("transactions.income")}</span>
             </div>
             <p className="text-sm font-bold text-emerald-600 tabular-nums">
               {formatCurrency(totalIncome)}
@@ -132,7 +115,7 @@ export default function TransactionsPage() {
           <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-xs text-slate-500">Gastos</span>
+              <span className="text-xs text-slate-500">{t("transactions.expenses")}</span>
             </div>
             <p className="text-sm font-bold text-red-600 tabular-nums">
               {formatCurrency(totalExpenses)}
@@ -141,7 +124,7 @@ export default function TransactionsPage() {
           <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-xs text-slate-500">Deducibles</span>
+              <span className="text-xs text-slate-500">{t("transactions.deductible")}</span>
             </div>
             <p className="text-sm font-bold text-violet-700 tabular-nums">
               {deductibleCount}
@@ -161,7 +144,7 @@ export default function TransactionsPage() {
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              {f === "all" ? "Todos" : f === "income" ? "Ingresos" : "Gastos"}
+              {f === "all" ? t("transactions.all") : f === "income" ? t("transactions.income") : t("transactions.expenses")}
             </button>
           ))}
         </div>
@@ -173,14 +156,14 @@ export default function TransactionsPage() {
             className="flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-all"
           >
             <ArrowUpRight className="w-4 h-4" />
-            Añadir ingreso
+            {t("transactions.addIncome")}
           </button>
           <button
             onClick={() => openForm("expense")}
             className="flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-medium transition-all"
           >
             <ArrowDownLeft className="w-4 h-4" />
-            Añadir gasto
+            {t("transactions.addExpense")}
           </button>
         </div>
 
@@ -188,8 +171,8 @@ export default function TransactionsPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-slate-400">
             <Filter className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No hay movimientos aún.</p>
-            <p className="text-xs mt-1">Añade tu primera factura o gasto.</p>
+            <p className="text-sm">{t("transactions.empty")}</p>
+            <p className="text-xs mt-1">{t("transactions.emptyHint")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -208,14 +191,14 @@ export default function TransactionsPage() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-semibold text-slate-900 mb-2">¿Eliminar movimiento?</h3>
-            <p className="text-slate-600 text-sm mb-5">Esta acción no se puede deshacer.</p>
+            <h3 className="font-semibold text-slate-900 mb-2">{t("transactions.deleteTitle")}</h3>
+            <p className="text-slate-600 text-sm mb-5">{t("transactions.deleteDesc")}</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
               <button
                 onClick={() => {
@@ -224,7 +207,7 @@ export default function TransactionsPage() {
                 }}
                 className="py-2.5 bg-red-600 hover:bg-red-700 rounded-xl text-sm font-medium text-white transition-colors"
               >
-                Eliminar
+                {t("common.delete")}
               </button>
             </div>
           </div>
@@ -248,14 +231,14 @@ function TransactionRow({
   tx: Transaction;
   onDelete: () => void;
 }) {
+  const { t } = useT();
+  const { formatShort } = useFormatDate();
   const isIncome = tx.type === "income";
-  const categoryColor =
-    CATEGORY_COLORS[tx.category] ?? "bg-slate-100 text-slate-700";
-  const categoryLabel = CATEGORY_LABELS[tx.category] ?? tx.category;
+  const categoryColor = CATEGORY_COLORS[tx.category] ?? "bg-slate-100 text-slate-700";
+  const categoryLabel = t(`transactionForm.categoryLabelsShort.${tx.category}`) || tx.category;
 
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
-      {/* Icon */}
       <div
         className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
           isIncome ? "bg-emerald-50" : "bg-slate-100"
@@ -268,34 +251,30 @@ function TransactionRow({
         )}
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-medium text-slate-900 truncate">
             {tx.merchant ?? tx.description}
           </p>
           {!isIncome && (
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-md font-medium flex-shrink-0 ${categoryColor}`}
-            >
+            <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium flex-shrink-0 ${categoryColor}`}>
               {categoryLabel}
             </span>
           )}
           {!isIncome && tx.isDeductible && (
             <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-violet-50 text-violet-600 flex-shrink-0">
-              Deducible
+              {t("common.deductible")}
             </span>
           )}
           {!isIncome && tx.confidence === "unclear" && !tx.deductionPromptAnswered && (
             <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-yellow-50 text-yellow-700 flex-shrink-0">
-              Pendiente
+              {t("common.pending")}
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-400 mt-0.5">{formatDate(tx.date)}</p>
+        <p className="text-xs text-slate-400 mt-0.5">{formatShort(tx.date)}</p>
       </div>
 
-      {/* Amount */}
       <div className="text-right flex-shrink-0">
         <p
           className={`text-sm font-bold tabular-nums ${
@@ -304,10 +283,9 @@ function TransactionRow({
         >
           {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
         </p>
-        <p className="text-xs text-slate-400">IVA {tx.ivaRate}%</p>
+        <p className="text-xs text-slate-400">{t("transactions.ivaLabel", { rate: tx.ivaRate })}</p>
       </div>
 
-      {/* Delete */}
       <button
         onClick={onDelete}
         className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors group flex-shrink-0"

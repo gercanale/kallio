@@ -6,8 +6,10 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/i18n";
 
 export default function LandingPage() {
+  const { t } = useT();
   const hydrated = useHydrated();
   const profile = useKallioStore((s) => s.profile);
   const router = useRouter();
@@ -24,6 +26,27 @@ export default function LandingPage() {
     router.push("/dashboard");
   };
 
+  const features = [
+    {
+      icon: Shield,
+      color: "bg-violet-500/20 text-violet-400",
+      title: t("landing.feature1Title"),
+      desc: t("landing.feature1Desc"),
+    },
+    {
+      icon: Sparkles,
+      color: "bg-emerald-500/20 text-emerald-400",
+      title: t("landing.feature2Title"),
+      desc: t("landing.feature2Desc"),
+    },
+    {
+      icon: Calendar,
+      color: "bg-amber-500/20 text-amber-400",
+      title: t("landing.feature3Title"),
+      desc: t("landing.feature3Desc"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex flex-col">
       {/* Nav */}
@@ -33,7 +56,7 @@ export default function LandingPage() {
           href="/onboarding"
           className="text-indigo-300 hover:text-white text-sm font-medium transition-colors"
         >
-          Acceder →
+          {t("landing.access")}
         </Link>
       </header>
 
@@ -41,19 +64,18 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center pb-16">
         <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/30 rounded-full px-4 py-1.5 text-indigo-300 text-xs font-medium mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-          MVP · España 2025
+          {t("landing.badge")}
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight max-w-3xl mb-6">
-          Tus impuestos,{" "}
+          {t("landing.hero")}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
-            sin sorpresas
+            {t("landing.heroHighlight")}
           </span>
         </h1>
 
         <p className="text-slate-400 text-lg max-w-xl mb-10 leading-relaxed">
-          Kallio calcula en tiempo real cuánto del saldo de tu cuenta es realmente tuyo.
-          IVA, IRPF, deducciones y deadlines, todo en un vistazo.
+          {t("landing.subtitle")}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-16">
@@ -61,39 +83,20 @@ export default function LandingPage() {
             href="/onboarding"
             className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-lg"
           >
-            Empezar gratis
+            {t("landing.startFree")}
             <ArrowRight className="w-4 h-4" />
           </Link>
           <button
             onClick={handleDemo}
             className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3.5 rounded-xl font-semibold transition-all border border-white/10"
           >
-            Ver demo
+            {t("landing.viewDemo")}
           </button>
         </div>
 
         {/* Feature cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full">
-          {[
-            {
-              icon: Shield,
-              color: "bg-violet-500/20 text-violet-400",
-              title: "Reserva fiscal en vivo",
-              desc: "Ve exactamente cuánto reservar para IVA e IRPF en tiempo real.",
-            },
-            {
-              icon: Sparkles,
-              color: "bg-emerald-500/20 text-emerald-400",
-              title: "Asistente de deducciones",
-              desc: "Detecta gastos deducibles automáticamente y te muestra el ahorro.",
-            },
-            {
-              icon: Calendar,
-              color: "bg-amber-500/20 text-amber-400",
-              title: "Countdown trimestral",
-              desc: "Alertas a 30, 15 y 7 días con importe estimado. Exporta PDF para tu gestor.",
-            },
-          ].map(({ icon: Icon, color, title, desc }) => (
+          {features.map(({ icon: Icon, color, title, desc }) => (
             <div
               key={title}
               className="bg-white/5 border border-white/10 rounded-2xl p-5 text-left"
@@ -111,15 +114,15 @@ export default function LandingPage() {
         <div className="mt-12 flex flex-col sm:flex-row items-center gap-6 text-slate-500 text-xs">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            Estimación Directa Simplificada
+            {t("landing.trust1")}
           </div>
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            Modelo 130 + Modelo 303
+            {t("landing.trust2")}
           </div>
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            Sin conexión bancaria
+            {t("landing.trust3")}
           </div>
         </div>
       </main>

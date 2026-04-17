@@ -13,6 +13,7 @@ import {
   IVARate,
   TransactionType,
 } from "./types";
+import type { Locale } from "@/i18n";
 import {
   calculateTaxSnapshot,
   classifyTransaction,
@@ -158,6 +159,10 @@ interface KallioState {
   // Actions – deductions
   answerDeductionPrompt: (transactionId: string, answer: "confirmed" | "rejected" | "later") => void;
 
+  // i18n
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getPendingPrompts: () => DeductionPrompt[];
@@ -176,6 +181,8 @@ export const useKallioStore = create<KallioState>()(
       transactions: [],
       deductionPrompts: [],
       totalSavedThisYear: 0,
+      locale: "es",
+      setLocale: (locale) => set({ locale }),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>

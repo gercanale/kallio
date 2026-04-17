@@ -77,7 +77,9 @@ export interface TaxSnapshot {
 
 export interface DeductionPrompt {
   transactionId: string;
-  question: string;             // Plain-Spanish question
+  question: string;             // Fallback pre-rendered question (legacy)
+  promptKey?: string;           // i18n key: "meals" | "travel" | "phone" | "hardware" | "homeOffice" | "unclear"
+  promptVars?: Record<string, string>; // Interpolation vars: { amount, merchant }
   projectedSaving: number;      // Tax impact if confirmed deductible
   status: "pending" | "confirmed" | "rejected" | "later";
 }

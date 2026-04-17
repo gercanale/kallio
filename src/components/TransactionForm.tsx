@@ -4,25 +4,7 @@ import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import type { IVARate, TransactionType, ExpenseCategory } from "@/lib/types";
-
-const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
-  { value: "software_subscriptions", label: "Software / SaaS" },
-  { value: "hardware_equipment", label: "Hardware / Equipos" },
-  { value: "office_supplies", label: "Material de oficina" },
-  { value: "professional_services", label: "Servicios profesionales" },
-  { value: "marketing_advertising", label: "Marketing / Publicidad" },
-  { value: "travel_transport", label: "Viajes / Transporte" },
-  { value: "meals_entertainment", label: "Comidas de trabajo" },
-  { value: "phone_internet", label: "Teléfono / Internet" },
-  { value: "training_education", label: "Formación" },
-  { value: "home_office", label: "Oficina en casa" },
-  { value: "rent_utilities", label: "Alquiler / Suministros" },
-  { value: "insurance", label: "Seguros" },
-  { value: "bank_fees", label: "Comisiones bancarias" },
-  { value: "other_deductible", label: "Otros gastos profesionales" },
-  { value: "personal", label: "Gasto personal (no deducible)" },
-  { value: "unclear", label: "No estoy seguro" },
-];
+import { useT } from "@/i18n";
 
 interface TransactionFormProps {
   onClose: () => void;
@@ -30,7 +12,27 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ onClose, defaultType = "expense" }: TransactionFormProps) {
+  const { t } = useT();
   const addTransaction = useKallioStore((s) => s.addTransaction);
+
+  const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
+    { value: "software_subscriptions", label: t("transactionForm.categories.software_subscriptions") },
+    { value: "hardware_equipment", label: t("transactionForm.categories.hardware_equipment") },
+    { value: "office_supplies", label: t("transactionForm.categories.office_supplies") },
+    { value: "professional_services", label: t("transactionForm.categories.professional_services") },
+    { value: "marketing_advertising", label: t("transactionForm.categories.marketing_advertising") },
+    { value: "travel_transport", label: t("transactionForm.categories.travel_transport") },
+    { value: "meals_entertainment", label: t("transactionForm.categories.meals_entertainment") },
+    { value: "phone_internet", label: t("transactionForm.categories.phone_internet") },
+    { value: "training_education", label: t("transactionForm.categories.training_education") },
+    { value: "home_office", label: t("transactionForm.categories.home_office") },
+    { value: "rent_utilities", label: t("transactionForm.categories.rent_utilities") },
+    { value: "insurance", label: t("transactionForm.categories.insurance") },
+    { value: "bank_fees", label: t("transactionForm.categories.bank_fees") },
+    { value: "other_deductible", label: t("transactionForm.categories.other_deductible") },
+    { value: "personal", label: t("transactionForm.categories.personal") },
+    { value: "unclear", label: t("transactionForm.categories.unclear") },
+  ];
 
   const [type, setType] = useState<TransactionType>(defaultType);
   const [description, setDescription] = useState("");
@@ -45,8 +47,8 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = parseFloat(amount.replace(",", "."));
-    if (!description.trim()) { setError("Añade una descripción"); return; }
-    if (isNaN(parsed) || parsed <= 0) { setError("Importe no válido"); return; }
+    if (!description.trim()) { setError(t("transactionForm.errorDescription")); return; }
+    if (isNaN(parsed) || parsed <= 0) { setError(t("transactionForm.errorAmount")); return; }
 
     addTransaction({
       date: new Date(date).toISOString(),
@@ -67,7 +69,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-semibold text-slate-900">Nuevo movimiento</h2>
+          <h2 className="font-semibold text-slate-900">{t("transactionForm.title")}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
@@ -79,20 +81,20 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Type toggle */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-            {(["income", "expense"] as TransactionType[]).map((t) => (
+            {(["income", "expense"] as TransactionType[]).map((tx) => (
               <button
-                key={t}
+                key={tx}
                 type="button"
-                onClick={() => setType(t)}
+                onClick={() => setType(tx)}
                 className={`py-2 rounded-lg text-sm font-medium transition-all ${
-                  type === t
-                    ? t === "income"
+                  type === tx
+                    ? tx === "income"
                       ? "bg-emerald-600 text-white shadow-sm"
                       : "bg-red-500 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                {t === "income" ? "Ingreso" : "Gasto"}
+                {tx === "income" ? t("transactionForm.income") : t("transactionForm.expense")}
               </button>
             ))}
           </div>
@@ -100,13 +102,13 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              Descripción *
+              {t("transactionForm.descriptionLabel")}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={type === "income" ? "Ej: Proyecto web – Acme Corp" : "Ej: Suscripción Figma"}
+              placeholder={type === "income" ? t("transactionForm.descriptionPlaceholderIncome") : t("transactionForm.descriptionPlaceholderExpense")}
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
             />
           </div>
@@ -114,13 +116,13 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           {/* Merchant / client */}
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              {type === "income" ? "Cliente" : "Proveedor / Comercio"}
+              {type === "income" ? t("transactionForm.clientLabel") : t("transactionForm.vendorLabel")}
             </label>
             <input
               type="text"
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
-              placeholder={type === "income" ? "Nombre del cliente" : "Nombre del comercio"}
+              placeholder={type === "income" ? t("transactionForm.clientPlaceholder") : t("transactionForm.vendorPlaceholder")}
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
             />
           </div>
@@ -129,7 +131,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                Importe (€) *
+                {t("transactionForm.amountLabel")}
               </label>
               <input
                 type="number"
@@ -143,7 +145,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                Fecha *
+                {t("transactionForm.dateLabel")}
               </label>
               <input
                 type="date"
@@ -157,7 +159,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           {/* IVA rate */}
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              Tipo de IVA
+              {t("transactionForm.ivaLabel")}
             </label>
             <div className="grid grid-cols-4 gap-2">
               {([21, 10, 4, 0] as IVARate[]).map((rate) => (
@@ -171,7 +173,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
                       : "border-slate-200 text-slate-600 hover:border-slate-300"
                   }`}
                 >
-                  {rate === 0 ? "Exento" : `${rate}%`}
+                  {rate === 0 ? t("transactionForm.ivaExempt") : `${rate}%`}
                 </button>
               ))}
             </div>
@@ -181,7 +183,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           {type === "expense" && (
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                Categoría
+                {t("transactionForm.categoryLabel")}
               </label>
               <select
                 value={category}
@@ -199,9 +201,9 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
           {type === "expense" && category !== "personal" && (
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
               <div>
-                <p className="text-sm font-medium text-slate-800">¿Es deducible?</p>
+                <p className="text-sm font-medium text-slate-800">{t("transactionForm.isDeductibleLabel")}</p>
                 <p className="text-xs text-slate-500">
-                  {isDeductible ? "Se descontará del IRPF" : "No se aplicará deducción"}
+                  {isDeductible ? t("transactionForm.isDeductibleYes") : t("transactionForm.isDeductibleNo")}
                 </p>
               </div>
               <button
@@ -230,7 +232,7 @@ export function TransactionForm({ onClose, defaultType = "expense" }: Transactio
             className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-medium transition-all"
           >
             <Plus className="w-4 h-4" />
-            Añadir movimiento
+            {t("transactionForm.submit")}
           </button>
         </form>
       </div>

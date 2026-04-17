@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { I18nProvider } from "@/i18n";
+import { HtmlLangSetter } from "./HtmlLangSetter";
 
 export const metadata: Metadata = {
   title: "Kallio – Tu copiloto fiscal",
@@ -14,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="h-full">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <I18nProvider>
+          <HtmlLangSetter />
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

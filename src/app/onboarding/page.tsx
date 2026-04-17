@@ -5,22 +5,12 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import type { FiscalRegime } from "@/lib/types";
+import { useT } from "@/i18n";
 
 type Step = 1 | 2 | 3;
 
-const ACTIVITY_OPTIONS = [
-  "Programador / Consultor IT",
-  "Diseñador / UX",
-  "Redactor / Copywriter",
-  "Marketing / Growth",
-  "Consultor de negocio",
-  "Fotógrafo / Videógrafo",
-  "Traductor / Intérprete",
-  "Docente / Formador",
-  "Otro",
-];
-
 export default function OnboardingPage() {
+  const { t } = useT();
   const router = useRouter();
   const completeOnboarding = useKallioStore((s) => s.completeOnboarding);
 
@@ -48,6 +38,39 @@ export default function OnboardingPage() {
     });
     router.push("/dashboard");
   };
+
+  const ACTIVITY_OPTIONS = [
+    { key: "dev", label: t("onboarding.activities.dev") },
+    { key: "design", label: t("onboarding.activities.design") },
+    { key: "copy", label: t("onboarding.activities.copy") },
+    { key: "marketing", label: t("onboarding.activities.marketing") },
+    { key: "consultant", label: t("onboarding.activities.consultant") },
+    { key: "photo", label: t("onboarding.activities.photo") },
+    { key: "translator", label: t("onboarding.activities.translator") },
+    { key: "teacher", label: t("onboarding.activities.teacher") },
+    { key: "other", label: t("onboarding.activities.other") },
+  ];
+
+  const REGIME_OPTIONS = [
+    {
+      value: "estimacion_directa_simplificada" as FiscalRegime,
+      label: t("onboarding.regime_eds_label"),
+      desc: t("onboarding.regime_eds_desc"),
+      recommended: true,
+    },
+    {
+      value: "estimacion_directa_normal" as FiscalRegime,
+      label: t("onboarding.regime_edn_label"),
+      desc: t("onboarding.regime_edn_desc"),
+      recommended: false,
+    },
+    {
+      value: "estimacion_objetiva" as FiscalRegime,
+      label: t("onboarding.regime_eo_label"),
+      desc: t("onboarding.regime_eo_desc"),
+      recommended: false,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -85,63 +108,65 @@ export default function OnboardingPage() {
                 )}
               </div>
             ))}
-            <span className="ml-2 text-xs text-slate-500">Paso {step} de 3</span>
+            <span className="ml-2 text-xs text-slate-500">
+              {t("onboarding.stepOf", { step, total: 3 })}
+            </span>
           </div>
 
-          {/* Step 1 – Datos personales */}
+          {/* Step 1 – Personal data */}
           {step === 1 && (
             <div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                ¡Bienvenido a Kallio!
+                {t("onboarding.step1Title")}
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                Cuéntanos un poco sobre ti para personalizar tu dashboard fiscal.
+                {t("onboarding.step1Subtitle")}
               </p>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Tu nombre *
+                    {t("onboarding.nameLabel")}
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej: Facundo García"
+                    placeholder={t("onboarding.namePlaceholder")}
                     className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    NIF / DNI (opcional)
+                    {t("onboarding.nifLabel")}
                   </label>
                   <input
                     type="text"
                     value={nif}
                     onChange={(e) => setNif(e.target.value)}
-                    placeholder="12345678A"
+                    placeholder={t("onboarding.nifPlaceholder")}
                     className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Tipo de actividad *
+                    {t("onboarding.activityLabel")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {ACTIVITY_OPTIONS.map((opt) => (
+                    {ACTIVITY_OPTIONS.map(({ key, label }) => (
                       <button
-                        key={opt}
+                        key={key}
                         type="button"
-                        onClick={() => setActivityType(opt)}
+                        onClick={() => setActivityType(label)}
                         className={`px-3 py-2.5 rounded-xl text-xs font-medium text-left transition-all border ${
-                          activityType === opt
+                          activityType === label
                             ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                             : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                         }`}
                       >
-                        {opt}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -153,50 +178,31 @@ export default function OnboardingPage() {
                 disabled={!name.trim() || !activityType}
                 className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
               >
-                Siguiente
+                {t("onboarding.next")}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Step 2 – Régimen fiscal */}
+          {/* Step 2 – Fiscal regime */}
           {step === 2 && (
             <div>
               <button
                 onClick={() => setStep(1)}
                 className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
               >
-                <ArrowLeft className="w-4 h-4" /> Atrás
+                <ArrowLeft className="w-4 h-4" /> {t("onboarding.back")}
               </button>
 
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                Tu régimen fiscal
+                {t("onboarding.step2Title")}
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                Esto determina cómo calculamos tu IRPF trimestral. La mayoría de autónomos digitales usan Estimación Directa Simplificada.
+                {t("onboarding.step2Subtitle")}
               </p>
 
               <div className="space-y-3">
-                {[
-                  {
-                    value: "estimacion_directa_simplificada" as FiscalRegime,
-                    label: "Estimación Directa Simplificada",
-                    desc: "La opción más común para autónomos. Kallio calcula el 20% del rendimiento neto.",
-                    recommended: true,
-                  },
-                  {
-                    value: "estimacion_directa_normal" as FiscalRegime,
-                    label: "Estimación Directa Normal",
-                    desc: "Para ingresos > €600.000/año o si renunciaste a simplificada.",
-                    recommended: false,
-                  },
-                  {
-                    value: "estimacion_objetiva" as FiscalRegime,
-                    label: "Estimación Objetiva (Módulos)",
-                    desc: "Solo para actividades específicas según la AEAT.",
-                    recommended: false,
-                  },
-                ].map(({ value, label, desc, recommended }) => (
+                {REGIME_OPTIONS.map(({ value, label, desc, recommended }) => (
                   <button
                     key={value}
                     type="button"
@@ -217,7 +223,7 @@ export default function OnboardingPage() {
                       </span>
                       {recommended && (
                         <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                          Recomendado
+                          {t("onboarding.recommended")}
                         </span>
                       )}
                     </div>
@@ -230,27 +236,27 @@ export default function OnboardingPage() {
                 onClick={() => setStep(3)}
                 className="w-full mt-8 flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all"
               >
-                Siguiente
+                {t("onboarding.next")}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Step 3 – Retención IRPF */}
+          {/* Step 3 – IRPF retention */}
           {step === 3 && (
             <div>
               <button
                 onClick={() => setStep(2)}
                 className="flex items-center gap-1.5 text-slate-500 text-sm mb-6 hover:text-slate-700"
               >
-                <ArrowLeft className="w-4 h-4" /> Atrás
+                <ArrowLeft className="w-4 h-4" /> {t("onboarding.back")}
               </button>
 
               <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                Retención IRPF
+                {t("onboarding.step3Title")}
               </h1>
               <p className="text-slate-600 text-sm mb-8">
-                ¿Tus clientes te retienen IRPF en las facturas? Esto reduce el pago trimestral del Modelo 130.
+                {t("onboarding.step3Subtitle")}
               </p>
 
               <div className="space-y-3 mb-6">
@@ -264,11 +270,9 @@ export default function OnboardingPage() {
                   }`}
                 >
                   <p className={`text-sm font-semibold mb-1 ${!ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
-                    No, mis clientes no me retienen
+                    {t("onboarding.noRetentionLabel")}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    Pagaré el 100% del Modelo 130 trimestralmente.
-                  </p>
+                  <p className="text-xs text-slate-500">{t("onboarding.noRetentionDesc")}</p>
                 </button>
                 <button
                   type="button"
@@ -280,23 +284,21 @@ export default function OnboardingPage() {
                   }`}
                 >
                   <p className={`text-sm font-semibold mb-1 ${ivaRetention ? "text-indigo-700" : "text-slate-900"}`}>
-                    Sí, me aplican retención
+                    {t("onboarding.yesRetentionLabel")}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    Mis clientes ya retienen parte del IRPF en cada factura.
-                  </p>
+                  <p className="text-xs text-slate-500">{t("onboarding.yesRetentionDesc")}</p>
                 </button>
               </div>
 
               {ivaRetention && (
                 <div className="bg-slate-50 rounded-xl p-4 mb-6">
                   <p className="text-xs font-medium text-slate-700 mb-3">
-                    ¿Qué tipo de retención aplican?
+                    {t("onboarding.retentionRateQuestion")}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { rate: 0.15, label: "15%", desc: "General" },
-                      { rate: 0.07, label: "7%", desc: "Primeros 3 años" },
+                      { rate: 0.15, label: "15%", desc: t("onboarding.rate15Desc") },
+                      { rate: 0.07, label: "7%", desc: t("onboarding.rate7Desc") },
                     ].map(({ rate, label, desc }) => (
                       <button
                         key={rate}
@@ -320,18 +322,18 @@ export default function OnboardingPage() {
 
               {/* Summary */}
               <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-4 mb-6">
-                <p className="text-xs font-semibold text-indigo-700 mb-2">Resumen de tu configuración</p>
+                <p className="text-xs font-semibold text-indigo-700 mb-2">{t("onboarding.summaryTitle")}</p>
                 <div className="space-y-1 text-xs text-slate-700">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Nombre</span>
+                    <span className="text-slate-500">{t("onboarding.summaryName")}</span>
                     <span className="font-medium">{name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Actividad</span>
+                    <span className="text-slate-500">{t("onboarding.summaryActivity")}</span>
                     <span className="font-medium">{activityType}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Régimen</span>
+                    <span className="text-slate-500">{t("onboarding.summaryRegime")}</span>
                     <span className="font-medium">EDS</span>
                   </div>
                 </div>
@@ -342,7 +344,7 @@ export default function OnboardingPage() {
                 className="w-full flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                Ir a mi dashboard
+                {t("onboarding.goToDashboard")}
               </button>
             </div>
           )}

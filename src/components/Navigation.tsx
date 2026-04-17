@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings } from "lucide-react";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/transactions", icon: ArrowLeftRight, label: "Movimientos" },
-];
+import { LayoutDashboard, ArrowLeftRight, Settings, Globe } from "lucide-react";
+import { useT } from "@/i18n";
+import { useKallioStore } from "@/lib/store";
 
 export function Navigation() {
   const pathname = usePathname();
+  const { t, locale } = useT();
+  const setLocale = useKallioStore((s) => s.setLocale);
+
+  const NAV_ITEMS = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
+    { href: "/transactions", icon: ArrowLeftRight, label: t("nav.transactions") },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 z-40 sm:relative sm:border-t-0 sm:border-b">
@@ -44,8 +48,18 @@ export function Navigation() {
             className="flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-800 transition-all"
           >
             <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span>Ajustes</span>
+            <span>{t("nav.settings")}</span>
           </Link>
+
+          {/* Language toggle */}
+          <button
+            onClick={() => setLocale(locale === "es" ? "en" : "es")}
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-800 transition-all"
+            aria-label="Switch language"
+          >
+            <Globe className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span className="uppercase font-semibold">{t("nav.switchLang")}</span>
+          </button>
         </div>
       </div>
     </nav>

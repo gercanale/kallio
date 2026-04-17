@@ -4,9 +4,12 @@ import { useState, useMemo } from "react";
 import { Sparkles, Check, X, Clock, Euro } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { formatCurrency } from "@/lib/tax-engine";
+import { useT } from "@/i18n";
+import { useFormatDate } from "@/i18n/useFormatDate";
 
 export function DeductionAssistant() {
-  // Subscribe to raw data, derive in useMemo to avoid infinite loop
+  const { t } = useT();
+  const { formatDayMonth } = useFormatDate();
   const deductionPrompts = useKallioStore((s) => s.deductionPrompts);
   const pendingPrompts = useMemo(
     () => deductionPrompts.filter((p) => p.status === "pending"),
@@ -37,20 +40,18 @@ export function DeductionAssistant() {
             <Sparkles className="w-4 h-4 text-emerald-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-slate-900 text-sm">Asistente de deducciones</h2>
-            <p className="text-xs text-slate-500">Todo revisado</p>
+            <h2 className="font-semibold text-slate-900 text-sm">{t("deductions.title")}</h2>
+            <p className="text-xs text-slate-500">{t("deductions.allReviewed")}</p>
           </div>
         </div>
 
-        <p className="text-slate-600 text-sm">
-          No hay gastos pendientes de clasificar. Kallio revisará los nuevos movimientos automáticamente.
-        </p>
+        <p className="text-slate-600 text-sm">{t("deductions.noExpenses")}</p>
 
         {totalSavedThisYear > 0 && (
           <div className="mt-4 bg-emerald-50 rounded-xl p-3 flex items-center gap-3">
             <Euro className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <div>
-              <p className="text-xs text-emerald-700">Ahorro confirmado este año</p>
+              <p className="text-xs text-emerald-700">{t("deductions.savedThisYear")}</p>
               <p className="text-lg font-bold text-emerald-700 tabular-nums">
                 {formatCurrency(totalSavedThisYear)}
               </p>
@@ -64,6 +65,15 @@ export function DeductionAssistant() {
   const current = pendingPrompts[0];
   const tx = transactions.find((t) => t.id === current.transactionId);
 
+  const question = current.promptKey
+    ? t(`deductionPrompts.${current.promptKey}`, current.promptVars)
+    : current.question;
+
+  const pendingLabel =
+    pendingPrompts.length === 1
+      ? t("deductions.pendingSingular", { count: 1 })
+      : t("deductions.pendingPlural", { count: pendingPrompts.length });
+
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       {/* Header */}
@@ -74,15 +84,13 @@ export function DeductionAssistant() {
               <Sparkles className="w-4 h-4 text-violet-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-900 text-sm">Asistente de deducciones</h2>
-              <p className="text-xs text-slate-500">
-                {pendingPrompts.length} gasto{pendingPrompts.length !== 1 ? "s" : ""} pendiente{pendingPrompts.length !== 1 ? "s" : ""}
-              </p>
+              <h2 className="font-semibold text-slate-900 text-sm">{t("deductions.title")}</h2>
+              <p className="text-xs text-slate-500">{pendingLabel}</p>
             </div>
           </div>
           {totalSavedThisYear > 0 && (
             <div className="text-right">
-              <p className="text-xs text-emerald-600 font-medium">Ahorro acumulado</p>
+              <p className="text-xs text-emerald-600 font-medium">{t("deductions.accumulatedSaving")}</p>
               <p className="text-sm font-bold text-emerald-700 tabular-nums">
                 {formatCurrency(totalSavedThisYear)}
               </p>
@@ -107,12 +115,7 @@ export function DeductionAssistant() {
               <p className="text-sm font-medium text-slate-900 truncate">
                 {tx.merchant ?? tx.description}
               </p>
-              <p className="text-xs text-slate-500">
-                {new Date(tx.date).toLocaleDateString("es-ES", {
-                  day: "numeric",
-                  month: "short",
-                })}
-              </p>
+              <p className="text-xs text-slate-500">{formatDayMonth(tx.date)}</p>
             </div>
             <span className="text-sm font-semibold text-slate-900 tabular-nums flex-shrink-0">
               {formatCurrency(tx.amount)}
@@ -121,17 +124,15 @@ export function DeductionAssistant() {
         )}
 
         {/* Question */}
-        <p className="text-slate-800 text-sm leading-relaxed mb-4">
-          {current.question}
-        </p>
+        <p className="text-slate-800 text-sm leading-relaxed mb-4">{question}</p>
 
         {/* Saving preview */}
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-3 mb-5">
-          <p className="text-xs text-emerald-700 mb-0.5">Si confirmas que es deducible, ahorras aprox.</p>
+          <p className="text-xs text-emerald-700 mb-0.5">{t("deductions.ifDeductible")}</p>
           <p className="text-xl font-bold text-emerald-700 tabular-nums">
             {formatCurrency(current.projectedSaving)}
           </p>
-          <p className="text-xs text-emerald-600 mt-0.5">en impuestos este trimestre</p>
+          <p className="text-xs text-emerald-600 mt-0.5">{t("deductions.inTaxesThisQuarter")}</p>
         </div>
 
         {/* Action buttons */}
@@ -141,21 +142,21 @@ export function DeductionAssistant() {
             className="flex flex-col items-center gap-1.5 py-3 px-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl transition-all"
           >
             <Check className="w-4 h-4" />
-            <span className="text-xs font-medium">Sí, deducible</span>
+            <span className="text-xs font-medium">{t("deductions.confirm")}</span>
           </button>
           <button
             onClick={() => handleAnswer(current.transactionId, "rejected")}
             className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl transition-all"
           >
             <X className="w-4 h-4" />
-            <span className="text-xs font-medium">No deducible</span>
+            <span className="text-xs font-medium">{t("deductions.reject")}</span>
           </button>
           <button
             onClick={() => handleAnswer(current.transactionId, "later")}
             className="flex flex-col items-center gap-1.5 py-3 px-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl transition-all"
           >
             <Clock className="w-4 h-4" />
-            <span className="text-xs font-medium">Luego</span>
+            <span className="text-xs font-medium">{t("deductions.later")}</span>
           </button>
         </div>
       </div>

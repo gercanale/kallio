@@ -7,11 +7,15 @@ import { LogOut, User } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Navigation } from "@/components/Navigation";
+import { useT } from "@/i18n";
 
 export default function SettingsPage() {
+  const { t } = useT();
   const router = useRouter();
   const hydrated = useHydrated();
   const profile = useKallioStore((s) => s.profile);
+  const locale = useKallioStore((s) => s.locale);
+  const setLocale = useKallioStore((s) => s.setLocale);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -29,7 +33,7 @@ export default function SettingsPage() {
   }
 
   const handleReset = () => {
-    if (confirm("¿Seguro que quieres borrar todos tus datos? Esta acción no se puede deshacer.")) {
+    if (confirm(t("settings.deleteConfirm"))) {
       localStorage.removeItem("kallio-storage");
       window.location.href = "/";
     }
@@ -40,7 +44,7 @@ export default function SettingsPage() {
       <Navigation />
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-slate-900 mb-6">Ajustes</h1>
+        <h1 className="text-xl font-bold text-slate-900 mb-6">{t("settings.title")}</h1>
 
         {/* Profile section */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-4">
@@ -57,22 +61,48 @@ export default function SettingsPage() {
           </div>
 
           <div className="divide-y divide-slate-100">
-            <SettingsRow label="Régimen fiscal" value="Estimación Directa Simplificada" />
+            <SettingsRow label={t("settings.fiscalRegime")} value={t("settings.fiscalRegimeValue")} />
             <SettingsRow
-              label="Retención IRPF"
-              value={profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : "Sin retención"}
+              label={t("settings.irpfRetention")}
+              value={profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : t("settings.noRetention")}
             />
-            <SettingsRow label="NIF" value={profile.nif ?? "—"} />
+            <SettingsRow label={t("settings.nif")} value={profile.nif ?? "—"} />
+          </div>
+        </div>
+
+        {/* Language section */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-4">
+          <div className="px-5 py-4">
+            <p className="text-sm font-semibold text-slate-800 mb-3">{t("settings.languageTitle")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setLocale("es")}
+                className={`py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                  locale === "es"
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                {t("settings.langEs")}
+              </button>
+              <button
+                onClick={() => setLocale("en")}
+                className={`py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                  locale === "en"
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                {t("settings.langEn")}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Pricing note */}
         <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 mb-4">
-          <p className="text-sm font-semibold text-indigo-800 mb-1">Plan gratuito – MVP</p>
-          <p className="text-xs text-indigo-600">
-            Todas las funciones disponibles durante el período de validación.
-            La versión Pro estará disponible próximamente desde €9/mes.
-          </p>
+          <p className="text-sm font-semibold text-indigo-800 mb-1">{t("settings.freePlanTitle")}</p>
+          <p className="text-xs text-indigo-600">{t("settings.freePlanDesc")}</p>
         </div>
 
         {/* Danger zone */}
@@ -82,7 +112,7 @@ export default function SettingsPage() {
             className="w-full flex items-center gap-3 px-5 py-4 text-red-600 hover:bg-red-50 transition-colors text-left"
           >
             <LogOut className="w-4 h-4" />
-            <span className="text-sm font-medium">Borrar todos mis datos</span>
+            <span className="text-sm font-medium">{t("settings.deleteData")}</span>
           </button>
         </div>
       </main>
