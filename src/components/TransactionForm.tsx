@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Plus, Sparkles } from "lucide-react";
+import { X, Plus, Sparkles, Maximize2, Minimize2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter } from "@/lib/tax-engine";
-import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter, calculateTaxSnapshot, quarterOf } from "@/lib/tax-engine";
+import type { IVARate, TransactionType, ExpenseCategory, Transaction, TaxSnapshot } from "@/lib/types";
+import { QuarterImpactModal } from "@/components/QuarterImpactModal";
 
 interface TransactionFormProps {
   onClose: () => void;
@@ -43,6 +44,9 @@ const PARTIAL_RATES: Record<ExpenseCategory, number> = {
 export function TransactionForm({ onClose, defaultType = "expense", editTransaction }: TransactionFormProps) {
   const addTransaction = useKallioStore((s) => s.addTransaction);
   const updateTransaction = useKallioStore((s) => s.updateTransaction);
+  const transactions = useKallioStore((s) => s.transactions);
+  const profile = useKallioStore((s) => s.profile);
+  const getQuarterStatus = useKallioStore((s) => s.getQuarterStatus);
   const t = useT();
 
   const isEdit = !!editTransaction;
@@ -60,6 +64,16 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
   const [error, setError] = useState("");
   const [categoryManuallySet, setCategoryManuallySet] = useState(isEdit);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+  const [fullScreen, setFullScreen] = useState(false);
+
+  // Pending impact confirmation for filed quarters
+  const [pendingImpact, setPendingImpact] = useState<{
+    quarterLabel: string;
+    year: number;
+    before: TaxSnapshot;
+    after: TaxSnapshot;
+    applyChanges: () => void;
+  } | null>(null);
 
   const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
     { value: "software_subscriptions", label: t.form.categories.software_subscriptions },
@@ -160,10 +174,13 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
     if (isNaN(parsed) || parsed <= 0) { setError(t.form.errorAmount); return; }
 
     const storedAmount = ivaRate > 0 && !amountIncludesVAT ? grossAmount : parsed;
+    const txDate = new Date(date).toISOString();
 
-    if (isEdit && editTransaction) {
+    // Build the actual update/add functions
+    const applyEdit = () => {
+      if (!editTransaction) return;
       updateTransaction(editTransaction.id, {
-        date: new Date(date).toISOString(),
+        date: txDate,
         description: description.trim(),
         merchant: merchant.trim() || undefined,
         amount: storedAmount,
@@ -173,9 +190,10 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
       });
-    } else {
+    };
+    const applyAdd = () => {
       addTransaction({
-        date: new Date(date).toISOString(),
+        date: txDate,
         description: description.trim(),
         merchant: merchant.trim() || undefined,
         amount: storedAmount,
@@ -185,32 +203,163 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
       });
+    };
+
+    // Check if the target quarter is filed
+    const { quarter: q, year: y } = quarterOf(txDate);
+    const status = getQuarterStatus(q, y);
+
+    if (status === "filed") {
+      // Compute before snapshot
+      const before = calculateTaxSnapshot(transactions, profile, q, y);
+
+      // Compute after snapshot (in-memory simulation)
+      let simTxs: Transaction[];
+      if (isEdit && editTransaction) {
+        simTxs = transactions.map((tx) =>
+          tx.id === editTransaction.id
+            ? {
+                ...tx,
+                date: txDate,
+                amount: storedAmount,
+                type,
+                ivaRate,
+                category,
+                isDeductible: type === "income" ? false : isDeductible,
+              }
+            : tx
+        );
+      } else {
+        const fakeTx: Transaction = {
+          id: "__pending__",
+          date: txDate,
+          description: description.trim(),
+          merchant: merchant.trim() || undefined,
+          amount: storedAmount,
+          type,
+          ivaRate,
+          category,
+          isDeductible: type === "income" ? false : isDeductible,
+          confidence: "high",
+          deductionPromptShown: false,
+          deductionPromptAnswered: false,
+        };
+        simTxs = [fakeTx, ...transactions];
+      }
+      const after = calculateTaxSnapshot(simTxs, profile, q, y);
+
+      const quarterLabels = ["1T", "2T", "3T", "4T"];
+      setPendingImpact({
+        quarterLabel: quarterLabels[q - 1],
+        year: y,
+        before,
+        after,
+        applyChanges: () => {
+          if (isEdit && editTransaction) applyEdit();
+          else applyAdd();
+          onClose();
+        },
+      });
+      return;
     }
 
+    // Open or past_not_filed: save normally
+    if (isEdit && editTransaction) applyEdit();
+    else applyAdd();
     onClose();
   };
 
+  // Quarter context for the selected date
+  const selectedDate = date ? new Date(date) : null;
+  const selectedQY = selectedDate ? quarterOf(selectedDate) : null;
+  const selectedQuarterStatus = selectedQY
+    ? getQuarterStatus(selectedQY.quarter, selectedQY.year)
+    : "open";
+  const quarterLabels = ["1T", "2T", "3T", "4T"];
+  const selectedQuarterLabel = selectedQY
+    ? `${quarterLabels[selectedQY.quarter - 1]} ${selectedQY.year}`
+    : "";
+
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col">
-        {/* Header — pinned */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-semibold text-slate-900">
-            {isEdit ? t.form.editTitle : t.form.title}
-          </h2>
+    <>
+    {pendingImpact && (
+      <QuarterImpactModal
+        quarterLabel={pendingImpact.quarterLabel}
+        year={pendingImpact.year}
+        before={pendingImpact.before}
+        after={pendingImpact.after}
+        onConfirm={pendingImpact.applyChanges}
+        onCancel={() => setPendingImpact(null)}
+      />
+    )}
+    {/* Backdrop — only in panel (non-fullscreen) mode */}
+    {!fullScreen && (
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+    )}
+
+    {/* Side panel */}
+    <div
+      className={`fixed top-0 bottom-0 right-0 z-50 flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out ${
+        fullScreen
+          ? "lg:left-56 left-0"   // full screen: respect nav on desktop, full on mobile
+          : "w-full sm:w-[440px]" // panel: full on mobile, 440px on sm+
+      }`}
+    >
+      {/* Header — pinned */}
+      <div className="flex-shrink-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">
+          {isEdit ? t.form.editTitle : t.form.title}
+        </h2>
+        <div className="flex items-center gap-1">
+          {/* Full-screen toggle */}
+          <button
+            onClick={() => setFullScreen((f) => !f)}
+            className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+            title={fullScreen ? "Panel view" : "Full screen"}
+          >
+            {fullScreen
+              ? <Minimize2 className="w-4 h-4 text-slate-500" />
+              : <Maximize2 className="w-4 h-4 text-slate-500" />
+            }
+          </button>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
+      </div>
 
-        {/* Scrollable fields */}
-        <div className="flex-1 overflow-y-auto">
+      {/* Scrollable fields */}
+      <div className="flex-1 overflow-y-auto">
+        <div className={fullScreen ? "max-w-2xl mx-auto" : ""}>
         <form id="transaction-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {/* Past quarter warning */}
-          {isEdit && isPastQuarter && (
+          {/* Quarter context banner */}
+          {selectedQY && selectedQuarterStatus !== "open" && (
+            <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-xs ${
+              selectedQuarterStatus === "filed"
+                ? "bg-red-50 border-red-200 text-red-800"
+                : "bg-amber-50 border-amber-200 text-amber-800"
+            }`}>
+              <span>
+                {selectedQuarterStatus === "filed"
+                  ? `🔒 ${t.pastQuarter.impactSubtitle
+                      .replace("{label}", quarterLabels[(selectedQY.quarter - 1)])
+                      .replace("{year}", String(selectedQY.year))}`
+                  : `📅 ${t.pastQuarter.pastNotFiledBanner
+                      .replace("{label}", quarterLabels[(selectedQY.quarter - 1)])
+                      .replace("{year}", String(selectedQY.year))}`
+                }
+              </span>
+            </div>
+          )}
+
+          {/* Past quarter edit warning (legacy) */}
+          {isEdit && isPastQuarter && selectedQuarterStatus === "open" && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
               <span className="text-xs text-amber-800">{t.form.pastQuarterWarning}</span>
             </div>
@@ -497,9 +646,11 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
 
         </form>
         </div>
+      </div>
 
-        {/* Footer — pinned */}
-        <div className="flex-shrink-0 px-6 pb-5 pt-3 border-t border-slate-100 space-y-2">
+      {/* Footer — pinned */}
+      <div className={`flex-shrink-0 border-t border-slate-100 dark:border-slate-700 space-y-2 ${fullScreen ? "" : ""}`}>
+        <div className={`px-6 pb-5 pt-3 space-y-2 ${fullScreen ? "max-w-2xl mx-auto" : ""}`}>
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
           )}
@@ -514,5 +665,6 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         </div>
       </div>
     </div>
+    </>
   );
 }
