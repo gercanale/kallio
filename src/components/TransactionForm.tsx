@@ -191,10 +191,10 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col">
+        {/* Header — pinned */}
+        <div className="flex-shrink-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-semibold text-slate-900">
             {isEdit ? t.form.editTitle : t.form.title}
           </h2>
@@ -206,7 +206,9 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        {/* Scrollable fields */}
+        <div className="flex-1 overflow-y-auto">
+        <form id="transaction-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Past quarter warning */}
           {isEdit && isPastQuarter && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
@@ -493,19 +495,23 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
             </div>
           )}
 
+        </form>
+        </div>
+
+        {/* Footer — pinned */}
+        <div className="flex-shrink-0 px-6 pb-5 pt-3 border-t border-slate-100 space-y-2">
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
           )}
-
-          {/* Submit */}
           <button
             type="submit"
+            form="transaction-form"
             className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl font-medium transition-all"
           >
             <Plus className="w-4 h-4" />
             {isEdit ? t.form.saveButton : t.form.submitButton}
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );
