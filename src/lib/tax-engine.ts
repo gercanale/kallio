@@ -174,6 +174,12 @@ export function currentQuarter(date: Date = new Date()): number {
   return Math.ceil((date.getMonth() + 1) / 3);
 }
 
+/** Returns the {quarter, year} for any date. */
+export function quarterOf(date: Date | string): { quarter: number; year: number } {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return { quarter: currentQuarter(d), year: d.getFullYear() };
+}
+
 export function quarterDateRange(quarter: number, year: number): { start: Date; end: Date } {
   const startMonth = (quarter - 1) * 3; // 0-indexed
   return {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calendar, Bell, FileDown, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Calendar, Bell, FileDown, AlertTriangle, CheckCircle2, Lock, LockOpen } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { calculateTaxSnapshot, nextDeadline, formatCurrency, nowInSpain } from "@/lib/tax-engine";
+import { calculateTaxSnapshot, nextDeadline, formatCurrency, nowInSpain, getQuarterDeadlines } from "@/lib/tax-engine";
 import { generateGestorPDF } from "@/lib/pdf-export";
 
 export function QuarterlyCountdown() {
@@ -12,14 +12,33 @@ export function QuarterlyCountdown() {
   const transactions = useKallioStore((s) => s.transactions);
   const profile = useKallioStore((s) => s.profile);
   const language = useKallioStore((s) => s.language);
+  const markQuarterFiled = useKallioStore((s) => s.markQuarterFiled);
+  const getQuarterStatus = useKallioStore((s) => s.getQuarterStatus);
   const t = useT();
 
-  const year = nowInSpain().getFullYear();
+  const now = nowInSpain();
+  const year = now.getFullYear();
   const deadline = useMemo(() => nextDeadline(year), [year]);
   const snap = useMemo(
     () => calculateTaxSnapshot(transactions, profile, deadline.quarter, deadline.year),
     [transactions, profile, deadline]
   );
+
+  // Past quarters this year (where deadline has passed)
+  const pastQuarters = useMemo(() => {
+    const deadlines = getQuarterDeadlines(year);
+    return deadlines
+      .filter((d) => {
+        const dl = new Date(d.modelo130Deadline);
+        return dl < now;
+      })
+      .map((d) => ({
+        ...d,
+        status: getQuarterStatus(d.quarter, d.year),
+        snap: calculateTaxSnapshot(transactions, profile, d.quarter, d.year),
+      }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, transactions, profile, getQuarterStatus]);
 
   const urgencyColor =
     deadline.daysLeft <= 7
@@ -160,6 +179,61 @@ export function QuarterlyCountdown() {
           )}
         </button>
       </div>
+
+      {/* Past quarters filing status */}
+      {pastQuarters.length > 0 && (
+        <div className="border-t border-slate-200/60 dark:border-slate-700/60 px-6 py-5">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+            {t.countdown.pastQuartersTitle}
+          </p>
+          <div className="space-y-2">
+            {pastQuarters.map((pq) => {
+              const isFiled = pq.status === "filed";
+              const totalTax = pq.snap.ivaPayable + pq.snap.irpfAdvancePayable;
+              return (
+                <div
+                  key={`${pq.quarter}-${pq.year}`}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-colors ${
+                    isFiled
+                      ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
+                      : "bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {isFiled ? (
+                      <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    ) : (
+                      <LockOpen className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        {pq.label} {pq.year}
+                      </p>
+                      <p className={`text-xs ${isFiled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}>
+                        {isFiled
+                          ? t.countdown.filedStatus
+                          : totalTax > 0
+                          ? formatCurrency(totalTax)
+                          : t.countdown.noTax}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => markQuarterFiled(pq.quarter, pq.year, !isFiled)}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                      isFiled
+                        ? "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        : "text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/50"
+                    }`}
+                  >
+                    {isFiled ? t.countdown.markOpen : t.countdown.markFiled}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

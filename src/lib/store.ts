@@ -9,6 +9,8 @@ import {
   Transaction,
   UserProfile,
   DeductionPrompt,
+  FiledQuarter,
+  QuarterStatus,
   ExpenseCategory,
   IVARate,
   TransactionType,
@@ -21,6 +23,7 @@ import {
   generateDeductionPrompt,
   generateId,
   currentQuarter,
+  getQuarterDeadlines,
 } from "./tax-engine";
 import type { TaxSnapshot } from "./types";
 
@@ -169,6 +172,7 @@ interface KallioState {
   transactions: Transaction[];
   deductionPrompts: DeductionPrompt[];
   totalSavedThisYear: number;
+  filedQuarters: FiledQuarter[];
 
   // Actions – profile
   setProfile: (profile: Partial<UserProfile>) => void;
@@ -186,8 +190,12 @@ interface KallioState {
   // Actions – deductions
   answerDeductionPrompt: (transactionId: string, answer: "confirmed" | "rejected" | "later") => void;
 
+  // Actions – filed quarters
+  markQuarterFiled: (quarter: number, year: number, filed: boolean) => void;
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
+  getQuarterStatus: (quarter: number, year: number) => QuarterStatus;
   getPendingPrompts: () => DeductionPrompt[];
   loadDemo: () => void;
 }
@@ -272,6 +280,7 @@ export const useKallioStore = create<KallioState>()(
       transactions: [],
       deductionPrompts: [],
       totalSavedThisYear: 0,
+      filedQuarters: [],
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -500,11 +509,59 @@ export const useKallioStore = create<KallioState>()(
         });
       },
 
+      // ── Filed quarters ────────────────────────────────────────────────────
+      markQuarterFiled: (quarter, year, filed) => {
+        set((s) => {
+          if (filed) {
+            // Add if not already present
+            const exists = s.filedQuarters.some(
+              (fq) => fq.quarter === quarter && fq.year === year
+            );
+            if (exists) return {};
+            return {
+              filedQuarters: [
+                ...s.filedQuarters,
+                { quarter, year, filedAt: new Date().toISOString() },
+              ],
+            };
+          } else {
+            return {
+              filedQuarters: s.filedQuarters.filter(
+                (fq) => !(fq.quarter === quarter && fq.year === year)
+              ),
+            };
+          }
+        });
+      },
+
       // ── Derived ────────────────────────────────────────────────────────────
       getTaxSnapshot: (quarter?, year?) => {
         const q = quarter ?? currentQuarter();
         const y = year ?? new Date().getFullYear();
         return calculateTaxSnapshot(get().transactions, get().profile, q, y);
+      },
+
+      getQuarterStatus: (quarter, year): QuarterStatus => {
+        const now = new Date();
+        const nowQ = currentQuarter(now);
+        const nowY = now.getFullYear();
+
+        // Current or future quarter → open
+        if (year > nowY || (year === nowY && quarter >= nowQ)) return "open";
+
+        // Check if filed
+        const isFiled = get().filedQuarters.some(
+          (fq) => fq.quarter === quarter && fq.year === year
+        );
+        if (isFiled) return "filed";
+
+        // Past quarter deadline - check if filing window has passed
+        const deadlines = getQuarterDeadlines(year);
+        const deadline = deadlines.find((d) => d.quarter === quarter);
+        if (!deadline) return "past_not_filed";
+
+        const deadlineDate = new Date(deadline.modelo130Deadline);
+        return now > deadlineDate ? "past_not_filed" : "open";
       },
 
       getPendingPrompts: () =>
@@ -539,10 +596,11 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
-      // Only persist language preference — all user data comes from Supabase
+      // Persist language, theme, and filed quarters (user-managed local state)
       partialize: (state) => ({
         language: state.language,
         theme: state.theme,
+        filedQuarters: state.filedQuarters,
       }),
     }
   )

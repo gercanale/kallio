@@ -103,3 +103,13 @@ export interface QuarterDeadline {
   modelo303Deadline: string;    // ISO date
   label: string;
 }
+
+/** A quarter the user has explicitly marked as "filed/presented" */
+export interface FiledQuarter {
+  quarter: number;  // 1–4
+  year: number;
+  filedAt: string;  // ISO timestamp
+}
+
+/** Open = current or future; past_not_filed = past deadline but not yet marked; filed = user marked it */
+export type QuarterStatus = "open" | "past_not_filed" | "filed";

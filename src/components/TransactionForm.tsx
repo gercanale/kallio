@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { X, Plus, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter } from "@/lib/tax-engine";
-import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter, calculateTaxSnapshot, quarterOf } from "@/lib/tax-engine";
+import type { IVARate, TransactionType, ExpenseCategory, Transaction, TaxSnapshot } from "@/lib/types";
+import { QuarterImpactModal } from "@/components/QuarterImpactModal";
 
 interface TransactionFormProps {
   onClose: () => void;
@@ -43,6 +44,9 @@ const PARTIAL_RATES: Record<ExpenseCategory, number> = {
 export function TransactionForm({ onClose, defaultType = "expense", editTransaction }: TransactionFormProps) {
   const addTransaction = useKallioStore((s) => s.addTransaction);
   const updateTransaction = useKallioStore((s) => s.updateTransaction);
+  const transactions = useKallioStore((s) => s.transactions);
+  const profile = useKallioStore((s) => s.profile);
+  const getQuarterStatus = useKallioStore((s) => s.getQuarterStatus);
   const t = useT();
 
   const isEdit = !!editTransaction;
@@ -60,6 +64,15 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
   const [error, setError] = useState("");
   const [categoryManuallySet, setCategoryManuallySet] = useState(isEdit);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+
+  // Pending impact confirmation for filed quarters
+  const [pendingImpact, setPendingImpact] = useState<{
+    quarterLabel: string;
+    year: number;
+    before: TaxSnapshot;
+    after: TaxSnapshot;
+    applyChanges: () => void;
+  } | null>(null);
 
   const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
     { value: "software_subscriptions", label: t.form.categories.software_subscriptions },
@@ -160,10 +173,13 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
     if (isNaN(parsed) || parsed <= 0) { setError(t.form.errorAmount); return; }
 
     const storedAmount = ivaRate > 0 && !amountIncludesVAT ? grossAmount : parsed;
+    const txDate = new Date(date).toISOString();
 
-    if (isEdit && editTransaction) {
+    // Build the actual update/add functions
+    const applyEdit = () => {
+      if (!editTransaction) return;
       updateTransaction(editTransaction.id, {
-        date: new Date(date).toISOString(),
+        date: txDate,
         description: description.trim(),
         merchant: merchant.trim() || undefined,
         amount: storedAmount,
@@ -173,9 +189,10 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
       });
-    } else {
+    };
+    const applyAdd = () => {
       addTransaction({
-        date: new Date(date).toISOString(),
+        date: txDate,
         description: description.trim(),
         merchant: merchant.trim() || undefined,
         amount: storedAmount,
@@ -185,12 +202,95 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
       });
+    };
+
+    // Check if the target quarter is filed
+    const { quarter: q, year: y } = quarterOf(txDate);
+    const status = getQuarterStatus(q, y);
+
+    if (status === "filed") {
+      // Compute before snapshot
+      const before = calculateTaxSnapshot(transactions, profile, q, y);
+
+      // Compute after snapshot (in-memory simulation)
+      let simTxs: Transaction[];
+      if (isEdit && editTransaction) {
+        simTxs = transactions.map((tx) =>
+          tx.id === editTransaction.id
+            ? {
+                ...tx,
+                date: txDate,
+                amount: storedAmount,
+                type,
+                ivaRate,
+                category,
+                isDeductible: type === "income" ? false : isDeductible,
+              }
+            : tx
+        );
+      } else {
+        const fakeTx: Transaction = {
+          id: "__pending__",
+          date: txDate,
+          description: description.trim(),
+          merchant: merchant.trim() || undefined,
+          amount: storedAmount,
+          type,
+          ivaRate,
+          category,
+          isDeductible: type === "income" ? false : isDeductible,
+          confidence: "high",
+          deductionPromptShown: false,
+          deductionPromptAnswered: false,
+        };
+        simTxs = [fakeTx, ...transactions];
+      }
+      const after = calculateTaxSnapshot(simTxs, profile, q, y);
+
+      const quarterLabels = ["1T", "2T", "3T", "4T"];
+      setPendingImpact({
+        quarterLabel: quarterLabels[q - 1],
+        year: y,
+        before,
+        after,
+        applyChanges: () => {
+          if (isEdit && editTransaction) applyEdit();
+          else applyAdd();
+          onClose();
+        },
+      });
+      return;
     }
 
+    // Open or past_not_filed: save normally
+    if (isEdit && editTransaction) applyEdit();
+    else applyAdd();
     onClose();
   };
 
+  // Quarter context for the selected date
+  const selectedDate = date ? new Date(date) : null;
+  const selectedQY = selectedDate ? quarterOf(selectedDate) : null;
+  const selectedQuarterStatus = selectedQY
+    ? getQuarterStatus(selectedQY.quarter, selectedQY.year)
+    : "open";
+  const quarterLabels = ["1T", "2T", "3T", "4T"];
+  const selectedQuarterLabel = selectedQY
+    ? `${quarterLabels[selectedQY.quarter - 1]} ${selectedQY.year}`
+    : "";
+
   return (
+    <>
+    {pendingImpact && (
+      <QuarterImpactModal
+        quarterLabel={pendingImpact.quarterLabel}
+        year={pendingImpact.year}
+        before={pendingImpact.before}
+        after={pendingImpact.after}
+        onConfirm={pendingImpact.applyChanges}
+        onCancel={() => setPendingImpact(null)}
+      />
+    )}
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col">
         {/* Header — pinned */}
@@ -209,8 +309,28 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         {/* Scrollable fields */}
         <div className="flex-1 overflow-y-auto">
         <form id="transaction-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {/* Past quarter warning */}
-          {isEdit && isPastQuarter && (
+          {/* Quarter context banner */}
+          {selectedQY && selectedQuarterStatus !== "open" && (
+            <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-xs ${
+              selectedQuarterStatus === "filed"
+                ? "bg-red-50 border-red-200 text-red-800"
+                : "bg-amber-50 border-amber-200 text-amber-800"
+            }`}>
+              <span>
+                {selectedQuarterStatus === "filed"
+                  ? `🔒 ${t.pastQuarter.impactSubtitle
+                      .replace("{label}", quarterLabels[(selectedQY.quarter - 1)])
+                      .replace("{year}", String(selectedQY.year))}`
+                  : `📅 ${t.pastQuarter.pastNotFiledBanner
+                      .replace("{label}", quarterLabels[(selectedQY.quarter - 1)])
+                      .replace("{year}", String(selectedQY.year))}`
+                }
+              </span>
+            </div>
+          )}
+
+          {/* Past quarter edit warning (legacy) */}
+          {isEdit && isPastQuarter && selectedQuarterStatus === "open" && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
               <span className="text-xs text-amber-800">{t.form.pastQuarterWarning}</span>
             </div>
@@ -514,5 +634,6 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         </div>
       </div>
     </div>
+    </>
   );
 }
