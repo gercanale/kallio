@@ -40,6 +40,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: false,
     deductionPromptShown: false,
     deductionPromptAnswered: false,
+    reviewed: false,
   },
   {
     id: "t2",
@@ -54,6 +55,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: true,
     deductionPromptShown: false,
     deductionPromptAnswered: true,
+    reviewed: false,
   },
   {
     id: "t3",
@@ -68,6 +70,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: true,
     deductionPromptShown: false,
     deductionPromptAnswered: true,
+    reviewed: false,
   },
   {
     id: "t4",
@@ -82,6 +85,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: false,
     deductionPromptShown: false,
     deductionPromptAnswered: false,
+    reviewed: false,
   },
   {
     id: "t5",
@@ -96,6 +100,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: false,
     deductionPromptShown: true,
     deductionPromptAnswered: false,
+    reviewed: false,
   },
   {
     id: "t6",
@@ -110,6 +115,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: true,
     deductionPromptShown: false,
     deductionPromptAnswered: true,
+    reviewed: false,
   },
   {
     id: "t7",
@@ -124,6 +130,7 @@ const DEMO_TRANSACTIONS: Transaction[] = [
     isDeductible: false,
     deductionPromptShown: true,
     deductionPromptAnswered: false,
+    reviewed: false,
   },
 ];
 
@@ -172,6 +179,8 @@ interface KallioState {
   addTransaction: (tx: Omit<Transaction, "id" | "confidence" | "deductionPromptShown" | "deductionPromptAnswered"> & { category?: Transaction["category"] }) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
+  duplicateTransaction: (id: string) => void;
+  markReviewed: (id: string, reviewed: boolean) => void;
   importTransactions: (txs: (Omit<Transaction, "id" | "confidence" | "deductionPromptShown" | "deductionPromptAnswered"> & { category?: Transaction["category"] })[]) => void;
 
   // Actions – deductions
@@ -304,6 +313,7 @@ export const useKallioStore = create<KallioState>()(
           isDeductible: rawTx.isDeductible ?? (category !== "personal" && category !== "unclear"),
           deductionPromptShown: false,
           deductionPromptAnswered: false,
+          reviewed: false,
         };
 
         const profile = get().profile;
@@ -380,6 +390,27 @@ export const useKallioStore = create<KallioState>()(
           if (error) console.error("Transaction delete failed:", error);
         });
       },
+
+      duplicateTransaction: (id) => {
+        const tx = get().transactions.find((t) => t.id === id);
+        if (!tx) return;
+        const newTx: Transaction = {
+          ...tx,
+          id: generateId(),
+          date: new Date().toISOString(),
+          reviewed: false,
+          deductionPromptShown: false,
+          deductionPromptAnswered: false,
+        };
+        set((s) => ({ transactions: [newTx, ...s.transactions] }));
+      },
+
+      markReviewed: (id, reviewed) =>
+        set((s) => ({
+          transactions: s.transactions.map((t) =>
+            t.id === id ? { ...t, reviewed } : t
+          ),
+        })),
 
       importTransactions: (rawTxs) => {
         const profile = get().profile;

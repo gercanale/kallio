@@ -38,6 +38,9 @@ export interface Transaction {
   deductionPromptShown: boolean;
   deductionPromptAnswered: boolean;
   notes?: string;
+  reviewed?: boolean;
+  attachmentName?: string;
+  attachmentData?: string;   // base64 data URL, capped at 1 MB in UI
 }
 
 export type FiscalRegime =

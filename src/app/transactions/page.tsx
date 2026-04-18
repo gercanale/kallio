@@ -5,20 +5,20 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
   Plus,
-  Trash2,
-  Pencil,
   ArrowUpRight,
   ArrowDownLeft,
   Filter,
   TrendingUp,
   TrendingDown,
   Sparkles,
+  MoreHorizontal,
 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
+import { TransactionActions } from "@/components/TransactionActions";
 import { formatCurrency, formatDate } from "@/lib/tax-engine";
 import type { Transaction, TransactionType } from "@/lib/types";
 
@@ -42,14 +42,13 @@ export default function TransactionsPage() {
   const profile = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const transactions = useKallioStore((s) => s.transactions);
-  const deleteTransaction = useKallioStore((s) => s.deleteTransaction);
   const t = useT();
 
   const [showForm, setShowForm] = useState(false);
   const [defaultType, setDefaultType] = useState<TransactionType>("expense");
-  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [actionsFor, setActionsFor] = useState<Transaction | null>(null);
+  const [editFor, setEditFor] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -184,8 +183,7 @@ export default function TransactionsPage() {
               <TransactionRow
                 key={tx.id}
                 tx={tx}
-                onDelete={() => setDeleteConfirm(tx.id)}
-                onEdit={() => setEditingTx(tx)}
+                onActions={() => setActionsFor(tx)}
                 categoryLabels={t.transactions.categories}
                 vatLabel={t.transactions.vatLabel}
                 deductibleBadge={t.transactions.deductibleBadge}
@@ -196,31 +194,22 @@ export default function TransactionsPage() {
         )}
       </main>
 
-      {/* Delete confirmation */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">{t.transactions.deleteTitle}</h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm mb-5">{t.transactions.deleteBody}</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={() => {
-                  deleteTransaction(deleteConfirm);
-                  setDeleteConfirm(null);
-                }}
-                className="py-2.5 bg-red-600 hover:bg-red-700 rounded-xl text-sm font-medium text-white transition-colors"
-              >
-                {t.common.delete}
-              </button>
-            </div>
-          </div>
-        </div>
+      {actionsFor && (
+        <TransactionActions
+          tx={actionsFor}
+          onClose={() => setActionsFor(null)}
+          onEdit={() => {
+            setEditFor(actionsFor);
+            setActionsFor(null);
+          }}
+        />
+      )}
+
+      {editFor && (
+        <TransactionForm
+          onClose={() => setEditFor(null)}
+          editTransaction={editFor}
+        />
       )}
 
       {showForm && (
@@ -229,29 +218,20 @@ export default function TransactionsPage() {
           defaultType={defaultType}
         />
       )}
-
-      {editingTx && (
-        <TransactionForm
-          onClose={() => setEditingTx(null)}
-          transaction={editingTx}
-        />
-      )}
     </div>
   );
 }
 
 function TransactionRow({
   tx,
-  onDelete,
-  onEdit,
+  onActions,
   categoryLabels,
   vatLabel,
   deductibleBadge,
   pendingBadge,
 }: {
   tx: Transaction;
-  onDelete: () => void;
-  onEdit: () => void;
+  onActions: () => void;
   categoryLabels: Record<string, string>;
   vatLabel: string;
   deductibleBadge: string;
@@ -296,6 +276,11 @@ function TransactionRow({
               {pendingBadge}
             </span>
           )}
+          {tx.reviewed && (
+            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-emerald-50 text-emerald-700 flex-shrink-0">
+              ✓ Revisado
+            </span>
+          )}
         </div>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(tx.date)}</p>
       </div>
@@ -308,16 +293,10 @@ function TransactionRow({
       </div>
 
       <button
-        onClick={onEdit}
+        onClick={onActions}
         className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors group flex-shrink-0"
       >
-        <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
-      </button>
-      <button
-        onClick={onDelete}
-        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors group flex-shrink-0"
-      >
-        <Trash2 className="w-3.5 h-3.5 text-slate-300 group-hover:text-red-600 transition-colors" />
+        <MoreHorizontal className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
       </button>
     </div>
   );

@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Plus, Pencil, Sparkles } from "lucide-react";
+import { X, Plus, Sparkles } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain } from "@/lib/tax-engine";
+import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter } from "@/lib/tax-engine";
 import type { IVARate, TransactionType, ExpenseCategory, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
   onClose: () => void;
   defaultType?: TransactionType;
-  transaction?: Transaction;
+  editTransaction?: Transaction;
 }
 
 const CATEGORY_DEDUCTIBILITY: Record<ExpenseCategory, { type: "full" | "partial" | "none" | "unclear"; rate?: number }> = {
@@ -40,24 +40,26 @@ const PARTIAL_RATES: Record<ExpenseCategory, number> = {
   other_deductible: 1, personal: 0, unclear: 1,
 };
 
-export function TransactionForm({ onClose, defaultType = "expense", transaction }: TransactionFormProps) {
+export function TransactionForm({ onClose, defaultType = "expense", editTransaction }: TransactionFormProps) {
   const addTransaction = useKallioStore((s) => s.addTransaction);
   const updateTransaction = useKallioStore((s) => s.updateTransaction);
   const t = useT();
-  const isEditing = !!transaction;
 
-  const [type, setType] = useState<TransactionType>(transaction?.type ?? defaultType);
-  const [description, setDescription] = useState(transaction?.description ?? "");
-  const [merchant, setMerchant] = useState(transaction?.merchant ?? "");
-  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
-  const [date, setDate] = useState(transaction ? transaction.date.split("T")[0] : todayInSpain());
-  const [ivaRate, setIvaRate] = useState<IVARate>(transaction?.ivaRate ?? 21);
+  const isEdit = !!editTransaction;
+
+  const [type, setType] = useState<TransactionType>(editTransaction?.type ?? defaultType);
+  const [description, setDescription] = useState(editTransaction?.description ?? "");
+  const [merchant, setMerchant] = useState(editTransaction?.merchant ?? "");
+  const [amount, setAmount] = useState(editTransaction ? String(editTransaction.amount) : "");
+  const [date, setDate] = useState(editTransaction ? editTransaction.date.split("T")[0] : todayInSpain());
+  const [ivaRate, setIvaRate] = useState<IVARate>(editTransaction?.ivaRate ?? 21);
   const [amountIncludesVAT, setAmountIncludesVAT] = useState(true);
-  const [category, setCategory] = useState<ExpenseCategory>(transaction?.category ?? "unclear");
-  const [isDeductible, setIsDeductible] = useState(transaction?.isDeductible ?? true);
+  const [category, setCategory] = useState<ExpenseCategory>(editTransaction?.category ?? "unclear");
+  const [isDeductible, setIsDeductible] = useState(editTransaction?.isDeductible ?? true);
+  const [notes, setNotes] = useState(editTransaction?.notes ?? "");
   const [error, setError] = useState("");
-  const [categoryManuallySet, setCategoryManuallySet] = useState(isEditing);
-  const [suggestionDismissed, setSuggestionDismissed] = useState(isEditing);
+  const [categoryManuallySet, setCategoryManuallySet] = useState(isEdit);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
 
   const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
     { value: "software_subscriptions", label: t.form.categories.software_subscriptions },
@@ -78,11 +80,24 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
     { value: "unclear", label: t.form.categories.unclear },
   ];
 
-  // Reset manual flag and suggestion when type changes
+  // Reset manual flag and suggestion when type changes (only for new transactions)
   useEffect(() => {
-    setCategoryManuallySet(false);
-    setSuggestionDismissed(false);
-  }, [type]);
+    if (!isEdit) {
+      setCategoryManuallySet(false);
+      setSuggestionDismissed(false);
+    }
+  }, [type, isEdit]);
+
+  // Past quarter warning for edit mode
+  const isPastQuarter = useMemo(() => {
+    if (!editTransaction) return false;
+    const txDate = new Date(editTransaction.date);
+    const txYear = txDate.getFullYear();
+    const txQuarter = currentQuarter(txDate);
+    const nowYear = new Date().getFullYear();
+    const nowQuarter = currentQuarter();
+    return txYear < nowYear || (txYear === nowYear && txQuarter < nowQuarter);
+  }, [editTransaction]);
 
   // Live auto-suggest
   const suggestion = useMemo(() => {
@@ -146,8 +161,8 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
 
     const storedAmount = ivaRate > 0 && !amountIncludesVAT ? grossAmount : parsed;
 
-    if (isEditing) {
-      updateTransaction(transaction.id, {
+    if (isEdit && editTransaction) {
+      updateTransaction(editTransaction.id, {
         date: new Date(date).toISOString(),
         description: description.trim(),
         merchant: merchant.trim() || undefined,
@@ -156,6 +171,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
         ivaRate,
         category,
         isDeductible: type === "income" ? false : isDeductible,
+        notes: notes.trim() || undefined,
       });
     } else {
       addTransaction({
@@ -167,6 +183,7 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
         ivaRate,
         category,
         isDeductible: type === "income" ? false : isDeductible,
+        notes: notes.trim() || undefined,
       });
     }
 
@@ -178,7 +195,9 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-semibold text-slate-900">{isEditing ? "Editar movimiento" : t.form.title}</h2>
+          <h2 className="font-semibold text-slate-900">
+            {isEdit ? t.form.editTitle : t.form.title}
+          </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
@@ -188,6 +207,13 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Past quarter warning */}
+          {isEdit && isPastQuarter && (
+            <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+              <span className="text-xs text-amber-800">{t.form.pastQuarterWarning}</span>
+            </div>
+          )}
+
           {/* Type toggle */}
           <div>
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
@@ -443,15 +469,29 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
             </div>
           </div>
 
-          {/* Live fiscal impact preview — always rendered; invisible when not applicable */}
-          <div className={fiscalImpact !== null && fiscalImpact > 0 ? "" : "invisible"}>
+          {/* Notes */}
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              {t.form.notesLabel}
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={t.form.notesPlaceholder}
+              rows={2}
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 resize-none"
+            />
+          </div>
+
+          {/* Live fiscal impact preview */}
+          {fiscalImpact !== null && fiscalImpact > 0 && (
             <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
               <span className="text-xs text-emerald-800">
                 {t.form.impactLabel}{" "}
-                <span className="font-semibold">{formatCurrency(fiscalImpact ?? 0)}</span>
+                <span className="font-semibold">{formatCurrency(fiscalImpact)}</span>
               </span>
             </div>
-          </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
@@ -462,8 +502,8 @@ export function TransactionForm({ onClose, defaultType = "expense", transaction 
             type="submit"
             className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl font-medium transition-all"
           >
-            {isEditing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {isEditing ? "Guardar cambios" : t.form.submitButton}
+            <Plus className="w-4 h-4" />
+            {isEdit ? t.form.saveButton : t.form.submitButton}
           </button>
         </form>
       </div>
