@@ -190,6 +190,7 @@ export const translations = {
       deleteConfirmBody: "Esta acción no se puede deshacer.",
       fileTooLarge: "El archivo es demasiado grande. Máximo 1 MB.",
       duplicated: "Movimiento duplicado",
+      explain: "¿Por qué?",
     },
     meter: {
       subtitle: "Así está tu dinero. Sin sorpresas.",
@@ -628,6 +629,7 @@ export const translations = {
       deleteConfirmBody: "This action cannot be undone.",
       fileTooLarge: "File too large. Maximum 1 MB.",
       duplicated: "Transaction duplicated",
+      explain: "Why?",
     },
     meter: {
       subtitle: "Your money, clearly. No surprises.",
@@ -1065,6 +1067,7 @@ export const translations = {
       deleteConfirmBody: "Questa azione non può essere annullata.",
       fileTooLarge: "File troppo grande. Massimo 1 MB.",
       duplicated: "Movimento duplicato",
+      explain: "Perché?",
     },
     meter: {
       subtitle: "I tuoi soldi, chiari. Niente sorprese.",
@@ -1498,6 +1501,7 @@ export const translations = {
       deleteConfirmBody: "Diese Aktion kann nicht rückgängig gemacht werden.",
       fileTooLarge: "Datei zu groß. Maximal 1 MB.",
       duplicated: "Transaktion dupliziert",
+      explain: "Warum?",
     },
     meter: {
       subtitle: "Dein Geld, klar. Keine Überraschungen.",
@@ -1931,6 +1935,7 @@ export const translations = {
       deleteConfirmBody: "Cette action ne peut pas être annulée.",
       fileTooLarge: "Fichier trop volumineux. Maximum 1 Mo.",
       duplicated: "Transaction dupliquée",
+      explain: "Pourquoi ?",
     },
     meter: {
       subtitle: "Votre argent, clairement. Sans surprises.",
