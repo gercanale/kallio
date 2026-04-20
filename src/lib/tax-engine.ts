@@ -25,8 +25,8 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-/** Modelo 130: 20% of net income (estimación directa simplificada) */
-const IRPF_ADVANCE_RATE = 0.2;
+/** Modelo 130: default 20% advance rate (estimación directa simplificada) */
+const IRPF_ADVANCE_RATE_DEFAULT = 0.2;
 
 /** Deduction cap for "comidas de trabajo" per year (AEAT criterion) */
 const MEALS_ANNUAL_CAP = 2000;
@@ -318,17 +318,19 @@ export function calculateTaxSnapshot(
     ? netIncome * profile.irpfRetentionRate
     : 0;
 
-  // Advance payment = 20% of net income – already retained
+  const advanceRate = profile.irpfAdvanceRate ?? IRPF_ADVANCE_RATE_DEFAULT;
+
+  // Advance payment = advanceRate% of net income – already retained
   const irpfAdvancePayable = Math.max(
     0,
-    netTaxableIncome * IRPF_ADVANCE_RATE - irpfAlreadyRetained
+    netTaxableIncome * advanceRate - irpfAlreadyRetained
   );
 
   // ── IVA (Modelo 303) ──────────────────────────────────────────────────────
   const ivaPayable = Math.max(0, ivaCollected - ivaDeductible);
 
   // ── Savings from deductions ───────────────────────────────────────────────
-  const totalSavedByDeductions = deductibleExpenses * IRPF_ADVANCE_RATE + ivaDeductible;
+  const totalSavedByDeductions = deductibleExpenses * advanceRate + ivaDeductible;
 
   // ── Reserve & spendable ───────────────────────────────────────────────────
   const totalTaxReserve = ivaPayable + irpfAdvancePayable;
@@ -372,8 +374,8 @@ export function calculateTaxSnapshot(
   // Full IRPF bill at year-end (bracket calculation)
   const estimatedAnnualIRPF = calculateAnnualIRPF(projectedAnnualNetIncome);
 
-  // What's already been paid via Modelo 130 (20% of YTD net after GDJ)
-  const irpfPaidViaAdvances = Math.max(0, ytdNetIncome * IRPF_ADVANCE_RATE);
+  // What's already been paid via Modelo 130
+  const irpfPaidViaAdvances = Math.max(0, ytdNetIncome * advanceRate);
 
   // Gap = what remains to pay at June declaration
   const yearEndIRPFGap = Math.max(0, estimatedAnnualIRPF - irpfPaidViaAdvances);
@@ -460,15 +462,16 @@ export function calculateYTDSnapshot(
   const irpfAlreadyRetained = profile.ivaRetention
     ? netIncome * profile.irpfRetentionRate
     : 0;
+  const ytdAdvanceRate = profile.irpfAdvanceRate ?? IRPF_ADVANCE_RATE_DEFAULT;
   const irpfAdvancePayable = Math.max(
-    0, netTaxableIncome * IRPF_ADVANCE_RATE - irpfAlreadyRetained
+    0, netTaxableIncome * ytdAdvanceRate - irpfAlreadyRetained
   );
 
   // ── IVA ───────────────────────────────────────────────────────────────────
   const ivaPayable = Math.max(0, ivaCollected - ivaDeductible);
 
   // ── Summary ───────────────────────────────────────────────────────────────
-  const totalSavedByDeductions = deductibleExpenses * IRPF_ADVANCE_RATE + ivaDeductible;
+  const totalSavedByDeductions = deductibleExpenses * ytdAdvanceRate + ivaDeductible;
   const totalTaxReserve = ivaPayable + irpfAdvancePayable;
   const trueSpendableBalance = netIncome - deductibleExpenses - totalTaxReserve;
 
@@ -477,7 +480,7 @@ export function calculateYTDSnapshot(
   const projectionFactor = currentMonth > 0 ? 12 / currentMonth : 1;
   const projectedAnnualNetIncome = Math.max(0, netTaxableIncome * projectionFactor);
   const estimatedAnnualIRPF = calculateAnnualIRPF(projectedAnnualNetIncome);
-  const irpfPaidViaAdvances = Math.max(0, netTaxableIncome * IRPF_ADVANCE_RATE);
+  const irpfPaidViaAdvances = Math.max(0, netTaxableIncome * ytdAdvanceRate);
   const yearEndIRPFGap = Math.max(0, estimatedAnnualIRPF - irpfPaidViaAdvances);
   const effRate = effectiveIRPFRate(projectedAnnualNetIncome);
 

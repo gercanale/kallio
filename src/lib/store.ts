@@ -143,6 +143,7 @@ const DEFAULT_PROFILE: UserProfile = {
   activityType: "",
   ivaRetention: false,
   irpfRetentionRate: 0.15,
+  irpfAdvanceRate: undefined,
   onboardingComplete: false,
 };
 
@@ -177,6 +178,7 @@ interface KallioState {
   // Actions – profile
   setProfile: (profile: Partial<UserProfile>) => void;
   updateName: (name: string) => Promise<void>;
+  updateIrpfAdvanceRate: (rate: number | undefined) => Promise<void>;
   completeOnboarding: (profile: UserProfile) => Promise<void>;
 
   // Actions – transactions
@@ -248,6 +250,7 @@ export const useKallioStore = create<KallioState>()(
               activityType: profileRow.activity_type,
               ivaRetention: profileRow.iva_retention,
               irpfRetentionRate: profileRow.irpf_retention_rate,
+              irpfAdvanceRate: profileRow.irpf_advance_rate ?? undefined,
               onboardingComplete: profileRow.onboarding_complete,
             },
             transactions: (txRows ?? []).map((r: any) => ({
@@ -294,6 +297,14 @@ export const useKallioStore = create<KallioState>()(
         await supabase.from("profiles").update({ name }).eq("id", user.id);
       },
 
+      updateIrpfAdvanceRate: async (rate) => {
+        set((s) => ({ profile: { ...s.profile, irpfAdvanceRate: rate } }));
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from("profiles").update({ irpf_advance_rate: rate ?? null }).eq("id", user.id);
+      },
+
       completeOnboarding: async (profile) => {
         const fullProfile = { ...profile, onboardingComplete: true };
         set({ profile: fullProfile });
@@ -304,6 +315,7 @@ export const useKallioStore = create<KallioState>()(
           id: user.id, name: fullProfile.name, nif: fullProfile.nif ?? null,
           fiscal_regime: fullProfile.fiscalRegime, activity_type: fullProfile.activityType,
           iva_retention: fullProfile.ivaRetention, irpf_retention_rate: fullProfile.irpfRetentionRate,
+          irpf_advance_rate: fullProfile.irpfAdvanceRate ?? null,
           onboarding_complete: true,
         });
       },

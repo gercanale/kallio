@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Sparkles, Tag } from "lucide-react";
 import { useT } from "@/lib/useT";
 import { formatCurrency, getCategoryDeductibilityPct, ivaAmount, netFromGross } from "@/lib/tax-engine";
+import { TaxTooltip } from "@/components/TaxTooltip";
 import type { Transaction, TaxSnapshot } from "@/lib/types";
 
 interface FinancialBreakdownProps {
@@ -52,18 +53,21 @@ function IncomeTab({ transactions, snapshot }: { transactions: Transaction[]; sn
           value={grossTotal}
           color="text-slate-900 dark:text-slate-100"
           icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-500" />}
+          tooltip="gross_income"
         />
         <StatCard
           label={tb.netNoVat}
           value={netTotal}
           color="text-emerald-600 dark:text-emerald-400"
           icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
+          tooltip="net_income"
         />
         <StatCard
           label={tb.vatCollected}
           value={vatTotal}
           color="text-amber-600 dark:text-amber-400"
           icon={<Sparkles className="w-3.5 h-3.5 text-amber-500" />}
+          tooltip="iva_collected"
         />
       </div>
 
@@ -162,6 +166,7 @@ function ExpensesTab({ transactions, snapshot }: { transactions: Transaction[]; 
           value={deductibleTotal}
           color="text-teal-700 dark:text-teal-400"
           icon={<Sparkles className="w-3.5 h-3.5 text-teal-500" />}
+          tooltip="deductible"
         />
         <StatCard
           label={tb.nonDeductible}
@@ -250,11 +255,13 @@ function StatCard({
   value,
   color,
   icon,
+  tooltip,
 }: {
   label: string;
   value: number;
   color: string;
   icon: React.ReactNode;
+  tooltip?: import("@/lib/tax-explanations").ConceptKey;
 }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
@@ -262,7 +269,9 @@ function StatCard({
       <p className={`text-sm font-bold tabular-nums leading-tight ${color}`}>
         {formatCurrency(value)}
       </p>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{label}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-tight flex items-center">
+        {label}{tooltip && <TaxTooltip concept={tooltip} />}
+      </p>
     </div>
   );
 }
