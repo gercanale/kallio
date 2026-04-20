@@ -55,8 +55,8 @@ export function Navigation() {
   const NAV_ITEMS = [
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
     { href: "/transactions", icon: ArrowLeftRight, label: t.nav.transactions },
-    { href: "/learn", icon: BookOpen, label: t.nav.learn },
     { href: "/settings", icon: Settings, label: t.nav.settings },
+    { href: "/learn", icon: BookOpen, label: t.nav.learn },
   ];
 
   const btnInactive = "text-slate-400 dark:text-slate-500";
