@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const signOut = useKallioStore((s) => s.signOut);
   const resetAll = useKallioStore((s) => s.resetAll);
   const updateName = useKallioStore((s) => s.updateName);
+  const updateIrpfAdvanceRate = useKallioStore((s) => s.updateIrpfAdvanceRate);
   const t = useT();
 
   const [editingName, setEditingName] = useState(false);
@@ -25,6 +26,10 @@ export default function SettingsPage() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const [editingIrpf, setEditingIrpf] = useState(false);
+  const [irpfRateValue, setIrpfRateValue] = useState<number | undefined>(undefined);
+  const [savingIrpf, setSavingIrpf] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -137,6 +142,87 @@ export default function SettingsPage() {
             />
             <SettingsRow label="NIF" value={profile.nif ?? "—"} />
           </div>
+        </div>
+
+        {/* IRPF Advance Rate */}
+        <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mb-4 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.settings.irpfAdvanceRateLabel}</p>
+            {!editingIrpf && (
+              <button
+                onClick={() => { setIrpfRateValue(profile.irpfAdvanceRate); setEditingIrpf(true); }}
+                className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+              >
+                {t.settings.irpfAdvanceRateEdit}
+              </button>
+            )}
+          </div>
+
+          {!editingIrpf ? (
+            <div className="px-5 py-3.5">
+              {profile.irpfAdvanceRate === undefined ? (
+                <p className="text-sm text-amber-600 dark:text-amber-400">{t.settings.irpfAdvanceRateNotSet}</p>
+              ) : (
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{(profile.irpfAdvanceRate * 100).toFixed(0)}%</p>
+              )}
+            </div>
+          ) : (
+            <div className="px-5 py-4 space-y-2">
+              {[
+                { rate: 0.2, label: "20%" },
+                { rate: 0.25, label: "25%" },
+                { rate: 0.3, label: "30%" },
+              ].map(({ rate, label }) => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => setIrpfRateValue(rate)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                    irpfRateValue === rate
+                      ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300"
+                      : "border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  {label}
+                  {irpfRateValue === rate && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setIrpfRateValue(undefined)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                  irpfRateValue === undefined
+                    ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300"
+                    : "border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                }`}
+              >
+                {t.settings.irpfAdvanceRateNotSet}
+                {irpfRateValue === undefined && <Check className="w-4 h-4" />}
+              </button>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={async () => {
+                    setSavingIrpf(true);
+                    await updateIrpfAdvanceRate(irpfRateValue);
+                    setSavingIrpf(false);
+                    setEditingIrpf(false);
+                  }}
+                  disabled={savingIrpf}
+                  className="flex-1 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                >
+                  {t.settings.irpfAdvanceRateSave}
+                </button>
+                <button
+                  onClick={() => setEditingIrpf(false)}
+                  disabled={savingIrpf}
+                  className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t.settings.irpfAdvanceRateCancel}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Session / account actions — solo mobile, desktop usa sidebar */}

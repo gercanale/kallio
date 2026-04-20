@@ -55,6 +55,7 @@ export interface UserProfile {
   activityType: string;         // e.g. "Programador / Consultor IT"
   ivaRetention: boolean;        // ¿retención IRPF en facturas? (15% or 7%)
   irpfRetentionRate: number;    // 0.07 or 0.15
+  irpfAdvanceRate?: number;     // Modelo 130 provision rate; undefined = "define later" (defaults to 0.20)
   onboardingComplete: boolean;
 }
 
