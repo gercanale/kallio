@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { ChevronDown, ChevronUp, Info, TrendingUp, Shield, Wallet } from "lucide-react";
-import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { calculateTaxSnapshot, formatCurrency, currentQuarter, nowInSpain } from "@/lib/tax-engine";
+import { formatCurrency } from "@/lib/tax-engine";
+import type { TaxSnapshot } from "@/lib/types";
 
-export function TaxReserveMeter() {
+interface TaxReserveMeterProps {
+  snapshot: TaxSnapshot;
+  periodLabel: string;      // e.g. "2T 2026", "Año 2026"
+  showGapBanner?: boolean;  // hide in YTD (it's redundant there)
+}
+
+export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = true }: TaxReserveMeterProps) {
   const [expanded, setExpanded] = useState<null | "gross" | "reserve" | "spendable">(null);
-  const transactions = useKallioStore((s) => s.transactions);
-  const profile = useKallioStore((s) => s.profile);
-  const language = useKallioStore((s) => s.language);
   const t = useT();
-  const snap = useMemo(
-    () => calculateTaxSnapshot(transactions, profile, currentQuarter(nowInSpain()), nowInSpain().getFullYear()),
-    [transactions, profile]
-  );
 
   const toggle = (key: "gross" | "reserve" | "spendable") =>
     setExpanded((prev) => (prev === key ? null : key));
@@ -34,7 +33,7 @@ export function TaxReserveMeter() {
         <div className="flex items-center gap-2 mb-1">
           <Shield className="w-4 h-4 text-teal-200" />
           <span className="text-teal-200 text-xs font-medium uppercase tracking-wider">
-            {t.meter.reserveLabel} – {snap.quarterLabel}
+            {t.meter.reserveLabel} – {periodLabel}
           </span>
         </div>
         <p className="text-white/70 text-sm">
@@ -127,7 +126,7 @@ export function TaxReserveMeter() {
       </div>
 
       {/* Year-end IRPF gap banner */}
-      {snap.yearEndIRPFGap > 0 && (
+      {showGapBanner && snap.yearEndIRPFGap > 0 && (
         <div className="border-t border-slate-100 dark:border-slate-700 px-6 py-4 bg-amber-50 dark:bg-amber-950/30">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
