@@ -196,9 +196,19 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
                 <Row label={t.meter.irpfAdvance} value={snap.irpfAdvancePayable} />
                 <p className="text-xs text-slate-400 pl-2">
                   20% × {formatCurrency(snap.netTaxableIncome)}
+                  {snap.gjdDeduction > 0 && (
+                    <span className="ml-1 text-teal-600 dark:text-teal-400">
+                      ({t.meter.gjdApplied}: −{formatCurrency(snap.gjdDeduction)})
+                    </span>
+                  )}
                 </p>
                 <RowTotal label={t.meter.totalFiscalReserve} value={snap.totalTaxReserve} highlight />
               </div>
+              {snap.gjdDeduction > 0 && (
+                <p className="text-xs text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 rounded-lg px-3 py-2 border border-teal-100 dark:border-teal-800">
+                  {t.meter.gjdNote.replace("{{amount}}", formatCurrency(snap.gjdDeduction))}
+                </p>
+              )}
             </div>
           )}
 

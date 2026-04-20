@@ -34,6 +34,14 @@ const MEALS_ANNUAL_CAP = 2000;
 /** Hard maximum deduction for home office (% of home costs attributable) */
 const HOME_OFFICE_DEDUCTION_PCT = 0.3;
 
+/**
+ * Estimación Directa Simplificada – Art. 30.2.4ª Ley IRPF:
+ * "Gastos de difícil justificación": 5% of net profit before this deduction,
+ * capped at €2,000 per year. Replaces the need to justify minor expenses.
+ */
+const GDJ_RATE = 0.05;
+const GDJ_ANNUAL_CAP = 2000;
+
 // ─── Category deductibility rules ────────────────────────────────────────────
 
 interface CategoryRule {
@@ -292,8 +300,18 @@ export function calculateTaxSnapshot(
   }, 0);
 
   // ── IRPF (Modelo 130) ─────────────────────────────────────────────────────
-  // Rendimiento neto = net income – deductible expenses
-  const netTaxableIncome = Math.max(0, netIncome - deductibleExpenses);
+  // Rendimiento neto previo = net income – deductible expenses (before GDJ)
+  const netTaxableIncomePrior = Math.max(0, netIncome - deductibleExpenses);
+
+  // Gastos de difícil justificación (Art. 30.2.4ª Ley IRPF – EDS only):
+  // 5% of prior net income, capped at €2,000/year.
+  // This replaces having to justify small/miscellaneous expenses.
+  const gjdDeduction = profile.fiscalRegime === "estimacion_directa_simplificada"
+    ? Math.min(netTaxableIncomePrior * GDJ_RATE, GDJ_ANNUAL_CAP)
+    : 0;
+
+  // Rendimiento neto final = after GDJ deduction
+  const netTaxableIncome = Math.max(0, netTaxableIncomePrior - gjdDeduction);
 
   // Prior IRPF withheld by clients (retention already applied)
   const irpfAlreadyRetained = profile.ivaRetention
@@ -338,7 +356,13 @@ export function calculateTaxSnapshot(
     return s + netFromGross(t.amount, t.ivaRate) * pct;
   }, 0);
 
-  const ytdNetIncome = ytdGrossIncome - ytdIvaCollected - ytdDeductibleExpenses;
+  const ytdNetIncomePrior = ytdGrossIncome - ytdIvaCollected - ytdDeductibleExpenses;
+
+  // Apply GDJ to YTD net for more accurate advance-payment tracking
+  const ytdGjd = profile.fiscalRegime === "estimacion_directa_simplificada"
+    ? Math.min(Math.max(0, ytdNetIncomePrior) * GDJ_RATE, GDJ_ANNUAL_CAP)
+    : 0;
+  const ytdNetIncome = Math.max(0, ytdNetIncomePrior - ytdGjd);
 
   // Project to full year based on months elapsed
   const currentMonth = nowInSpain().getMonth() + 1; // 1-12
@@ -348,7 +372,7 @@ export function calculateTaxSnapshot(
   // Full IRPF bill at year-end (bracket calculation)
   const estimatedAnnualIRPF = calculateAnnualIRPF(projectedAnnualNetIncome);
 
-  // What's already been paid via Modelo 130 (20% of YTD net)
+  // What's already been paid via Modelo 130 (20% of YTD net after GDJ)
   const irpfPaidViaAdvances = Math.max(0, ytdNetIncome * IRPF_ADVANCE_RATE);
 
   // Gap = what remains to pay at June declaration
@@ -360,6 +384,7 @@ export function calculateTaxSnapshot(
     quarterLabel: `${quarter}T ${year}`,
     grossIncome,
     deductibleExpenses,
+    gjdDeduction,
     netTaxableIncome,
     ivaCollected,
     ivaDeductible,
@@ -421,7 +446,17 @@ export function calculateYTDSnapshot(
   }, 0);
 
   // ── IRPF (cumulative YTD) ─────────────────────────────────────────────────
-  const netTaxableIncome = Math.max(0, netIncome - deductibleExpenses);
+  // Rendimiento neto previo (before GDJ)
+  const netTaxableIncomePrior = Math.max(0, netIncome - deductibleExpenses);
+
+  // Gastos de difícil justificación (5%, annual cap €2,000 – EDS only)
+  // In YTD view the annual cap applies correctly across all quarters.
+  const gjdDeduction = profile.fiscalRegime === "estimacion_directa_simplificada"
+    ? Math.min(netTaxableIncomePrior * GDJ_RATE, GDJ_ANNUAL_CAP)
+    : 0;
+
+  const netTaxableIncome = Math.max(0, netTaxableIncomePrior - gjdDeduction);
+
   const irpfAlreadyRetained = profile.ivaRetention
     ? netIncome * profile.irpfRetentionRate
     : 0;
@@ -450,6 +485,7 @@ export function calculateYTDSnapshot(
     quarterLabel: `${year}`,      // caller adds "Año" label in UI
     grossIncome,
     deductibleExpenses,
+    gjdDeduction,
     netTaxableIncome,
     ivaCollected,
     ivaDeductible,
