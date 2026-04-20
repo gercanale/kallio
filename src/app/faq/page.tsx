@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, FileText, Info } from "lucide-react";
+import { ChevronDown, FileText, Info, Settings2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
@@ -86,6 +86,22 @@ export default function FaqPage() {
           <div className="space-y-2">
             <Accordion title={tf.m303Title}>{tf.m303Body}</Accordion>
             <Accordion title={tf.m130Title}>{tf.m130Body}</Accordion>
+          </div>
+        </section>
+
+        {/* Onboarding choices section */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Settings2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {tf.onboardingSection}
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{tf.onboardingDesc}</p>
+          <div className="space-y-2">
+            <Accordion title={tf.regimeFaqTitle}>{tf.regimeFaqBody}</Accordion>
+            <Accordion title={tf.irpfRetentionFaqTitle}>{tf.irpfRetentionFaqBody}</Accordion>
+            <Accordion title={tf.irpfRateFaqTitle}>{tf.irpfRateFaqBody}</Accordion>
           </div>
         </section>
 
