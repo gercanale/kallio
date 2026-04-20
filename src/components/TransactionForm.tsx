@@ -61,6 +61,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
   const [category, setCategory] = useState<ExpenseCategory>(editTransaction?.category ?? "unclear");
   const [isDeductible, setIsDeductible] = useState(editTransaction?.isDeductible ?? true);
   const [notes, setNotes] = useState(editTransaction?.notes ?? "");
+  const [currency, setCurrency] = useState<string>(editTransaction?.currency ?? "EUR");
   const [error, setError] = useState("");
   const [categoryManuallySet, setCategoryManuallySet] = useState(isEdit);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
@@ -189,6 +190,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         category,
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
+        currency: currency !== "EUR" ? currency : undefined,
       });
     };
     const applyAdd = () => {
@@ -202,6 +204,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         category,
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
+        currency: currency !== "EUR" ? currency : undefined,
       });
     };
 
@@ -243,6 +246,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
           confidence: "high",
           deductionPromptShown: false,
           deductionPromptAnswered: false,
+          currency: currency !== "EUR" ? currency : undefined,
         };
         simTxs = [fakeTx, ...transactions];
       }
@@ -540,6 +544,45 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
                   {!amountIncludesVAT && (
                     <p className="text-xs text-slate-400 pt-0.5">{t.form.vatBreakdownNote}</p>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Currency selector — shown for expenses only */}
+          {type === "expense" && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                {t.form.currencyLabel}
+              </label>
+              <div className="flex gap-1.5 flex-wrap">
+                {["EUR", "USD", "GBP", "CHF"].map((cur) => (
+                  <button
+                    key={cur}
+                    type="button"
+                    onClick={() => setCurrency(cur)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                      currency === cur
+                        ? "border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
+                        : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                    }`}
+                  >
+                    {cur}
+                  </button>
+                ))}
+              </div>
+              {currency !== "EUR" && (
+                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                  <span className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                    💱 {t.form.currencyNote.replace("{{currency}}", currency)}
+                  </span>
+                </div>
+              )}
+              {currency !== "EUR" && category === "training_education" && ivaRate > 0 && (
+                <div className="mt-1.5 flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl">
+                  <span className="text-xs text-blue-800 dark:text-blue-300">
+                    {t.form.vatHintInternational}
+                  </span>
                 </div>
               )}
             </div>

@@ -151,6 +151,9 @@ export const translations = {
       submitButton: "Añadir movimiento",
       errorDescription: "Añade una descripción",
       errorAmount: "Importe no válido",
+      currencyLabel: "Divisa del gasto",
+      currencyNote: "Introduce el importe equivalente en euros. Kallio siempre guarda en EUR.",
+      vatHintInternational: "Los servicios de proveedores extranjeros suelen tener IVA 0% en España. Considera cambiarlo.",
       categories: {
         software_subscriptions: "Software / SaaS",
         hardware_equipment: "Hardware / Equipos",
@@ -216,6 +219,8 @@ export const translations = {
       irpfAnnualNet: "Ingreso neto anual est.",
       irpfAnnualTotal: "IRPF total estimado",
       irpfPaidMod130: "Pagado Mod. 130",
+      gjdApplied: "GDJ aplicado",
+      gjdNote: "Reducción por gastos de difícil justificación (5%, máx. €2.000/año – EDS): −{{amount}}",
     },
     countdown: {
       nextDeclaration: "Próxima declaración",
@@ -525,6 +530,9 @@ export const translations = {
       submitButton: "Add transaction",
       errorDescription: "Please add a description",
       errorAmount: "Invalid amount",
+      currencyLabel: "Expense currency",
+      currencyNote: "Enter the equivalent amount in euros. Kallio always stores in EUR.",
+      vatHintInternational: "Services from foreign providers are usually 0% VAT in Spain. Consider changing the rate.",
       categories: {
         software_subscriptions: "Software / SaaS",
         hardware_equipment: "Hardware / Equipment",
@@ -590,6 +598,8 @@ export const translations = {
       irpfAnnualNet: "Est. annual net income",
       irpfAnnualTotal: "Estimated total IRPF",
       irpfPaidMod130: "Paid via Mod. 130",
+      gjdApplied: "GDJ applied",
+      gjdNote: "Hard-to-justify expenses deduction (5%, max €2,000/yr – simplified direct assessment): −{{amount}}",
     },
     countdown: {
       nextDeclaration: "Next filing deadline",
@@ -898,6 +908,9 @@ export const translations = {
       submitButton: "Aggiungi movimento",
       errorDescription: "Aggiungi una descrizione",
       errorAmount: "Importo non valido",
+      currencyLabel: "Valuta della spesa",
+      currencyNote: "Inserisci l'importo equivalente in euro. Kallio salva sempre in EUR.",
+      vatHintInternational: "I servizi di fornitori esteri hanno di solito IVA 0% in Spagna. Considera di cambiare l'aliquota.",
       categories: {
         software_subscriptions: "Software / SaaS",
         hardware_equipment: "Hardware / Attrezzature",
@@ -963,6 +976,8 @@ export const translations = {
       irpfAnnualNet: "Reddito netto annuo est.",
       irpfAnnualTotal: "IRPF totale stimato",
       irpfPaidMod130: "Pagato con Mod. 130",
+      gjdApplied: "GDJ applicato",
+      gjdNote: "Deduzione per spese di difficile giustificazione (5%, max €2.000/anno – regime semplificato): −{{amount}}",
     },
     countdown: {
       nextDeclaration: "Prossima scadenza",
@@ -1267,6 +1282,9 @@ export const translations = {
       submitButton: "Transaktion hinzufügen",
       errorDescription: "Bitte füge eine Beschreibung hinzu",
       errorAmount: "Ungültiger Betrag",
+      currencyLabel: "Ausgabenwährung",
+      currencyNote: "Gib den entsprechenden Betrag in Euro ein. Kallio speichert immer in EUR.",
+      vatHintInternational: "Leistungen ausländischer Anbieter haben in Spanien normalerweise 0% MwSt. Erwäge, den Satz zu ändern.",
       categories: {
         software_subscriptions: "Software / SaaS",
         hardware_equipment: "Hardware / Geräte",
@@ -1332,6 +1350,8 @@ export const translations = {
       irpfAnnualNet: "Gesch. jährl. Nettoeinkommen",
       irpfAnnualTotal: "Geschätzter IRPF gesamt",
       irpfPaidMod130: "Über Mod. 130 gezahlt",
+      gjdApplied: "GDJ angewendet",
+      gjdNote: "Abzug für schwer zu rechtfertigende Ausgaben (5%, max. 2.000 €/Jahr – vereinfachte Direktschätzung): −{{amount}}",
     },
     countdown: {
       nextDeclaration: "Nächste Abgabefrist",
@@ -1636,6 +1656,9 @@ export const translations = {
       submitButton: "Ajouter la transaction",
       errorDescription: "Veuillez ajouter une description",
       errorAmount: "Montant invalide",
+      currencyLabel: "Devise de la dépense",
+      currencyNote: "Saisissez le montant équivalent en euros. Kallio enregistre toujours en EUR.",
+      vatHintInternational: "Les services de fournisseurs étrangers sont généralement à 0 % de TVA en Espagne. Pensez à modifier le taux.",
       categories: {
         software_subscriptions: "Logiciels / SaaS",
         hardware_equipment: "Matériel / Équipements",
@@ -1701,6 +1724,8 @@ export const translations = {
       irpfAnnualNet: "Revenu net annuel est.",
       irpfAnnualTotal: "IRPF total estimé",
       irpfPaidMod130: "Payé via Mod. 130",
+      gjdApplied: "GDJ appliqué",
+      gjdNote: "Déduction pour charges difficilement justifiables (5%, plafond 2 000 €/an – régime simplifié) : −{{amount}}",
     },
     countdown: {
       nextDeclaration: "Prochaine échéance",

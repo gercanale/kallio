@@ -29,7 +29,7 @@ export interface Transaction {
   date: string;               // ISO date string
   description: string;
   merchant?: string;
-  amount: number;             // Always positive
+  amount: number;             // Always positive, stored in EUR
   type: TransactionType;
   ivaRate: IVARate;
   category: ExpenseCategory;
@@ -41,6 +41,8 @@ export interface Transaction {
   reviewed?: boolean;
   attachmentName?: string;
   attachmentData?: string;   // base64 data URL, capped at 1 MB in UI
+  /** Original currency if the transaction was in a foreign currency (amount is always stored in EUR) */
+  currency?: string;
 }
 
 export type FiscalRegime =
@@ -71,6 +73,9 @@ export interface TaxSnapshot {
 
   // IRPF pago fraccionado (Modelo 130 – estimación directa simplificada)
   irpfAdvancePayable: number;   // 20% of net taxable income – prior payments
+
+  // GDJ – Gastos de Difícil Justificación (Estimación Directa Simplificada)
+  gjdDeduction: number;         // 5% of net taxable income, capped at €2,000/year
 
   // Summary
   totalTaxReserve: number;      // ivaPayable + irpfAdvancePayable
