@@ -607,7 +607,7 @@ export function formatDate(iso: string): string {
 }
 
 export function generateId(): string {
-  return Math.random().toString(36).slice(2, 11);
+  return crypto.randomUUID();
 }
 
 /** Estimate the IRPF marginal tax bracket for a given annual net income */
