@@ -217,6 +217,9 @@ export const translations = {
       irpfAnnualNet: "Ingreso neto anual est.",
       irpfAnnualTotal: "IRPF total estimado",
       irpfPaidMod130: "Pagado Mod. 130",
+      vatPayableTooltip: "Diferencia entre el IVA que cobraste a tus clientes y el que pagaste a proveedores este trimestre. Lo declaras con el Modelo 303.",
+      irpfAdvanceTooltip: "Pago a cuenta del IRPF anual, equivalente al 20% de tu beneficio neto del trimestre. Lo declaras con el Modelo 130.",
+      seeFaq: "Más info en FAQ →",
     },
     countdown: {
       nextDeclaration: "Próxima declaración",
@@ -626,6 +629,9 @@ export const translations = {
       irpfAnnualNet: "Est. annual net income",
       irpfAnnualTotal: "Estimated total IRPF",
       irpfPaidMod130: "Paid via Mod. 130",
+      vatPayableTooltip: "Difference between the VAT you charged clients and the VAT you paid to suppliers this quarter. Filed with Form 303.",
+      irpfAdvanceTooltip: "Advance payment on your annual income tax, equal to 20% of your net quarterly profit. Filed with Form 130.",
+      seeFaq: "More info in FAQ →",
     },
     countdown: {
       nextDeclaration: "Next filing deadline",
@@ -1034,6 +1040,9 @@ export const translations = {
       irpfAnnualNet: "Reddito netto annuo est.",
       irpfAnnualTotal: "IRPF totale stimato",
       irpfPaidMod130: "Pagato con Mod. 130",
+      vatPayableTooltip: "Differenza tra l'IVA che hai addebitato ai clienti e quella pagata ai fornitori nel trimestre. Si dichiara con il Modulo 303.",
+      irpfAdvanceTooltip: "Acconto sull'IRPF annuale, pari al 20% del tuo utile netto trimestrale. Si dichiara con il Modulo 130.",
+      seeFaq: "Più info nel FAQ →",
     },
     countdown: {
       nextDeclaration: "Prossima scadenza",
@@ -1438,6 +1447,9 @@ export const translations = {
       irpfAnnualNet: "Gesch. jährl. Nettoeinkommen",
       irpfAnnualTotal: "Geschätzter IRPF gesamt",
       irpfPaidMod130: "Über Mod. 130 gezahlt",
+      vatPayableTooltip: "Differenz zwischen der USt., die du Kunden berechnet hast, und der USt., die du an Lieferanten gezahlt hast. Wird mit Formular 303 erklärt.",
+      irpfAdvanceTooltip: "Vorauszahlung auf die jährliche Einkommensteuer, entspricht 20% deines vierteljährlichen Nettogewinns. Wird mit Formular 130 erklärt.",
+      seeFaq: "Mehr Infos im FAQ →",
     },
     countdown: {
       nextDeclaration: "Nächste Abgabefrist",
@@ -1842,6 +1854,9 @@ export const translations = {
       irpfAnnualNet: "Revenu net annuel est.",
       irpfAnnualTotal: "IRPF total estimé",
       irpfPaidMod130: "Payé via Mod. 130",
+      vatPayableTooltip: "Différence entre la TVA que vous avez facturée à vos clients et celle payée à vos fournisseurs ce trimestre. Déclarée avec le formulaire 303.",
+      irpfAdvanceTooltip: "Acompte sur l'impôt sur le revenu annuel, égal à 20% de votre bénéfice net trimestriel. Déclaré avec le formulaire 130.",
+      seeFaq: "Plus d'infos dans la FAQ →",
     },
     countdown: {
       nextDeclaration: "Prochaine échéance",
