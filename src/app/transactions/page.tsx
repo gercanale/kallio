@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
   Plus,
   ArrowUpRight,
@@ -11,14 +10,19 @@ import {
   TrendingUp,
   TrendingDown,
   Sparkles,
-  MoreHorizontal,
+  Pencil,
+  Copy,
+  CheckCircle,
+  Clock,
+  Paperclip,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
-import { TransactionActions } from "@/components/TransactionActions";
 import { formatCurrency, formatDate } from "@/lib/tax-engine";
 import type { Transaction, TransactionType } from "@/lib/types";
 
@@ -47,7 +51,6 @@ export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [defaultType, setDefaultType] = useState<TransactionType>("expense");
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
-  const [actionsFor, setActionsFor] = useState<Transaction | null>(null);
   const [editFor, setEditFor] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -183,7 +186,7 @@ export default function TransactionsPage() {
               <TransactionRow
                 key={tx.id}
                 tx={tx}
-                onActions={() => setActionsFor(tx)}
+                onEdit={() => setEditFor(tx)}
                 categoryLabels={t.transactions.categories}
                 vatLabel={t.transactions.vatLabel}
                 deductibleBadge={t.transactions.deductibleBadge}
@@ -193,17 +196,6 @@ export default function TransactionsPage() {
           </div>
         )}
       </main>
-
-      {actionsFor && (
-        <TransactionActions
-          tx={actionsFor}
-          onClose={() => setActionsFor(null)}
-          onEdit={() => {
-            setEditFor(actionsFor);
-            setActionsFor(null);
-          }}
-        />
-      )}
 
       {editFor && (
         <TransactionForm
@@ -224,36 +216,50 @@ export default function TransactionsPage() {
 
 function TransactionRow({
   tx,
-  onActions,
+  onEdit,
   categoryLabels,
   vatLabel,
   deductibleBadge,
   pendingBadge,
 }: {
   tx: Transaction;
-  onActions: () => void;
+  onEdit: () => void;
   categoryLabels: Record<string, string>;
   vatLabel: string;
   deductibleBadge: string;
   pendingBadge: string;
 }) {
+  const duplicateTransaction = useKallioStore((s) => s.duplicateTransaction);
+  const markReviewed = useKallioStore((s) => s.markReviewed);
+  const deleteTransaction = useKallioStore((s) => s.deleteTransaction);
+  const updateTransaction = useKallioStore((s) => s.updateTransaction);
+  const t = useT();
+
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const isIncome = tx.type === "income";
-  const categoryColor =
-    CATEGORY_COLORS[tx.category] ?? "bg-slate-100 text-slate-700";
+  const categoryColor = CATEGORY_COLORS[tx.category] ?? "bg-slate-100 text-slate-700";
   const categoryLabel = categoryLabels[tx.category] ?? tx.category;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1048576) { e.target.value = ""; return; }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      updateTransaction(tx.id, { attachmentName: file.name, attachmentData: evt.target?.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const iconBtn = "w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0";
+  const iconBtnBase = `${iconBtn} text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200`;
 
   return (
     <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm px-4 py-3 flex items-center gap-3">
-      <div
-        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          isIncome ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-slate-100 dark:bg-slate-700"
-        }`}
-      >
-        {isIncome ? (
-          <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-        ) : (
-          <ArrowDownLeft className="w-4 h-4 text-slate-500" />
-        )}
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-slate-100 dark:bg-slate-700"}`}>
+        {isIncome ? <ArrowUpRight className="w-4 h-4 text-emerald-600" /> : <ArrowDownLeft className="w-4 h-4 text-slate-500" />}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -292,12 +298,70 @@ function TransactionRow({
         <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
       </div>
 
-      <button
-        onClick={onActions}
-        className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors group flex-shrink-0"
-      >
-        <MoreHorizontal className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
-      </button>
+      {/* Action icons */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        {deleteConfirm ? (
+          <>
+            <Tip label={t.actions.cancel}>
+              <button onClick={() => setDeleteConfirm(false)} className={iconBtnBase}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+            <Tip label={t.actions.delete}>
+              <button onClick={() => deleteTransaction(tx.id)} className={`${iconBtn} bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+          </>
+        ) : (
+          <>
+            <Tip label={t.actions.edit}>
+              <button onClick={onEdit} className={iconBtnBase}>
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+            <Tip label={t.actions.duplicate}>
+              <button onClick={() => duplicateTransaction(tx.id)} className={iconBtnBase}>
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+            <Tip label={tx.reviewed ? t.actions.markPending : t.actions.markReviewed}>
+              <button
+                onClick={() => markReviewed(tx.id, !tx.reviewed)}
+                className={tx.reviewed ? `${iconBtn} text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30` : iconBtnBase}
+              >
+                {tx.reviewed ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
+              </button>
+            </Tip>
+            <Tip label={tx.attachmentName ? t.actions.viewAttachment : t.actions.attachment}>
+              <button
+                onClick={() => tx.attachmentName && tx.attachmentData ? window.open(tx.attachmentData, "_blank") : fileInputRef.current?.click()}
+                className={tx.attachmentName ? `${iconBtn} text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30` : iconBtnBase}
+              >
+                <Paperclip className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+            <Tip label={t.actions.delete}>
+              <button onClick={() => setDeleteConfirm(true)} className={`${iconBtn} text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </Tip>
+          </>
+        )}
+      </div>
+
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileChange} />
+    </div>
+  );
+}
+
+function Tip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="relative group/tip">
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+        {label}
+      </span>
     </div>
   );
 }
