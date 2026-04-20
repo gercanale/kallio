@@ -12,6 +12,7 @@ import {
   TrendingDown,
   Sparkles,
   MoreHorizontal,
+  HelpCircle,
 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
@@ -19,6 +20,7 @@ import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionActions } from "@/components/TransactionActions";
+import { ExplainDrawer } from "@/components/ExplainDrawer";
 import { formatCurrency, formatDate } from "@/lib/tax-engine";
 import type { Transaction, TransactionType } from "@/lib/types";
 
@@ -49,6 +51,7 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const [actionsFor, setActionsFor] = useState<Transaction | null>(null);
   const [editFor, setEditFor] = useState<Transaction | null>(null);
+  const [explainFor, setExplainFor] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -184,6 +187,7 @@ export default function TransactionsPage() {
                 key={tx.id}
                 tx={tx}
                 onActions={() => setActionsFor(tx)}
+                onExplain={() => setExplainFor(tx)}
                 categoryLabels={t.transactions.categories}
                 vatLabel={t.transactions.vatLabel}
                 deductibleBadge={t.transactions.deductibleBadge}
@@ -193,6 +197,10 @@ export default function TransactionsPage() {
           </div>
         )}
       </main>
+
+      {explainFor && (
+        <ExplainDrawer tx={explainFor} onClose={() => setExplainFor(null)} />
+      )}
 
       {actionsFor && (
         <TransactionActions
@@ -225,6 +233,7 @@ export default function TransactionsPage() {
 function TransactionRow({
   tx,
   onActions,
+  onExplain,
   categoryLabels,
   vatLabel,
   deductibleBadge,
@@ -232,6 +241,7 @@ function TransactionRow({
 }: {
   tx: Transaction;
   onActions: () => void;
+  onExplain: () => void;
   categoryLabels: Record<string, string>;
   vatLabel: string;
   deductibleBadge: string;
@@ -292,12 +302,21 @@ function TransactionRow({
         <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
       </div>
 
-      <button
-        onClick={onActions}
-        className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors group flex-shrink-0"
-      >
-        <MoreHorizontal className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
-      </button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <button
+          onClick={onExplain}
+          className="w-7 h-7 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 flex items-center justify-center transition-colors group"
+          title="Why?"
+        >
+          <HelpCircle className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" />
+        </button>
+        <button
+          onClick={onActions}
+          className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors group"
+        >
+          <MoreHorizontal className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
+        </button>
+      </div>
     </div>
   );
 }

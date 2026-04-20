@@ -9,6 +9,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       transactions: "Movimientos",
+      learn: "Aprende",
       settings: "Ajustes",
       themeLight: "Modo claro",
       themeDark: "Modo oscuro",
@@ -388,6 +389,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       transactions: "Transactions",
+      learn: "Learn",
       settings: "Settings",
       themeLight: "Light mode",
       themeDark: "Dark mode",
@@ -766,6 +768,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       transactions: "Movimenti",
+      learn: "Impara",
       settings: "Impostazioni",
       themeLight: "Modalità chiara",
       themeDark: "Modalità scura",
@@ -1140,6 +1143,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       transactions: "Transaktionen",
+      learn: "Lernen",
       settings: "Einstellungen",
       themeLight: "Heller Modus",
       themeDark: "Dunkler Modus",
@@ -1514,6 +1518,7 @@ export const translations = {
     nav: {
       dashboard: "Tableau de bord",
       transactions: "Transactions",
+      learn: "Apprendre",
       settings: "Paramètres",
       themeLight: "Mode clair",
       themeDark: "Mode sombre",

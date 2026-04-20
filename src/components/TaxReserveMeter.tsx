@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Info, TrendingUp, Shield, Wallet } from "lucide-react";
 import { useT } from "@/lib/useT";
 import { formatCurrency } from "@/lib/tax-engine";
+import { TaxTooltip } from "@/components/TaxTooltip";
 import type { TaxSnapshot } from "@/lib/types";
 
 interface TaxReserveMeterProps {
@@ -83,7 +84,9 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
           <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">
             {formatCurrency(snap.grossIncome)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.grossIncome}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center">
+            {t.meter.grossIncome}<TaxTooltip concept="gross_income" />
+          </p>
         </button>
 
         {/* Tax reserve */}
@@ -102,7 +105,9 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
           <p className="text-lg font-bold text-red-600 dark:text-red-400 tabular-nums">
             {formatCurrency(snap.totalTaxReserve)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.taxReserve}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center">
+            {t.meter.taxReserve}<TaxTooltip concept="tax_reserve" />
+          </p>
         </button>
 
         {/* Spendable */}
@@ -121,7 +126,9 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
           <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {formatCurrency(Math.max(0, snap.trueSpendableBalance))}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.meter.spendable}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center">
+            {t.meter.spendable}<TaxTooltip concept="spendable" />
+          </p>
         </button>
       </div>
 
@@ -189,11 +196,21 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
                 {t.meter.taxDetail}
               </p>
               <div className="bg-white dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 space-y-1.5">
-                <Row label={t.meter.vatPayable} value={snap.ivaPayable} />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600 dark:text-slate-300 text-xs flex items-center">
+                    {t.meter.vatPayable}<TaxTooltip concept="iva_payable" size="xs" />
+                  </span>
+                  <span className="text-xs font-medium tabular-nums text-slate-700 dark:text-slate-200">{formatCurrency(snap.ivaPayable)}</span>
+                </div>
                 <p className="text-xs text-slate-400 pl-2">
                   {formatCurrency(snap.ivaCollected)} − {formatCurrency(snap.ivaDeductible)}
                 </p>
-                <Row label={t.meter.irpfAdvance} value={snap.irpfAdvancePayable} />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600 dark:text-slate-300 text-xs flex items-center">
+                    {t.meter.irpfAdvance}<TaxTooltip concept="irpf_advance" size="xs" />
+                  </span>
+                  <span className="text-xs font-medium tabular-nums text-slate-700 dark:text-slate-200">{formatCurrency(snap.irpfAdvancePayable)}</span>
+                </div>
                 <p className="text-xs text-slate-400 pl-2">
                   20% × {formatCurrency(snap.netTaxableIncome)}
                   {snap.gjdDeduction > 0 && (
