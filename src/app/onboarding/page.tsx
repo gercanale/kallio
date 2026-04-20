@@ -295,21 +295,24 @@ export default function OnboardingPage() {
                     value: "estimacion_directa_simplificada" as FiscalRegime,
                     label: t.onboarding.regimeSimplified,
                     desc: t.onboarding.regimeSimplifiedDesc,
+                    hint: t.onboarding.regimeSimplifiedHint,
                     recommended: true,
                   },
                   {
                     value: "estimacion_directa_normal" as FiscalRegime,
                     label: t.onboarding.regimeNormal,
                     desc: t.onboarding.regimeNormalDesc,
+                    hint: t.onboarding.regimeNormalHint,
                     recommended: false,
                   },
                   {
                     value: "estimacion_objetiva" as FiscalRegime,
                     label: t.onboarding.regimeObjective,
                     desc: t.onboarding.regimeObjectiveDesc,
+                    hint: t.onboarding.regimeObjectiveHint,
                     recommended: false,
                   },
-                ].map(({ value, label, desc, recommended }) => (
+                ].map(({ value, label, desc, hint, recommended }) => (
                   <button
                     key={value}
                     type="button"
@@ -329,6 +332,7 @@ export default function OnboardingPage() {
                       )}
                     </div>
                     <p className={`text-xs ${textMuted}`}>{desc}</p>
+                    <p className={`text-xs mt-1.5 ${textMuted} opacity-70`}>→ {hint}</p>
                   </button>
                 ))}
               </div>
@@ -370,6 +374,7 @@ export default function OnboardingPage() {
                     {t.onboarding.irpfNo}
                   </p>
                   <p className={`text-xs ${textMuted}`}>{t.onboarding.irpfNoDesc}</p>
+                  <p className={`text-xs mt-1.5 ${textMuted} opacity-70`}>→ {t.onboarding.irpfNoHint}</p>
                 </button>
                 <button
                   type="button"
@@ -380,6 +385,7 @@ export default function OnboardingPage() {
                     {t.onboarding.irpfYes}
                   </p>
                   <p className={`text-xs ${textMuted}`}>{t.onboarding.irpfYesDesc}</p>
+                  <p className={`text-xs mt-1.5 ${textMuted} opacity-70`}>→ {t.onboarding.irpfYesHint}</p>
                 </button>
               </div>
 
@@ -390,9 +396,9 @@ export default function OnboardingPage() {
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { rate: 0.15, label: "15%", desc: t.onboarding.irpfGeneral },
-                      { rate: 0.07, label: "7%", desc: t.onboarding.irpfFirst3 },
-                    ].map(({ rate, label, desc }) => (
+                      { rate: 0.15, label: "15%", desc: t.onboarding.irpfGeneral, hint: t.onboarding.irpfGeneralHint },
+                      { rate: 0.07, label: "7%", desc: t.onboarding.irpfFirst3, hint: t.onboarding.irpfFirst3Hint },
+                    ].map(({ rate, label, desc, hint }) => (
                       <button
                         key={rate}
                         type="button"
@@ -403,6 +409,7 @@ export default function OnboardingPage() {
                           {label}
                         </p>
                         <p className={`text-xs ${textMuted}`}>{desc}</p>
+                        <p className={`text-xs mt-1 ${textMuted} opacity-70`}>{hint}</p>
                       </button>
                     ))}
                   </div>
