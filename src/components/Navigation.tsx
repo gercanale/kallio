@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun, ChevronDown } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun, ChevronDown, HelpCircle } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
@@ -56,6 +56,7 @@ export function Navigation() {
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
     { href: "/transactions", icon: ArrowLeftRight, label: t.nav.transactions },
     { href: "/settings", icon: Settings, label: t.nav.settings },
+    { href: "/faq", icon: HelpCircle, label: t.nav.faq },
   ];
 
   const btnInactive = "text-slate-400 dark:text-slate-500";
