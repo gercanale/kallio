@@ -377,6 +377,96 @@ export function calculateTaxSnapshot(
   };
 }
 
+/** Returns the deductible percentage (0–1) for a given expense category. */
+export function getCategoryDeductibilityPct(category: ExpenseCategory): number {
+  const rule = CATEGORY_RULES[category];
+  return rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
+}
+
+// ─── YTD snapshot (all quarters year-to-date) ────────────────────────────────
+
+export function calculateYTDSnapshot(
+  transactions: Transaction[],
+  profile: UserProfile,
+  year: number
+): TaxSnapshot {
+  const now = nowInSpain();
+  const endOfCurrentQuarter = quarterDateRange(currentQuarter(now), year).end;
+  const start = new Date(year, 0, 1);
+  const end = endOfCurrentQuarter < now ? endOfCurrentQuarter : now;
+
+  const ytdTxs = transactions.filter((t) => {
+    const d = new Date(t.date);
+    return d >= start && d <= end;
+  });
+
+  const income = ytdTxs.filter((t) => t.type === "income");
+  const expenses = ytdTxs.filter((t) => t.type === "expense" && t.isDeductible);
+
+  // ── Income ────────────────────────────────────────────────────────────────
+  const grossIncome = income.reduce((s, t) => s + t.amount, 0);
+  const ivaCollected = income.reduce((s, t) =>
+    t.ivaRate === 0 ? s : s + ivaAmount(t.amount, t.ivaRate), 0);
+  const netIncome = grossIncome - ivaCollected;
+
+  // ── Expenses ──────────────────────────────────────────────────────────────
+  const ivaDeductible = expenses.reduce((s, t) => {
+    if (t.ivaRate === 0) return s;
+    const pct = getCategoryDeductibilityPct(t.category);
+    return s + ivaAmount(t.amount, t.ivaRate) * pct;
+  }, 0);
+  const deductibleExpenses = expenses.reduce((s, t) => {
+    const pct = getCategoryDeductibilityPct(t.category);
+    return s + netFromGross(t.amount, t.ivaRate) * pct;
+  }, 0);
+
+  // ── IRPF (cumulative YTD) ─────────────────────────────────────────────────
+  const netTaxableIncome = Math.max(0, netIncome - deductibleExpenses);
+  const irpfAlreadyRetained = profile.ivaRetention
+    ? netIncome * profile.irpfRetentionRate
+    : 0;
+  const irpfAdvancePayable = Math.max(
+    0, netTaxableIncome * IRPF_ADVANCE_RATE - irpfAlreadyRetained
+  );
+
+  // ── IVA ───────────────────────────────────────────────────────────────────
+  const ivaPayable = Math.max(0, ivaCollected - ivaDeductible);
+
+  // ── Summary ───────────────────────────────────────────────────────────────
+  const totalSavedByDeductions = deductibleExpenses * IRPF_ADVANCE_RATE + ivaDeductible;
+  const totalTaxReserve = ivaPayable + irpfAdvancePayable;
+  const trueSpendableBalance = netIncome - deductibleExpenses - totalTaxReserve;
+
+  // ── Year-end IRPF gap ──────────────────────────────────────────────────────
+  const currentMonth = now.getMonth() + 1;
+  const projectionFactor = currentMonth > 0 ? 12 / currentMonth : 1;
+  const projectedAnnualNetIncome = Math.max(0, netTaxableIncome * projectionFactor);
+  const estimatedAnnualIRPF = calculateAnnualIRPF(projectedAnnualNetIncome);
+  const irpfPaidViaAdvances = Math.max(0, netTaxableIncome * IRPF_ADVANCE_RATE);
+  const yearEndIRPFGap = Math.max(0, estimatedAnnualIRPF - irpfPaidViaAdvances);
+  const effRate = effectiveIRPFRate(projectedAnnualNetIncome);
+
+  return {
+    quarterLabel: `${year}`,      // caller adds "Año" label in UI
+    grossIncome,
+    deductibleExpenses,
+    netTaxableIncome,
+    ivaCollected,
+    ivaDeductible,
+    ivaPayable,
+    irpfAdvancePayable,
+    totalTaxReserve,
+    trueSpendableBalance,
+    totalSavedByDeductions,
+    ytdNetIncome: netIncome,
+    projectedAnnualNetIncome,
+    estimatedAnnualIRPF,
+    irpfPaidViaAdvances,
+    yearEndIRPFGap,
+    effectiveIRPFRate: effRate,
+  };
+}
+
 // ─── Deduction prompt generator ──────────────────────────────────────────────
 
 interface PromptTemplate {
