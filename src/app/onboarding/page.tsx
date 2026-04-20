@@ -7,7 +7,7 @@ import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import type { FiscalRegime } from "@/lib/types";
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2 | 3 | 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -27,10 +27,12 @@ export default function OnboardingPage() {
   const [fiscalRegime, setFiscalRegime] = useState<FiscalRegime>(
     "estimacion_directa_simplificada"
   );
+  const [irpfAdvanceRate, setIrpfAdvanceRate] = useState<number | undefined>(0.2);
+  const [irpfAdvanceLater, setIrpfAdvanceLater] = useState(false);
   const [ivaRetention, setIvaRetention] = useState(false);
   const [irpfRetentionRate, setIrpfRetentionRate] = useState(0.15);
 
-  const progress = step === 0 ? 0 : (step / 3) * 100;
+  const progress = step === 0 ? 0 : (step / 4) * 100;
 
   const handleFinish = async () => {
     await completeOnboarding({
@@ -38,6 +40,7 @@ export default function OnboardingPage() {
       nif: nif.trim() || undefined,
       activityType,
       fiscalRegime,
+      irpfAdvanceRate: irpfAdvanceLater ? undefined : irpfAdvanceRate,
       ivaRetention,
       irpfRetentionRate,
       onboardingComplete: true,
@@ -115,7 +118,7 @@ export default function OnboardingPage() {
           {/* Step indicator — only when step > 0 */}
           {step > 0 && (
             <div className="flex items-center gap-2 mb-8">
-              {([1, 2, 3] as (1 | 2 | 3)[]).map((s) => (
+              {([1, 2, 3, 4] as (1 | 2 | 3 | 4)[]).map((s) => (
                 <div key={s} className="flex items-center gap-2">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -128,7 +131,7 @@ export default function OnboardingPage() {
                   >
                     {s < step ? <CheckCircle2 className="w-4 h-4" /> : s}
                   </div>
-                  {s < 3 && (
+                  {s < 4 && (
                     <div className={`flex-1 h-0.5 w-12 ${s < step ? stepConnectorActive : stepConnector}`} />
                   )}
                 </div>
@@ -347,11 +350,90 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3 – Retención IRPF */}
+          {/* Step 3 – Provisión IRPF Modelo 130 */}
           {step === 3 && (
             <div>
               <button
                 onClick={() => setStep(2)}
+                className={`flex items-center gap-1.5 text-sm mb-6 ${textMuted}`}
+              >
+                <ArrowLeft className="w-4 h-4" /> {t.onboarding.back}
+              </button>
+
+              <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>
+                {t.onboarding.irpfAdvanceTitle}
+              </h1>
+              <p className={`text-sm mb-6 ${textSecondary}`}>
+                {t.onboarding.irpfAdvanceSubtitle}
+              </p>
+
+              <div className="space-y-2 mb-4">
+                {[
+                  { rate: 0.2,  label: t.onboarding.irpfAdvance20,  desc: t.onboarding.irpfAdvance20Desc,  hint: t.onboarding.irpfAdvance20Hint,  recommended: true },
+                  { rate: 0.25, label: t.onboarding.irpfAdvance25,  desc: t.onboarding.irpfAdvance25Desc,  hint: t.onboarding.irpfAdvance25Hint,  recommended: false },
+                  { rate: 0.3,  label: t.onboarding.irpfAdvance30,  desc: t.onboarding.irpfAdvance30Desc,  hint: t.onboarding.irpfAdvance30Hint,  recommended: false },
+                ].map(({ rate, label, desc, hint, recommended }) => {
+                  const isActive = !irpfAdvanceLater && irpfAdvanceRate === rate;
+                  return (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => { setIrpfAdvanceRate(rate); setIrpfAdvanceLater(false); }}
+                      className={`w-full p-4 rounded-xl text-left border transition-all ${isActive ? cardActive : cardInactive}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-sm font-semibold ${isActive ? cardActiveText : cardInactiveTitle}`}>
+                          {label}
+                        </span>
+                        {recommended && (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                            {t.onboarding.irpfAdvanceRecommended}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-xs ${textMuted}`}>{desc}</p>
+                      <p className={`text-xs mt-1.5 ${textMuted} opacity-70`}>→ {hint}</p>
+                    </button>
+                  );
+                })}
+
+                {/* Define later */}
+                <button
+                  type="button"
+                  onClick={() => { setIrpfAdvanceLater(true); setIrpfAdvanceRate(undefined); }}
+                  className={`w-full p-4 rounded-xl text-left border transition-all ${irpfAdvanceLater ? cardActive : cardInactive}`}
+                >
+                  <p className={`text-sm font-semibold mb-1 ${irpfAdvanceLater ? cardActiveText : cardInactiveTitle}`}>
+                    {t.onboarding.irpfAdvanceLater}
+                  </p>
+                  <p className={`text-xs ${textMuted}`}>{t.onboarding.irpfAdvanceLaterDesc}</p>
+                </button>
+              </div>
+
+              {irpfAdvanceLater && (
+                <div className={`rounded-xl px-4 py-3 mb-4 ${dark ? "bg-amber-900/20 border border-amber-800/40" : "bg-amber-50 border border-amber-200"}`}>
+                  <p className={`text-xs leading-relaxed ${dark ? "text-amber-300" : "text-amber-700"}`}>
+                    ⚠ {t.onboarding.irpfAdvanceLaterInfo}
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={() => setStep(4)}
+                disabled={!irpfAdvanceLater && irpfAdvanceRate === undefined}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+              >
+                {t.onboarding.next}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Step 4 – Retención IRPF */}
+          {step === 4 && (
+            <div>
+              <button
+                onClick={() => setStep(3)}
                 className={`flex items-center gap-1.5 text-sm mb-6 ${textMuted}`}
               >
                 <ArrowLeft className="w-4 h-4" /> {t.onboarding.back}
