@@ -58,7 +58,7 @@ export async function generateGestorPDF(
 
   const profileData = [
     ["Nombre", profile.name || "—"],
-    ["NIF", profile.nif || "—"],
+    [profile.nifType ?? "NIF", profile.nif || "—"],
     ["Régimen fiscal", regimeLabel(profile.fiscalRegime)],
     ["Actividad", profile.activityType || "—"],
     ["Retención IRPF", profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : "No aplica"],

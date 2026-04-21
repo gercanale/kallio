@@ -53,9 +53,12 @@ export type FiscalRegime =
   | "estimacion_directa_normal"
   | "estimacion_objetiva"; // módulos
 
+export type NifType = "NIF" | "NIE" | "CIF" | "DNI";
+
 export interface UserProfile {
   name: string;
   nif?: string;
+  nifType?: NifType;
   fiscalRegime: FiscalRegime;
   activityType: string;         // e.g. "Programador / Consultor IT"
   ivaRetention: boolean;        // ¿retención IRPF en facturas? (15% or 7%)
