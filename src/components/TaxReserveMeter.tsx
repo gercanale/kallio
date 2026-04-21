@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { ChevronDown, ChevronUp, Info, TrendingUp, Shield, Wallet } from "lucide-react";
 import { useT } from "@/lib/useT";
 import { formatCurrency } from "@/lib/tax-engine";
@@ -252,49 +251,6 @@ export function TaxReserveMeter({ snapshot: snap, periodLabel, showGapBanner = t
   );
 }
 
-function RowWithTooltip({ label, value, tooltip, faqLabel }: { label: string; value: number; tooltip: string; faqLabel: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  return (
-    <div className="flex justify-between items-center">
-      <div className="relative flex items-center gap-1" ref={ref}>
-        <span className="text-slate-600 dark:text-slate-300 text-xs">{label}</span>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="text-slate-400 hover:text-teal-500 dark:hover:text-teal-400 transition-colors flex-shrink-0"
-          aria-label="Más información"
-        >
-          <Info className="w-3 h-3" />
-        </button>
-        {open && (
-          <div className="absolute bottom-full left-0 mb-2 w-60 bg-slate-800 dark:bg-slate-900 text-white rounded-xl p-3 shadow-xl z-20 border border-slate-700">
-            <p className="text-xs leading-relaxed text-slate-200">{tooltip}</p>
-            <Link
-              href="/faq"
-              onClick={() => setOpen(false)}
-              className="mt-2 block text-xs text-teal-400 hover:text-teal-300 font-medium"
-            >
-              {faqLabel}
-            </Link>
-          </div>
-        )}
-      </div>
-      <span className="text-xs font-medium tabular-nums text-slate-700 dark:text-slate-200">
-        {formatCurrency(value)}
-      </span>
-    </div>
-  );
-}
 
 function Row({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
