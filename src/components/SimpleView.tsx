@@ -7,6 +7,7 @@ import { useT } from "@/lib/useT";
 import { formatCurrency, nextDeadline } from "@/lib/tax-engine";
 import type { TaxSnapshot } from "@/lib/types";
 import type { WizardProfile } from "@/lib/wizard-config";
+import { BeckhamCountdown } from "./BeckhamCountdown";
 
 interface SimpleViewProps {
   snapshot: TaxSnapshot;
@@ -215,6 +216,14 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction }: Simple
           </div>
         </div>
 
+        {/* ── Beckham countdown banner ── */}
+        {wizardProfile.fiscalRegime === 'beckham' && wizardProfile.beckhamStartYear && (
+          <BeckhamCountdown
+            beckhamStartYear={wizardProfile.beckhamStartYear}
+            annualNetIncome={snapshot.projectedAnnualNetIncome}
+          />
+        )}
+
         {/* ── Two-column stat row ── */}
         <div className="grid grid-cols-2 gap-3">
           {/* Reserve card */}
@@ -226,7 +235,9 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction }: Simple
             <p className="text-2xl font-bold text-red-600 dark:text-red-400 tabular-nums mb-1">
               {formatCurrency(totalTaxReserve)}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">{sv.reserveSubtext}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {wizardProfile.fiscalRegime === 'beckham' ? sv.reserveSubtextBeckham : sv.reserveSubtext}
+            </p>
           </div>
 
           {/* Next payment card */}
@@ -252,7 +263,11 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction }: Simple
                 <InfoButton text={sv.projectionModal} />
               </div>
               <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                {wizardProfile.incomeStability === "stable"
+                {wizardProfile.fiscalRegime === 'beckham'
+                  ? interp(sv.projectionBeckham, {
+                      monthly: formatCurrency(monthlyProjected).replace("€", "").trim(),
+                    })
+                  : wizardProfile.incomeStability === "stable"
                   ? interp(sv.projectionStable, {
                       monthly: formatCurrency(monthlyProjected).replace("€", "").trim(),
                       gap: formatCurrency(yearEndIRPFGap).replace("€", "").trim(),

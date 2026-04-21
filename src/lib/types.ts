@@ -2,6 +2,8 @@
 
 export type IVARate = 21 | 10 | 4 | 0; // 0 = exempt
 
+export type ClientLocation = 'spain_eu' | 'non_eu';
+
 export type TransactionType = "income" | "expense";
 
 export type ExpenseCategory =
@@ -43,6 +45,7 @@ export interface Transaction {
   attachmentData?: string;   // base64 data URL, capped at 1 MB in UI
   /** Original currency if the transaction was in a foreign currency (amount is always stored in EUR) */
   currency?: string;
+  clientLocation?: ClientLocation;
 }
 
 export type FiscalRegime =
@@ -119,3 +122,38 @@ export interface FiledQuarter {
 
 /** Open = current or future; past_not_filed = past deadline but not yet marked; filed = user marked it */
 export type QuarterStatus = "open" | "past_not_filed" | "filed";
+
+export interface CheckerRun {
+  id: string;
+  period: string;        // e.g. '1T2025'
+  quarter: number;
+  year: number;
+  createdAt: string;
+  kallio: {
+    ivaRepercutido: number;
+    ivaSoportado: number;
+    ivaResult: number;
+    ingresosBrutos: number;
+    gastosDeducibles: number;
+    rendimientoNeto: number;
+    irpfAdvance: number;
+  };
+  gestor: {
+    baseImponible: number;
+    cuotaRepercutida: number;
+    cuotaSoportada: number;
+    resultadoLiquidacion: number;
+    ingresosComputables: number;
+    gastosDeducibles: number;
+    rendimientoNeto: number;
+    cuotaIngresada: number;
+    pagadoReal: number;
+  };
+  diff: {
+    ivaResult: number;
+    irpfAdvance: number;
+    gastosDeducibles: number;
+    totalDiff: number;
+  };
+  verdict: 'green' | 'amber' | 'red';
+}

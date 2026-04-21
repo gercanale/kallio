@@ -5,7 +5,7 @@ import { X, Plus, Sparkles, Maximize2, Minimize2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { formatCurrency, classifyTransaction, netFromGross, ivaAmount, todayInSpain, currentQuarter, calculateTaxSnapshot, quarterOf } from "@/lib/tax-engine";
-import type { IVARate, TransactionType, ExpenseCategory, Transaction, TaxSnapshot } from "@/lib/types";
+import type { IVARate, TransactionType, ExpenseCategory, Transaction, TaxSnapshot, ClientLocation } from "@/lib/types";
 import { QuarterImpactModal } from "@/components/QuarterImpactModal";
 
 interface TransactionFormProps {
@@ -62,6 +62,9 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
   const [isDeductible, setIsDeductible] = useState(editTransaction?.isDeductible ?? true);
   const [notes, setNotes] = useState(editTransaction?.notes ?? "");
   const [currency, setCurrency] = useState<string>(editTransaction?.currency ?? "EUR");
+  const [clientLocation, setClientLocation] = useState<ClientLocation | undefined>(
+    editTransaction?.clientLocation ?? undefined
+  );
   const [error, setError] = useState("");
   const [categoryManuallySet, setCategoryManuallySet] = useState(isEdit);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
@@ -191,6 +194,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
         currency: currency !== "EUR" ? currency : undefined,
+        clientLocation: type === "income" ? clientLocation : undefined,
       });
     };
     const applyAdd = () => {
@@ -205,6 +209,7 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
         isDeductible: type === "income" ? false : isDeductible,
         notes: notes.trim() || undefined,
         currency: currency !== "EUR" ? currency : undefined,
+        clientLocation: type === "income" ? clientLocation : undefined,
       });
     };
 
@@ -442,6 +447,36 @@ export function TransactionForm({ onClose, defaultType = "expense", editTransact
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
             />
           </div>
+
+          {/* Client location selector — income only */}
+          {type === "income" && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                {t.form.clientLocationLabel}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["spain_eu", "non_eu"] as ClientLocation[]).map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => setClientLocation(clientLocation === loc ? undefined : loc)}
+                    className={`py-2 rounded-xl text-sm font-medium transition-all border-2 ${
+                      clientLocation === loc
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    {loc === "spain_eu" ? t.form.clientLocationSpainEU : t.form.clientLocationNonEU}
+                  </button>
+                ))}
+              </div>
+              {clientLocation === "non_eu" && (
+                <div className="mt-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="text-xs text-emerald-800">{t.form.clientLocationNonEUNote}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Amount + Date row */}
           <div className="grid grid-cols-2 gap-3">
