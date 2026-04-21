@@ -14,6 +14,7 @@ import {
   ExpenseCategory,
   IVARate,
   TransactionType,
+  NifType,
 } from "./types";
 import type { WizardProfile } from "./wizard-config";
 import type { Language } from "./i18n";
@@ -179,6 +180,7 @@ interface KallioState {
   // Actions – profile
   setProfile: (profile: Partial<UserProfile>) => void;
   updateName: (name: string) => Promise<void>;
+  updateNif: (nif: string | undefined, nifType: NifType | undefined) => Promise<void>;
   updateIrpfAdvanceRate: (rate: number | undefined) => Promise<void>;
   completeOnboarding: (profile: UserProfile) => Promise<void>;
 
@@ -253,6 +255,7 @@ export const useKallioStore = create<KallioState>()(
             profile: {
               name: profileRow.name ?? "",
               nif: profileRow.nif ?? undefined,
+              nifType: (profileRow.nif_type as NifType) ?? undefined,
               fiscalRegime: profileRow.fiscal_regime,
               activityType: profileRow.activity_type,
               ivaRetention: profileRow.iva_retention,
@@ -308,6 +311,14 @@ export const useKallioStore = create<KallioState>()(
         await supabase.from("profiles").update({ name }).eq("id", user.id);
       },
 
+      updateNif: async (nif, nifType) => {
+        set((s) => ({ profile: { ...s.profile, nif, nifType } }));
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from("profiles").update({ nif: nif ?? null, nif_type: nifType ?? null }).eq("id", user.id);
+      },
+
       updateIrpfAdvanceRate: async (rate) => {
         set((s) => ({ profile: { ...s.profile, irpfAdvanceRate: rate } }));
         const supabase = createClient();
@@ -323,7 +334,7 @@ export const useKallioStore = create<KallioState>()(
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         await supabase.from("profiles").upsert({
-          id: user.id, name: fullProfile.name, nif: fullProfile.nif ?? null,
+          id: user.id, name: fullProfile.name, nif: fullProfile.nif ?? null, nif_type: fullProfile.nifType ?? null,
           fiscal_regime: fullProfile.fiscalRegime, activity_type: fullProfile.activityType,
           iva_retention: fullProfile.ivaRetention, irpf_retention_rate: fullProfile.irpfRetentionRate,
           irpf_advance_rate: fullProfile.irpfAdvanceRate ?? null,
