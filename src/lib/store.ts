@@ -14,6 +14,7 @@ import {
   ExpenseCategory,
   IVARate,
   TransactionType,
+  CheckerRun,
   NifType,
 } from "./types";
 import type { WizardProfile } from "./wizard-config";
@@ -204,6 +205,10 @@ interface KallioState {
   setWizardProfile: (p: WizardProfile) => void;
   setDashboardMode: (mode: 'simple' | 'full') => void;
 
+  // Checker history
+  checkerHistory: CheckerRun[];
+  addCheckerRun: (run: CheckerRun) => void;
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getQuarterStatus: (quarter: number, year: number) => QuarterStatus;
@@ -298,6 +303,8 @@ export const useKallioStore = create<KallioState>()(
       dashboardMode: 'full' as const,
       setWizardProfile: (p) => set({ wizardProfile: p, dashboardMode: 'simple' }),
       setDashboardMode: (mode) => set({ dashboardMode: mode }),
+      checkerHistory: [],
+      addCheckerRun: (run) => set((s) => ({ checkerHistory: [run, ...s.checkerHistory] })),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -637,6 +644,7 @@ export const useKallioStore = create<KallioState>()(
         filedQuarters: state.filedQuarters,
         wizardProfile: state.wizardProfile,
         dashboardMode: state.dashboardMode,
+        checkerHistory: state.checkerHistory,
       }),
     }
   )

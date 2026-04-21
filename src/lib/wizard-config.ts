@@ -45,7 +45,11 @@ export const ACTIVITY_DEDUCTIBILITY_BADGE: Record<ActivityKey, string> = {
   otro: 'variable',
 };
 
+export type FiscalRegime = 'eds' | 'beckham' | 'sl';
+
 export interface WizardProfile {
+  fiscalRegime: FiscalRegime;
+  beckhamStartYear: number | null;   // null for eds/sl
   incomeStructure: IncomeStructure;
   activity: ActivityKey;
   deductibilityRate: number;     // resolved from DEDUCTIBILITY_RATES[activity]

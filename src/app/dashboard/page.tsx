@@ -135,6 +135,14 @@ export default function DashboardPage() {
             <p className="text-slate-500 dark:text-slate-400 text-sm">{dateStr}</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Checker button */}
+            <button
+              onClick={() => router.push("/checker")}
+              className="hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+            >
+              {t.checker.title}
+            </button>
+
             {/* Backtest button */}
             <button
               onClick={() => router.push("/backtest")}
