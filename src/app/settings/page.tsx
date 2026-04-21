@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Trash2, User, Pencil, Check, X, Crown } from "lucide-react";
+import type { NifType } from "@/lib/types";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const resetAll = useKallioStore((s) => s.resetAll);
   const updateName = useKallioStore((s) => s.updateName);
   const updateIrpfAdvanceRate = useKallioStore((s) => s.updateIrpfAdvanceRate);
+  const updateNif = useKallioStore((s) => s.updateNif);
   const t = useT();
 
   const [editingName, setEditingName] = useState(false);
@@ -30,6 +32,11 @@ export default function SettingsPage() {
   const [editingIrpf, setEditingIrpf] = useState(false);
   const [irpfRateValue, setIrpfRateValue] = useState<number | undefined>(undefined);
   const [savingIrpf, setSavingIrpf] = useState(false);
+
+  const [editingNif, setEditingNif] = useState(false);
+  const [nifValue, setNifValue] = useState("");
+  const [nifTypeValue, setNifTypeValue] = useState<NifType>("NIF");
+  const [savingNif, setSavingNif] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -140,7 +147,86 @@ export default function SettingsPage() {
               label={t.settings.irpfRetention}
               value={profile.ivaRetention ? `${(profile.irpfRetentionRate * 100).toFixed(0)}%` : t.settings.noRetention}
             />
-            <SettingsRow label="NIF" value={profile.nif ?? "—"} />
+            {!editingNif ? (
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {profile.nifType ?? "NIF"}
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-200">
+                    {profile.nif ?? "—"}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setNifValue(profile.nif ?? "");
+                      setNifTypeValue(profile.nifType ?? "NIF");
+                      setEditingNif(true);
+                    }}
+                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                  >
+                    {t.settings.nifEdit}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="px-5 py-4 space-y-3">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t.settings.nifDocType}</p>
+                <div className="flex gap-2">
+                  {(["NIF", "NIE", "CIF", "DNI"] as NifType[]).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setNifTypeValue(type)}
+                      className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-all ${
+                        nifTypeValue === type
+                          ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300"
+                          : "border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  autoFocus
+                  value={nifValue}
+                  onChange={(e) => setNifValue(e.target.value.toUpperCase())}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      setSavingNif(true);
+                      await updateNif(nifValue.trim() || undefined, nifValue.trim() ? nifTypeValue : undefined);
+                      setSavingNif(false);
+                      setEditingNif(false);
+                    }
+                    if (e.key === "Escape") setEditingNif(false);
+                  }}
+                  placeholder="12345678A"
+                  className="w-full border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal-500 uppercase"
+                  disabled={savingNif}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      setSavingNif(true);
+                      await updateNif(nifValue.trim() || undefined, nifValue.trim() ? nifTypeValue : undefined);
+                      setSavingNif(false);
+                      setEditingNif(false);
+                    }}
+                    disabled={savingNif}
+                    className="flex-1 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  >
+                    {t.common.save}
+                  </button>
+                  <button
+                    onClick={() => setEditingNif(false)}
+                    disabled={savingNif}
+                    className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    {t.common.cancel}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
