@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Settings2, LayoutGrid, Layers } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
@@ -19,6 +19,8 @@ import { DeductionAssistant } from "@/components/DeductionAssistant";
 import { QuarterlyCountdown } from "@/components/QuarterlyCountdown";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
+import { SetupWizard } from "@/components/SetupWizard";
+import { SimpleView } from "@/components/SimpleView";
 
 type Period = "prev" | "curr" | "ytd";
 
@@ -29,9 +31,13 @@ export default function DashboardPage() {
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const transactions = useKallioStore((s) => s.transactions);
   const language = useKallioStore((s) => s.language);
+  const wizardProfile = useKallioStore((s) => s.wizardProfile);
+  const dashboardMode = useKallioStore((s) => s.dashboardMode);
+  const setDashboardMode = useKallioStore((s) => s.setDashboardMode);
   const t = useT();
 
   const [showForm, setShowForm] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [period, setPeriod] = useState<Period>("curr");
 
   useEffect(() => {
@@ -48,7 +54,6 @@ export default function DashboardPage() {
   const resolvedQY = useMemo((): { quarter: number; year: number } | null => {
     if (period === "ytd") return null;
     if (period === "curr") return { quarter: currQ, year: currY };
-    // prev
     if (currQ === 1) return { quarter: 4, year: currY - 1 };
     return { quarter: currQ - 1, year: currY };
   }, [period, currQ, currY]);
@@ -61,6 +66,11 @@ export default function DashboardPage() {
     return calculateYTDSnapshot(transactions, profile, currY);
   }, [resolvedQY, transactions, profile, currY]);
 
+  // Current-quarter snapshot always used for SimpleView
+  const currSnapshot = useMemo(() => {
+    return calculateTaxSnapshot(transactions, profile, currQ, currY);
+  }, [transactions, profile, currQ, currY]);
+
   // Transactions filtered to the selected period (for FinancialBreakdown)
   const periodTransactions = useMemo(() => {
     if (resolvedQY) {
@@ -70,7 +80,6 @@ export default function DashboardPage() {
         return d >= start && d <= end;
       });
     }
-    // YTD: Jan 1 to today
     return transactions.filter((tx) => new Date(tx.date).getFullYear() === currY);
   }, [resolvedQY, transactions, currY]);
 
@@ -80,6 +89,9 @@ export default function DashboardPage() {
     if (resolvedQY) return `${resolvedQY.quarter}T ${resolvedQY.year}`;
     return "";
   }, [period, resolvedQY, currY, t]);
+
+  // Derived state: should we show the simple view?
+  const isSimpleMode = dashboardMode === "simple" && wizardProfile?.wizardCompleted;
 
   if (!hydrated || !sessionActive) {
     return (
@@ -122,57 +134,100 @@ export default function DashboardPage() {
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">{dateStr}</p>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {t.dashboard.addButton}
-          </button>
-        </div>
-
-        {/* Period selector */}
-        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 w-full">
-          {periods.map(({ key, label }) => (
+          <div className="flex items-center gap-2">
+            {/* Backtest button */}
             <button
-              key={key}
-              onClick={() => setPeriod(key)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                period === key
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              }`}
+              onClick={() => router.push("/backtest")}
+              className="hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
             >
-              {label}
+              {t.simpleView.backtest}
             </button>
-          ))}
-        </div>
 
-        <div className="space-y-4">
-          {/* Tax reserve meter — period-aware */}
-          <TaxReserveMeter
-            snapshot={snapshot}
-            periodLabel={periodLabel}
-            showGapBanner={period !== "ytd"}
-          />
+            {/* Configurar / wizard button */}
+            <button
+              onClick={() => setShowWizard(true)}
+              className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              {t.simpleView.configure}
+            </button>
 
-          {/* Income / Expense breakdown */}
-          <FinancialBreakdown
-            transactions={periodTransactions}
-            snapshot={snapshot}
-          />
+            {/* View mode toggle — only show if wizard is complete */}
+            {wizardProfile?.wizardCompleted && (
+              <button
+                onClick={() => setDashboardMode(isSimpleMode ? "full" : "simple")}
+                className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+                title={isSimpleMode ? t.simpleView.fullView : t.simpleView.simpleViewBtn}
+              >
+                {isSimpleMode ? (
+                  <><LayoutGrid className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t.simpleView.fullView}</span></>
+                ) : (
+                  <><Layers className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t.simpleView.simpleViewBtn}</span></>
+                )}
+              </button>
+            )}
 
-          {/* Countdown + Deduction assistant */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <DeductionAssistant />
-            <QuarterlyCountdown />
+            {/* Add transaction */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.dashboard.addButton}</span>
+            </button>
           </div>
         </div>
+
+        {/* ── Simple View ── */}
+        {isSimpleMode && wizardProfile && (
+          <SimpleView
+            snapshot={currSnapshot}
+            wizardProfile={wizardProfile}
+            onAddTransaction={() => setShowForm(true)}
+          />
+        )}
+
+        {/* ── Full View ── */}
+        {!isSimpleMode && (
+          <>
+            {/* Period selector */}
+            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 w-full">
+              {periods.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setPeriod(key)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                    period === key
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              <TaxReserveMeter
+                snapshot={snapshot}
+                periodLabel={periodLabel}
+                showGapBanner={period !== "ytd"}
+              />
+              <FinancialBreakdown
+                transactions={periodTransactions}
+                snapshot={snapshot}
+              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <DeductionAssistant />
+                <QuarterlyCountdown />
+              </div>
+            </div>
+          </>
+        )}
       </main>
 
-      {showForm && (
-        <TransactionForm onClose={() => setShowForm(false)} />
-      )}
+      {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
+      {showWizard && <SetupWizard onClose={() => setShowWizard(false)} />}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   IVARate,
   TransactionType,
 } from "./types";
+import type { WizardProfile } from "./wizard-config";
 import type { Language } from "./i18n";
 import { createClient } from "./supabase";
 import {
@@ -195,6 +196,12 @@ interface KallioState {
   // Actions – filed quarters
   markQuarterFiled: (quarter: number, year: number, filed: boolean) => void;
 
+  // Wizard + dashboard mode
+  wizardProfile: WizardProfile | null;
+  dashboardMode: 'simple' | 'full';
+  setWizardProfile: (p: WizardProfile) => void;
+  setDashboardMode: (mode: 'simple' | 'full') => void;
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getQuarterStatus: (quarter: number, year: number) => QuarterStatus;
@@ -284,6 +291,10 @@ export const useKallioStore = create<KallioState>()(
       deductionPrompts: [],
       totalSavedThisYear: 0,
       filedQuarters: [],
+      wizardProfile: null,
+      dashboardMode: 'full' as const,
+      setWizardProfile: (p) => set({ wizardProfile: p, dashboardMode: 'simple' }),
+      setDashboardMode: (mode) => set({ dashboardMode: mode }),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -608,11 +619,13 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
-      // Persist language, theme, and filed quarters (user-managed local state)
+      // Persist language, theme, filed quarters, wizard profile and dashboard mode
       partialize: (state) => ({
         language: state.language,
         theme: state.theme,
         filedQuarters: state.filedQuarters,
+        wizardProfile: state.wizardProfile,
+        dashboardMode: state.dashboardMode,
       }),
     }
   )
