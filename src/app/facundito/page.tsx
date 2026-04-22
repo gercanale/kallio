@@ -24,10 +24,18 @@ export default async function FacunditoPage() {
   if (!user?.email || !ADMIN_EMAILS.includes(user.email)) redirect("/dashboard");
 
   const admin = createAdminClient();
-  const [{ data: authData }, { data: profiles }] = await Promise.all([
+  const [{ data: authData, error: listError }, { data: profiles }] = await Promise.all([
     admin.auth.admin.listUsers({ perPage: 1000 }),
     admin.from("profiles").select("id, name"),
   ]);
+
+  if (listError) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <p className="text-red-500 text-sm font-mono">Error al listar usuarios: {listError.message}</p>
+      </div>
+    );
+  }
 
   const profileMap = new Map((profiles ?? []).map((p: { id: string; name: string }) => [p.id, p.name]));
 
