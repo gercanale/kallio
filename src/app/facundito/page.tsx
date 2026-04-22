@@ -29,44 +29,44 @@ export default function FacunditoPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [authorized, setAuthorized] = useState(false);
 
-  // Verify admin and get token
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session || !ADMIN_EMAILS.includes(session.user.email ?? "")) {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
         router.replace("/dashboard");
-        return;
+      } else {
+        setAuthorized(true);
       }
-      setToken(session.access_token);
     });
   }, [router]);
 
   const fetchUsers = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
-    const res = await fetch("/api/admin/users", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch("/api/admin/users");
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error === "SUPABASE_SERVICE_ROLE_KEY not configured"
-        ? "Falta configurar SUPABASE_SERVICE_ROLE_KEY en las variables de entorno."
-        : "No se pudieron cargar los usuarios.");
+      setError(
+        body.error === "SUPABASE_SERVICE_ROLE_KEY not configured"
+          ? "Falta configurar SUPABASE_SERVICE_ROLE_KEY en las variables de entorno."
+          : "No se pudieron cargar los usuarios."
+      );
       setLoading(false);
       return;
     }
     setUsers(await res.json());
     setLoading(false);
-  }, [token]);
+  }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    if (authorized) fetchUsers();
+  }, [authorized, fetchUsers]);
 
   async function toggleBan(user: AdminUser) {
     await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ banned: !user.banned }),
     });
     setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, banned: !u.banned } : u));
@@ -75,10 +75,7 @@ export default function FacunditoPage() {
   async function deleteUser(user: AdminUser) {
     if (!confirm(`¿Eliminar la cuenta de ${user.email}? Esta acción no se puede deshacer.`)) return;
     setDeletingId(user.id);
-    await fetch(`/api/admin/users/${user.id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
     setUsers((prev) => prev.filter((u) => u.id !== user.id));
     setDeletingId(null);
   }
@@ -90,10 +87,10 @@ export default function FacunditoPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading) {
+  if (!authorized || loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-500 text-sm">Cargando usuarios...</p>
+        <p className="text-slate-500 text-sm">Cargando...</p>
       </div>
     );
   }
@@ -112,7 +109,6 @@ export default function FacunditoPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10">
       <div className="max-w-5xl mx-auto">
 
-        {/* Header */}
         <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -134,7 +130,6 @@ export default function FacunditoPage() {
           </button>
         </div>
 
-        {/* Table */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -158,30 +153,22 @@ export default function FacunditoPage() {
                     </td>
                     <td className="px-5 py-4">
                       <button
-                        onClick={() => { navigator.clipboard.writeText(user.email); }}
+                        onClick={() => navigator.clipboard.writeText(user.email)}
                         title="Copiar email"
                         className="text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-mono text-xs"
                       >
                         {user.email}
                       </button>
                     </td>
-                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {fmt(user.createdAt)}
-                    </td>
-                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {fmt(user.lastSignIn)}
-                    </td>
+                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmt(user.createdAt)}</td>
+                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmt(user.lastSignIn)}</td>
                     <td className="px-5 py-4 text-center">
                       <button
                         onClick={() => toggleBan(user)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                          !user.banned ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${!user.banned ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"}`}
                         aria-label={user.banned ? "Activar cuenta" : "Desactivar cuenta"}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                          !user.banned ? "translate-x-6" : "translate-x-1"
-                        }`} />
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${!user.banned ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -201,9 +188,7 @@ export default function FacunditoPage() {
           </div>
         </div>
 
-        <p className="mt-4 text-xs text-slate-400 text-center">
-          Acceso restringido · Kallio 2026
-        </p>
+        <p className="mt-4 text-xs text-slate-400 text-center">Acceso restringido · Kallio 2026</p>
       </div>
     </div>
   );

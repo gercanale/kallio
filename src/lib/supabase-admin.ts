@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export function createAdminClient() {
   return createClient(
@@ -10,10 +12,23 @@ export function createAdminClient() {
 
 export const ADMIN_EMAILS = ["gercanale@gmail.com", "gomezvera.f@gmail.com"];
 
-export async function verifyAdmin(authHeader: string | null): Promise<boolean> {
-  if (!authHeader?.startsWith("Bearer ")) return false;
-  const token = authHeader.slice(7);
-  const admin = createAdminClient();
-  const { data } = await admin.auth.getUser(token);
-  return !!data.user?.email && ADMIN_EMAILS.includes(data.user.email);
+/** Reads the session from request cookies and checks if the user is admin. */
+export async function verifyAdminFromCookies(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  return !!user?.email && ADMIN_EMAILS.includes(user.email);
 }

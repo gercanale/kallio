@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient, verifyAdmin } from "@/lib/supabase-admin";
+import { NextResponse } from "next/server";
+import { createAdminClient, verifyAdminFromCookies } from "@/lib/supabase-admin";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, { status: 503 });
   }
 
   try {
-    if (!(await verifyAdmin(req.headers.get("authorization")))) {
+    if (!(await verifyAdminFromCookies())) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
