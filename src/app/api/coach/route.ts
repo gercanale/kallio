@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { COACH_BETA_USERS } from '@/config/coachBetaUsers';
+import { COACH_BETA_EMAILS } from '@/config/coachBetaUsers';
 import { buildSystemPrompt } from '@/lib/coachPrompt';
 import type { CoachContext } from '@/lib/coachPrompt';
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   // 2. Whitelist check
-  if (!COACH_BETA_USERS.includes(user.id)) {
+  if (!user.email || !COACH_BETA_EMAILS.includes(user.email)) {
     return Response.json({ eligible: false }, { status: 403 });
   }
 

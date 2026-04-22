@@ -1,9 +1,9 @@
 /**
- * Manually maintained whitelist of user IDs eligible for the AI Coach beta.
- * Add Supabase user UUIDs here to grant access.
- * The /api/coach route checks this list before any Anthropic API call.
+ * Manually maintained whitelist of emails eligible for the AI Coach beta.
+ * The /api/coach route checks the authenticated user's email against this list
+ * before any Anthropic API call — non-whitelisted users get a 403 and no API call is made.
  */
-export const COACH_BETA_USERS: string[] = [
-  // Add your own Supabase user UUID here:
-  // 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+export const COACH_BETA_EMAILS: string[] = [
+  "gomezvera.f@gmail.com",
+  "gercanale@gmail.com",
 ];

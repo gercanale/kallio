@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { COACH_BETA_USERS } from '@/config/coachBetaUsers';
+import { COACH_BETA_EMAILS } from '@/config/coachBetaUsers';
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -26,6 +26,6 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return Response.json({ eligible: false });
-  return Response.json({ eligible: COACH_BETA_USERS.includes(user.id) });
+  if (!user?.email) return Response.json({ eligible: false });
+  return Response.json({ eligible: COACH_BETA_EMAILS.includes(user.email) });
 }
