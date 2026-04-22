@@ -49,7 +49,14 @@ export default function FacunditoPage() {
     const res = await fetch("/api/admin/users", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) { setError("No se pudieron cargar los usuarios."); setLoading(false); return; }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error === "SUPABASE_SERVICE_ROLE_KEY not configured"
+        ? "Falta configurar SUPABASE_SERVICE_ROLE_KEY en las variables de entorno."
+        : "No se pudieron cargar los usuarios.");
+      setLoading(false);
+      return;
+    }
     setUsers(await res.json());
     setLoading(false);
   }, [token]);

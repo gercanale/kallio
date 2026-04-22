@@ -2,27 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, verifyAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin(req.headers.get("authorization")))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, { status: 503 });
   }
 
-  const admin = createAdminClient();
+  try {
+    if (!(await verifyAdmin(req.headers.get("authorization")))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const [{ data: authData }, { data: profiles }] = await Promise.all([
-    admin.auth.admin.listUsers({ perPage: 1000 }),
-    admin.from("profiles").select("id, name"),
-  ]);
+    const admin = createAdminClient();
 
-  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+    const [{ data: authData, error: authError }, { data: profiles }] = await Promise.all([
+      admin.auth.admin.listUsers({ perPage: 1000 }),
+      admin.from("profiles").select("id, name"),
+    ]);
 
-  const users = (authData?.users ?? []).map((u) => ({
-    id: u.id,
-    email: u.email ?? "",
-    name: profileMap.get(u.id) ?? "",
-    createdAt: u.created_at,
-    lastSignIn: u.last_sign_in_at ?? null,
-    banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
-  }));
+    if (authError) {
+      console.error("listUsers error:", authError);
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
 
-  return NextResponse.json(users);
+    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+
+    const users = (authData?.users ?? []).map((u) => ({
+      id: u.id,
+      email: u.email ?? "",
+      name: profileMap.get(u.id) ?? "",
+      createdAt: u.created_at,
+      lastSignIn: u.last_sign_in_at ?? null,
+      banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
+    }));
+
+    return NextResponse.json(users);
+  } catch (e) {
+    console.error("admin/users error:", e);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
