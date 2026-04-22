@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { ADMIN_EMAILS } from "./admin-config";
+
+export { ADMIN_EMAILS };
 
 export function createAdminClient() {
   return createClient(
@@ -9,8 +12,6 @@ export function createAdminClient() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }
-
-export const ADMIN_EMAILS = ["gercanale@gmail.com", "gomezvera.f@gmail.com"];
 
 /** Reads the session from request cookies and checks if the user is admin. */
 export async function verifyAdminFromCookies(): Promise<boolean> {

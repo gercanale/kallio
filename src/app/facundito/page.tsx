@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Copy, Check, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { ADMIN_EMAILS } from "@/lib/supabase-admin";
+import { ADMIN_EMAILS } from "@/lib/admin-config";
 
 interface AdminUser {
   id: string;
