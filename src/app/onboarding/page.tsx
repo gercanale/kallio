@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Globe, Moon, Sun } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Moon, Sun } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
+import { createClient } from "@/lib/supabase";
 import type { FiscalRegime } from "@/lib/types";
+import type { Language } from "@/lib/i18n";
+
+const LANGS: { code: Language; flag: string; label: string }[] = [
+  { code: "es", flag: "🇪🇸", label: "Español" },
+  { code: "en", flag: "🇬🇧", label: "English" },
+  { code: "it", flag: "🇮🇹", label: "Italiano" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch" },
+  { code: "fr", flag: "🇫🇷", label: "Français" },
+];
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
@@ -20,6 +30,7 @@ export default function OnboardingPage() {
   const dark = theme === "dark";
   const t = useT();
 
+  const [langChosen, setLangChosen] = useState(false);
   const [step, setStep] = useState<Step>(0);
   const [name, setName] = useState("");
   const [nif, setNif] = useState("");
@@ -46,6 +57,18 @@ export default function OnboardingPage() {
       onboardingComplete: true,
     });
     activateSession();
+
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    const userEmail = data.user?.email;
+    if (userEmail) {
+      fetch("/api/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, lang: language }),
+      });
+    }
+
     router.push("/dashboard");
   };
 
@@ -95,7 +118,7 @@ export default function OnboardingPage() {
         />
       </div>
 
-      {/* Top bar: theme + language toggles */}
+      {/* Top bar: theme toggle */}
       <div className="flex justify-end items-center gap-3 px-6 pt-4">
         <button
           onClick={() => setTheme(dark ? "light" : "dark")}
@@ -104,19 +127,37 @@ export default function OnboardingPage() {
         >
           {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-        <button
-          onClick={() => setLanguage(language === "es" ? "en" : "es")}
-          className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${dark ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}
-        >
-          <Globe className="w-4 h-4" />
-          <span>{language === "es" ? "EN" : "ES"}</span>
-        </button>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-8">
         <div className="w-full max-w-md">
+
+          {/* Language step — shown before everything else */}
+          {!langChosen && (
+            <div className="text-center">
+              <p className="text-3xl mb-3">🌍</p>
+              <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>Choose your language</h1>
+              <p className={`text-sm mb-8 ${textSecondary}`}>Elige el idioma · Scegli la lingua · Wähle die Sprache · Choisissez la langue</p>
+              <div className="grid grid-cols-1 gap-3 mb-8">
+                {LANGS.map(({ code, flag, label }) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => { setLanguage(code); setLangChosen(true); }}
+                    className={`flex items-center gap-4 w-full px-5 py-4 rounded-xl border text-left transition-all font-medium text-base ${
+                      language === code ? cardActive + " " + cardActiveText : cardInactive + " " + cardInactiveTitle
+                    }`}
+                  >
+                    <span className="text-2xl">{flag}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Step indicator — only when step > 0 */}
-          {step > 0 && (
+          {langChosen && step > 0 && (
             <div className="flex items-center gap-2 mb-8">
               {([1, 2, 3, 4] as (1 | 2 | 3 | 4)[]).map((s) => (
                 <div key={s} className="flex items-center gap-2">
@@ -142,8 +183,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 0 – Intro slide */}
-          {step === 0 && (
+          {/* Steps 0-4 — only after language is chosen */}
+          {langChosen && step === 0 && (
             <div>
               <h1 className={`text-2xl font-bold mb-1 text-center ${textPrimary}`}>
                 {t.onboarding.introTitle}
@@ -199,7 +240,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 1 – Datos personales */}
-          {step === 1 && (
+          {langChosen && step === 1 && (
             <div>
               <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>
                 {t.onboarding.welcomeTitle}
@@ -276,7 +317,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 2 – Régimen fiscal */}
-          {step === 2 && (
+          {langChosen && step === 2 && (
             <div>
               <button
                 onClick={() => setStep(1)}
@@ -351,7 +392,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 3 – Provisión IRPF Modelo 130 */}
-          {step === 3 && (
+          {langChosen && step === 3 && (
             <div>
               <button
                 onClick={() => setStep(2)}
@@ -430,7 +471,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 4 – Retención IRPF */}
-          {step === 4 && (
+          {langChosen && step === 4 && (
             <div>
               <button
                 onClick={() => setStep(3)}
