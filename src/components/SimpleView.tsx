@@ -5,14 +5,16 @@ import { HelpCircle, X, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useT } from "@/lib/useT";
 import { formatCurrency, nextDeadline } from "@/lib/tax-engine";
-import type { TaxSnapshot } from "@/lib/types";
+import type { TaxSnapshot, CheckerRun } from "@/lib/types";
 import type { WizardProfile } from "@/lib/wizard-config";
 import { BeckhamCountdown } from "./BeckhamCountdown";
+import { PreguntameButton } from "./PreguntameButton";
 
 interface SimpleViewProps {
   snapshot: TaxSnapshot;
   wizardProfile: WizardProfile;
   onAddTransaction: () => void;
+  checkerHistory: CheckerRun[];
 }
 
 // Simple template string interpolation
@@ -96,7 +98,7 @@ function LearnMoreModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main SimpleView ─────────────────────────────────────────────────────────
 
-export function SimpleView({ snapshot, wizardProfile, onAddTransaction }: SimpleViewProps) {
+export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerHistory }: SimpleViewProps) {
   const t = useT();
   const sv = t.simpleView;
 
@@ -301,6 +303,13 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction }: Simple
             </div>
           </div>
         )}
+
+        {/* ── Coach button ── */}
+        <PreguntameButton
+          snapshot={snapshot}
+          wizardProfile={wizardProfile}
+          checkerHistory={checkerHistory}
+        />
 
         {/* ── Learn more ── */}
         <button
