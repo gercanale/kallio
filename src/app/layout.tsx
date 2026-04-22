@@ -3,6 +3,7 @@ import "./globals.css";
 import { HtmlLangSetter } from "./HtmlLangSetter";
 import { AuthProvider } from "./AuthProvider";
 import { ThemeWrapper } from "./ThemeWrapper";
+import { HelpButton } from "@/components/HelpButton";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeWrapper>
             {children}
+            <HelpButton />
           </ThemeWrapper>
         </AuthProvider>
         <Analytics />
