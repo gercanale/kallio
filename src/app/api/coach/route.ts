@@ -95,20 +95,29 @@ export async function POST(req: Request) {
     });
   }
 
-  // 8. Build system prompt
+  // 8. Check API key is configured
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('COACH: ANTHROPIC_API_KEY is not set');
+    return Response.json({
+      reply: 'El asistente IA no está configurado aún — falta la clave API. Contacta con el equipo.',
+      error: true,
+    });
+  }
+
+  // 9. Build system prompt
   const systemPrompt = buildSystemPrompt(contextObject);
 
-  // 9. Call Anthropic API
+  // 10. Call Anthropic API
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-opus-4-5',
         max_tokens: 400,
         system: systemPrompt,
         messages: [
@@ -119,7 +128,9 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
+      const errorBody = await response.text();
+      console.error(`COACH: Anthropic API error ${response.status}:`, errorBody);
+      throw new Error(`Anthropic API error: ${response.status} — ${errorBody}`);
     }
 
     const data = (await response.json()) as { content: { text: string }[] };
