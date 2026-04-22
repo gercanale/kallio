@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient, verifyAdmin } from "@/lib/supabase-admin";
+import { createAdminClient, verifyAdminFromRequest } from "@/lib/supabase-admin";
 
 export async function GET(req: NextRequest) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    if (!(await verifyAdmin(req.headers.get("authorization")))) {
+    if (!(await verifyAdminFromRequest(req))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(users);
   } catch (e) {
-    console.error("admin/users error:", e);
+    console.error("admin/users GET error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
