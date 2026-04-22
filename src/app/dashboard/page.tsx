@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const language = useKallioStore((s) => s.language);
   const wizardProfile = useKallioStore((s) => s.wizardProfile);
   const dashboardMode = useKallioStore((s) => s.dashboardMode);
+  const checkerHistory = useKallioStore((s) => s.checkerHistory);
   const setDashboardMode = useKallioStore((s) => s.setDashboardMode);
   const t = useT();
 
@@ -192,6 +193,7 @@ export default function DashboardPage() {
             snapshot={currSnapshot}
             wizardProfile={wizardProfile}
             onAddTransaction={() => setShowForm(true)}
+            checkerHistory={checkerHistory}
           />
         )}
 
