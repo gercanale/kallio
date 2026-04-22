@@ -652,6 +652,7 @@ export const translations = {
       successBody: "Te responderemos lo antes posible en tu email.",
       errorBody: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
       charCount: "caracteres",
+      responseTime: "Te respondemos en 4 hs hábiles.",
     },
   },
 
@@ -1302,6 +1303,7 @@ export const translations = {
       successBody: "We'll get back to you as soon as possible.",
       errorBody: "Could not send the message. Please try again.",
       charCount: "characters",
+      responseTime: "We reply within 4 business hours.",
     },
   },
   it: {
@@ -1946,6 +1948,7 @@ export const translations = {
       successBody: "Ti risponderemo il prima possibile.",
       errorBody: "Impossibile inviare il messaggio. Riprova.",
       charCount: "caratteri",
+      responseTime: "Rispondiamo entro 4 ore lavorative.",
     },
   },
 
@@ -2591,6 +2594,7 @@ export const translations = {
       successBody: "Wir melden uns so schnell wie möglich bei dir.",
       errorBody: "Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.",
       charCount: "Zeichen",
+      responseTime: "Wir antworten innerhalb von 4 Arbeitsstunden.",
     },
   },
 
@@ -3236,6 +3240,7 @@ export const translations = {
       successBody: "Nous vous répondrons dès que possible.",
       errorBody: "Impossible d'envoyer le message. Veuillez réessayer.",
       charCount: "caractères",
+      responseTime: "Nous répondons en 4 heures ouvrables.",
     },
   },
 } as const;

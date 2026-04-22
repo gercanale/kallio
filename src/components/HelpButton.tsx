@@ -132,6 +132,10 @@ export function HelpButton() {
                   </span>
                 </div>
 
+                <p className="text-xs text-slate-400 dark:text-slate-500 -mt-2">
+                  {ht.responseTime}
+                </p>
+
                 {status === "error" && (
                   <p className="text-sm text-red-500">{ht.errorBody}</p>
                 )}
