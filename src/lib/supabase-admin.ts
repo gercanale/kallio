@@ -8,7 +8,7 @@ export function createAdminClient() {
   );
 }
 
-export const ADMIN_EMAILS = ["german.canale@relp.ngo", "gercanale@gmail.com"];
+export const ADMIN_EMAILS = ["gercanale@gmail.com", "gomezvera.f@gmail.com"];
 
 export async function verifyAdmin(authHeader: string | null): Promise<boolean> {
   if (!authHeader?.startsWith("Bearer ")) return false;
