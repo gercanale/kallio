@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2, Copy, Check, Users, Moon, Sun } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Trash2, Copy, Check, Users, Search } from "lucide-react";
 import { banUserAction, deleteUserAction } from "./actions";
 import { useKallioStore } from "@/lib/store";
+import { Navigation } from "@/components/Navigation";
+
+type StatusFilter = "all" | "active" | "inactive";
 
 export interface AdminUser {
   id: string;
@@ -25,12 +28,21 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [copied, setCopied] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const theme = useKallioStore((s) => s.theme);
-  const setTheme = useKallioStore((s) => s.setTheme);
-  const dark = theme === "dark";
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      if (statusFilter === "active" && u.banned) return false;
+      if (statusFilter === "inactive" && !u.banned) return false;
+      if (!q) return true;
+      return u.email.toLowerCase().includes(q) || u.name.toLowerCase().includes(q);
+    });
+  }, [users, search, statusFilter]);
 
   function copyEmails() {
-    navigator.clipboard.writeText(users.map((u) => u.email).join(", "));
+    navigator.clipboard.writeText(filtered.map((u) => u.email).join(", "));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -49,9 +61,12 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
   }
 
   const active = users.filter((u) => !u.banned).length;
+  const showing = filtered.length;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Navigation />
+      <main className="lg:ml-56 px-4 py-10 pb-24 lg:pb-10">
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
@@ -61,16 +76,12 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
               <Users size={20} className="text-teal-600" />
               <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Usuarios</h1>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{users.length} registrados · {active} activos</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {users.length} registrados · {active} activos
+              {showing !== users.length && <span className="ml-2 text-teal-600 font-medium">· {showing} mostrados</span>}
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(dark ? "light" : "dark")}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {dark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
             <button
               onClick={copyEmails}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium transition-colors"
@@ -81,11 +92,36 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
           </div>
         </div>
 
+        {/* Search + Filter */}
+        <div className="mb-4 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre o email…"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden text-sm">
+            {(["all", "active", "inactive"] as StatusFilter[]).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setStatusFilter(opt)}
+                className={`px-4 py-2 transition-colors ${statusFilter === opt ? "bg-teal-600 text-white" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+              >
+                {opt === "all" ? "Todos" : opt === "active" ? "Activos" : "Inactivos"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Table */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
-          {users.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
-              No hay usuarios registrados.
+              {users.length === 0 ? "No hay usuarios registrados." : "Sin resultados para esta búsqueda."}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -101,7 +137,7 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {users.map((user) => (
+                  {filtered.map((user) => (
                     <tr key={user.id} className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 ${user.banned ? "opacity-50" : ""}`}>
                       <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
                         {user.name || <span className="text-slate-400 italic">—</span>}
@@ -144,6 +180,7 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
 
         <p className="mt-4 text-xs text-slate-400 text-center">Acceso restringido · Kallio 2026</p>
       </div>
+      </main>
     </div>
   );
 }
