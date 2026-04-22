@@ -656,6 +656,19 @@ export const translations = {
       send: "Enviar",
       preguntameBtn: "Pregúntame",
     },
+
+    help: {
+      buttonLabel: "Necesito ayuda",
+      modalTitle: "¿En qué podemos ayudarte?",
+      placeholder: "Cuéntanos qué necesitas o qué problema tienes. Nuestro equipo te responderá por email.",
+      send: "Enviar mensaje",
+      sending: "Enviando...",
+      successTitle: "¡Mensaje enviado!",
+      successBody: "Te responderemos lo antes posible en tu email.",
+      errorBody: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+      charCount: "caracteres",
+      responseTime: "Te respondemos en 4 hs hábiles.",
+    },
   },
 
   en: {
@@ -1309,6 +1322,19 @@ export const translations = {
       send: "Send",
       preguntameBtn: "Ask me",
     },
+
+    help: {
+      buttonLabel: "Need help",
+      modalTitle: "How can we help you?",
+      placeholder: "Tell us what you need or what issue you're facing. Our team will reply to your email.",
+      send: "Send message",
+      sending: "Sending...",
+      successTitle: "Message sent!",
+      successBody: "We'll get back to you as soon as possible.",
+      errorBody: "Could not send the message. Please try again.",
+      charCount: "characters",
+      responseTime: "We reply within 4 business hours.",
+    },
   },
   it: {
     nav: {
@@ -1955,6 +1981,19 @@ export const translations = {
       inputPlaceholder: "Scrivi la tua domanda...",
       send: "Invia",
       preguntameBtn: "Chiedimi",
+    },
+
+    help: {
+      buttonLabel: "Ho bisogno di aiuto",
+      modalTitle: "Come possiamo aiutarti?",
+      placeholder: "Dicci cosa ti serve o quale problema stai riscontrando. Il nostro team ti risponderà via email.",
+      send: "Invia messaggio",
+      sending: "Invio in corso...",
+      successTitle: "Messaggio inviato!",
+      successBody: "Ti risponderemo il prima possibile.",
+      errorBody: "Impossibile inviare il messaggio. Riprova.",
+      charCount: "caratteri",
+      responseTime: "Rispondiamo entro 4 ore lavorative.",
     },
   },
 
@@ -2604,6 +2643,19 @@ export const translations = {
       send: "Senden",
       preguntameBtn: "Frag mich",
     },
+
+    help: {
+      buttonLabel: "Ich brauche Hilfe",
+      modalTitle: "Wie können wir dir helfen?",
+      placeholder: "Beschreibe, was du brauchst oder welches Problem du hast. Unser Team antwortet dir per E-Mail.",
+      send: "Nachricht senden",
+      sending: "Wird gesendet...",
+      successTitle: "Nachricht gesendet!",
+      successBody: "Wir melden uns so schnell wie möglich bei dir.",
+      errorBody: "Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.",
+      charCount: "Zeichen",
+      responseTime: "Wir antworten innerhalb von 4 Arbeitsstunden.",
+    },
   },
 
   fr: {
@@ -3251,6 +3303,19 @@ export const translations = {
       inputPlaceholder: "Écrivez votre question...",
       send: "Envoyer",
       preguntameBtn: "Demandez-moi",
+    },
+
+    help: {
+      buttonLabel: "J'ai besoin d'aide",
+      modalTitle: "Comment pouvons-nous vous aider ?",
+      placeholder: "Dites-nous ce dont vous avez besoin ou quel problème vous rencontrez. Notre équipe vous répondra par email.",
+      send: "Envoyer le message",
+      sending: "Envoi en cours...",
+      successTitle: "Message envoyé !",
+      successBody: "Nous vous répondrons dès que possible.",
+      errorBody: "Impossible d'envoyer le message. Veuillez réessayer.",
+      charCount: "caractères",
+      responseTime: "Nous répondons en 4 heures ouvrables.",
     },
   },
 } as const;

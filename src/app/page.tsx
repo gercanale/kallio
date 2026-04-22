@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, Globe, Moon, Sun } from "lucide-react";
+import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, Moon, Sun, ChevronDown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useT } from "@/lib/useT";
+import type { Language } from "@/lib/i18n";
+
+const LANGS: { code: Language; flag: string; label: string; short: string }[] = [
+  { code: "es", flag: "🇪🇸", label: "Español", short: "ES" },
+  { code: "en", flag: "🇬🇧", label: "English", short: "EN" },
+  { code: "it", flag: "🇮🇹", label: "Italiano", short: "IT" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch", short: "DE" },
+  { code: "fr", flag: "🇫🇷", label: "Français", short: "FR" },
+];
 
 export default function LandingPage() {
   const hydrated = useHydrated();
@@ -23,12 +32,26 @@ export default function LandingPage() {
 
   const dark = theme === "dark";
 
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [langOpen]);
+
   useEffect(() => {
     if (sessionActive) { router.replace("/dashboard"); return; }
     createClient().auth.getUser().then(({ data: { user } }) => {
       if (user) router.replace("/dashboard");
     });
   }, [sessionActive, router]);
+
+  const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
 
   const handleDemo = () => {
     useKallioStore.getState().loadDemo();
@@ -72,6 +95,9 @@ export default function LandingPage() {
   const trustColor = dark ? "text-slate-500" : "text-slate-400";
   const footerColor = dark ? "text-slate-700" : "text-slate-400";
   const navBtnColor = dark ? "text-teal-300 hover:text-white" : "text-teal-600 hover:text-teal-800";
+  const dropdownBg = dark ? "bg-slate-900 border-slate-700 shadow-xl" : "bg-white border-slate-200 shadow-lg";
+  const dropdownItem = dark ? "text-slate-300 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+  const dropdownActive = dark ? "bg-teal-500/20 text-teal-300" : "bg-teal-50 text-teal-700";
   const themeToggleColor = dark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-800";
   const demoBtnBg = dark ? "bg-white/10 hover:bg-white/20 border-white/10 text-white" : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800";
   const welcomeCardBg = dark ? "bg-white/10 border-white/20" : "bg-white border-slate-200 shadow-sm";
@@ -98,14 +124,33 @@ export default function LandingPage() {
           >
             {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          {/* Language toggle */}
-          <button
-            onClick={() => setLanguage(language === "es" ? "en" : "es")}
-            className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${navBtnColor}`}
-          >
-            <Globe className="w-4 h-4" />
-            <span>{language === "es" ? "EN" : "ES"}</span>
-          </button>
+          {/* Language dropdown */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setLangOpen((o) => !o)}
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${navBtnColor}`}
+            >
+              <span className="text-base leading-none">{currentLang.flag}</span>
+              <span>{currentLang.short}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+            </button>
+            {langOpen && (
+              <div className={`absolute top-full right-0 mt-2 border rounded-xl overflow-hidden z-50 min-w-[150px] ${dropdownBg}`}>
+                {LANGS.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLanguage(lang.code); setLangOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
+                      lang.code === language ? dropdownActive : dropdownItem
+                    }`}
+                  >
+                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span>{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {hasExistingAccount ? (
             <button onClick={handleContinue} className={`text-sm font-medium transition-colors ${navBtnColor}`}>
               {t.landing.continueBtn}
