@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient, verifyAdminFromCookies } from "@/lib/supabase-admin";
+import { createAdminClient, verifyAdminFromRequest } from "@/lib/supabase-admin";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await verifyAdminFromCookies())) {
+  if (!(await verifyAdminFromRequest(req))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await verifyAdminFromCookies())) {
+  if (!(await verifyAdminFromRequest(req))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

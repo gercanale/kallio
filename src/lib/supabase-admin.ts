@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 import { ADMIN_EMAILS } from "./admin-config";
 
 export { ADMIN_EMAILS };
@@ -13,20 +13,15 @@ export function createAdminClient() {
   );
 }
 
-/** Reads the session from request cookies and checks if the user is admin. */
-export async function verifyAdminFromCookies(): Promise<boolean> {
-  const cookieStore = await cookies();
+/** Reads the session from the request cookies and checks if the user is admin. */
+export async function verifyAdminFromRequest(req: NextRequest): Promise<boolean> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        },
+        getAll() { return req.cookies.getAll(); },
+        setAll() {},
       },
     }
   );

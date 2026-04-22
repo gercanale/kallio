@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
-import { createAdminClient, verifyAdminFromCookies } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient, verifyAdminFromRequest } from "@/lib/supabase-admin";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, { status: 503 });
   }
 
   try {
-    if (!(await verifyAdminFromCookies())) {
+    if (!(await verifyAdminFromRequest(req))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -36,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json(users);
   } catch (e) {
-    console.error("admin/users error:", e);
+    console.error("admin/users GET error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
