@@ -5,7 +5,6 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
 import { useT } from "@/lib/useT";
 import type { Language } from "@/lib/i18n";
 
@@ -33,7 +32,6 @@ export default function LandingPage() {
   const hydrated     = useHydrated();
   const profile      = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
-  const activateSession = useKallioStore((s) => s.activateSession);
   const language     = useKallioStore((s) => s.language);
   const setLanguage  = useKallioStore((s) => s.setLanguage);
   const router       = useRouter();
@@ -51,15 +49,18 @@ export default function LandingPage() {
     return () => document.removeEventListener("mousedown", close);
   }, [langOpen]);
 
+  // Wait for AuthProvider to finish loading before redirecting.
+  // Never call getUser() here — that races with the store and causes
+  // an infinite loop: landing detects Supabase session → /dashboard,
+  // dashboard sees sessionActive=false → back to /, repeat.
   useEffect(() => {
-    if (sessionActive) { router.replace("/dashboard"); return; }
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/dashboard");
-    });
-  }, [sessionActive, router]);
+    if (!hydrated) return;
+    if (sessionActive) router.replace("/dashboard");
+  }, [hydrated, sessionActive, router]);
 
   const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
   const hasAccount  = hydrated && profile.onboardingComplete && !sessionActive;
+  const activateSession = useKallioStore((s) => s.activateSession);
 
   const handleDemo = () => {
     useKallioStore.getState().loadDemo();
