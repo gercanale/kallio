@@ -66,7 +66,7 @@ export function UsersClient({ initialUsers }: { initialUsers: AdminUser[] }) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navigation />
-      <main className="lg:ml-56 px-4 py-10 pb-24 lg:pb-10">
+      <main className="pt-14 px-4 py-10 pb-24 lg:pb-10">
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}

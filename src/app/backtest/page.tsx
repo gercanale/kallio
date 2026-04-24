@@ -268,7 +268,7 @@ export default function BacktestPage() {
       <Navigation />
       {showWhyModal && <InfoModal text={bt.whyText} onClose={() => setShowWhyModal(false)} />}
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6 max-w-2xl">
+      <main className="pt-14 px-4 lg:px-8 py-6 max-w-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button

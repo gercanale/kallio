@@ -65,6 +65,9 @@ export interface UserProfile {
   irpfRetentionRate: number;    // 0.07 or 0.15
   irpfAdvanceRate?: number;     // Modelo 130 provision rate; undefined = "define later" (defaults to 0.20)
   onboardingComplete: boolean;
+  clientes?: 'es_only' | 'eu' | 'non_eu' | 'mix';   // where clients are located
+  region?: string;        // RegionCode — comunidad autónoma
+  ingresoMensual?: number;  // self-reported monthly billing estimate (€)
 }
 
 export interface TaxSnapshot {

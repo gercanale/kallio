@@ -169,9 +169,6 @@ interface KallioState {
   language: Language;
   setLanguage: (lang: Language) => void;
 
-  theme: "dark" | "light";
-  setTheme: (theme: "dark" | "light") => void;
-
   profile: UserProfile;
   transactions: Transaction[];
   deductionPrompts: DeductionPrompt[];
@@ -290,9 +287,6 @@ export const useKallioStore = create<KallioState>()(
 
       language: "es" as Language,
       setLanguage: (lang) => set({ language: lang }),
-
-      theme: "dark" as const,
-      setTheme: (theme) => set({ theme }),
 
       profile: DEFAULT_PROFILE,
       transactions: [],
@@ -637,10 +631,9 @@ export const useKallioStore = create<KallioState>()(
     {
       name: "kallio-storage",
       version: 1,
-      // Persist language, theme, filed quarters, wizard profile and dashboard mode
+      // Persist language, filed quarters, wizard profile and dashboard mode
       partialize: (state) => ({
         language: state.language,
-        theme: state.theme,
         filedQuarters: state.filedQuarters,
         wizardProfile: state.wizardProfile,
         dashboardMode: state.dashboardMode,

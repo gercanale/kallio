@@ -65,7 +65,7 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
       <Navigation />
-      <main className="lg:ml-56 px-4 lg:px-8 py-6 pb-24 lg:pb-8 max-w-3xl">
+      <main className="pt-14 px-4 lg:px-8 py-6 pb-24 lg:pb-8 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{tf.title}</h1>

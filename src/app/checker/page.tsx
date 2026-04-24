@@ -92,7 +92,7 @@ export default function CheckerPage() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0">
         <Navigation />
-        <main className="lg:ml-56 px-4 lg:px-8 py-6 flex items-center justify-center">
+        <main className="pt-14 px-4 lg:px-8 py-6 flex items-center justify-center">
           <div className="max-w-sm w-full bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 text-center">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{ck.noWizard}</p>
             <Link
@@ -215,7 +215,7 @@ export default function CheckerPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6 max-w-2xl">
+      <main className="pt-14 px-4 lg:px-8 py-6 max-w-2xl">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{ck.title}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{ck.subtitle}</p>
