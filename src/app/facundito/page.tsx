@@ -31,8 +31,8 @@ export default async function FacunditoPage() {
 
   if (listError) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <p className="text-red-500 text-sm font-mono">Error al listar usuarios: {listError.message}</p>
+      <div style={{ minHeight: '100dvh', background: '#fdfaf3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <p style={{ fontSize: 13, color: '#c44536', fontFamily: 'monospace' }}>Error al listar usuarios: {listError.message}</p>
       </div>
     );
   }
