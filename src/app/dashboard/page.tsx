@@ -2,44 +2,93 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Settings2, LayoutGrid, Layers } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import {
   calculateTaxSnapshot,
-  calculateYTDSnapshot,
   quarterDateRange,
   currentQuarter,
   nowInSpain,
+  getQuarterDeadlines,
+  daysUntilDeadline,
 } from "@/lib/tax-engine";
-import { TaxReserveMeter } from "@/components/TaxReserveMeter";
-import { FinancialBreakdown } from "@/components/FinancialBreakdown";
-import { DeductionAssistant } from "@/components/DeductionAssistant";
-import { QuarterlyCountdown } from "@/components/QuarterlyCountdown";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { SetupWizard } from "@/components/SetupWizard";
-import { SimpleView } from "@/components/SimpleView";
+import { DeductionAssistant } from "@/components/DeductionAssistant";
+import { BeckhamCountdown } from "@/components/BeckhamCountdown";
+import { PreguntameButton } from "@/components/PreguntameButton";
+import type { Transaction } from "@/lib/types";
 
-type Period = "prev" | "curr" | "ytd";
+// ─── Direction A tokens ───────────────────────────────────────────────────────
+const C = {
+  BG:          '#fdfaf3',
+  INK:         '#1a1f2e',
+  MUTED:       '#6b6456',
+  BORDER:      '#e8dfc8',
+  BORDER_SOFT: '#f0e8d3',
+  IVA:         '#c44536',
+  IRPF:        '#d4a017',
+  OK:          '#5a7a3e',
+  CARD:        '#ffffff',
+  WARM:        '#c9bfa8',
+};
+
+// ─── Weekly bar chart helper ──────────────────────────────────────────────────
+function weeklyIncomeHeights(txs: Transaction[], quarter: number, year: number): number[] {
+  const { start } = quarterDateRange(quarter, year);
+  const weeks = new Array(13).fill(0);
+  for (const tx of txs) {
+    if (tx.type !== "income") continue;
+    const d = new Date(tx.date);
+    const dayOffset = Math.floor((d.getTime() - start.getTime()) / 86_400_000);
+    if (dayOffset < 0 || dayOffset > 91) continue;
+    const wi = Math.min(Math.floor(dayOffset / 7), 12);
+    weeks[wi] += tx.amount / (1 + tx.ivaRate / 100);
+  }
+  const max = Math.max(...weeks, 1);
+  return weeks.map(v => Math.round((v / max) * 100));
+}
+
+// ─── Quarter deadline label ───────────────────────────────────────────────────
+function deadlineLabel(quarter: number, year: number): string {
+  const deadlines = getQuarterDeadlines(year);
+  const d = deadlines.find(x => x.quarter === quarter);
+  if (!d) return "";
+  const dt = new Date(d.modelo130Deadline);
+  return dt.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+// ─── Quarter months label for bar chart axis ──────────────────────────────────
+function quarterMonthLabels(quarter: number): [string, string, string] {
+  const months = [
+    ["Ene","Feb","Mar"], ["Abr","May","Jun"],
+    ["Jul","Ago","Sep"], ["Oct","Nov","Dic"],
+  ];
+  return months[quarter - 1] as [string, string, string];
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const hydrated = useHydrated();
-  const profile = useKallioStore((s) => s.profile);
+  const router       = useRouter();
+  const hydrated     = useHydrated();
+  const profile      = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const transactions = useKallioStore((s) => s.transactions);
-  const language = useKallioStore((s) => s.language);
-  const wizardProfile = useKallioStore((s) => s.wizardProfile);
-  const dashboardMode = useKallioStore((s) => s.dashboardMode);
-  const checkerHistory = useKallioStore((s) => s.checkerHistory);
-  const setDashboardMode = useKallioStore((s) => s.setDashboardMode);
-  const t = useT();
+  const wizardProfile   = useKallioStore((s) => s.wizardProfile);
+  const checkerHistory  = useKallioStore((s) => s.checkerHistory);
+  const t            = useT();
 
-  const [showForm, setShowForm] = useState(false);
+  const [showForm,   setShowForm]   = useState(false);
   const [showWizard, setShowWizard] = useState(false);
-  const [period, setPeriod] = useState<Period>("curr");
+
+  const now   = useMemo(() => nowInSpain(), []);
+  const currQ = currentQuarter(now);
+  const currY = now.getFullYear();
+
+  // Quarter selection: 1–4
+  const [selQ, setSelQ] = useState(currQ);
+  const selY = currY; // always current year for MVP
 
   useEffect(() => {
     if (!hydrated) return;
@@ -47,196 +96,261 @@ export default function DashboardPage() {
     else if (!profile.onboardingComplete) router.replace("/onboarding");
   }, [hydrated, sessionActive, profile.onboardingComplete, router]);
 
-  const now = useMemo(() => nowInSpain(), []);
-  const currQ = currentQuarter(now);
-  const currY = now.getFullYear();
+  const snapshot = useMemo(
+    () => calculateTaxSnapshot(transactions, profile, selQ, selY),
+    [transactions, profile, selQ, selY]
+  );
 
-  // Resolve which quarter to show (null = YTD)
-  const resolvedQY = useMemo((): { quarter: number; year: number } | null => {
-    if (period === "ytd") return null;
-    if (period === "curr") return { quarter: currQ, year: currY };
-    if (currQ === 1) return { quarter: 4, year: currY - 1 };
-    return { quarter: currQ - 1, year: currY };
-  }, [period, currQ, currY]);
+  const barHeights = useMemo(
+    () => weeklyIncomeHeights(transactions, selQ, selY),
+    [transactions, selQ, selY]
+  );
 
-  // Snapshot for the selected period
-  const snapshot = useMemo(() => {
-    if (resolvedQY) {
-      return calculateTaxSnapshot(transactions, profile, resolvedQY.quarter, resolvedQY.year);
-    }
-    return calculateYTDSnapshot(transactions, profile, currY);
-  }, [resolvedQY, transactions, profile, currY]);
+  const fmt = (n: number) =>
+    n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
 
-  // Current-quarter snapshot always used for SimpleView
-  const currSnapshot = useMemo(() => {
-    return calculateTaxSnapshot(transactions, profile, currQ, currY);
-  }, [transactions, profile, currQ, currY]);
+  // Derived display values
+  const gross         = snapshot.grossIncome;
+  const spendable     = Math.max(0, gross - snapshot.totalTaxReserve);
+  const taxDue        = snapshot.ivaPayable + snapshot.irpfAdvancePayable;
+  const ivaAmt        = snapshot.ivaPayable;
+  const irpfAdv       = snapshot.irpfAdvancePayable;
+  const irpfEnd       = snapshot.yearEndIRPFGap;
+  const pctOf = (n: number) => gross > 0 ? Math.round((n / gross) * 100) : 0;
 
-  // Transactions filtered to the selected period (for FinancialBreakdown)
-  const periodTransactions = useMemo(() => {
-    if (resolvedQY) {
-      const { start, end } = quarterDateRange(resolvedQY.quarter, resolvedQY.year);
-      return transactions.filter((tx) => {
-        const d = new Date(tx.date);
-        return d >= start && d <= end;
-      });
-    }
-    return transactions.filter((tx) => new Date(tx.date).getFullYear() === currY);
-  }, [resolvedQY, transactions, currY]);
+  // Quarter status
+  const deadlineISO = getQuarterDeadlines(selY).find(d => d.quarter === selQ)?.modelo130Deadline ?? "";
+  const daysLeft    = deadlineISO ? daysUntilDeadline(deadlineISO) : 0;
+  const isPast      = daysLeft < 0;
+  const isCurrent   = selQ === currQ;
+  const statusLabel = isCurrent
+    ? `en curso · ${daysLeft} días`
+    : isPast ? "pasado" : "próximo";
 
-  // Human-readable period label
-  const periodLabel = useMemo(() => {
-    if (period === "ytd") return `${t.dashboard.periodYTD} ${currY}`;
-    if (resolvedQY) return `${resolvedQY.quarter}T ${resolvedQY.year}`;
-    return "";
-  }, [period, resolvedQY, currY, t]);
+  const dueLabel   = deadlineLabel(selQ, selY);
+  const [m1, m2, m3] = quarterMonthLabels(selQ);
 
-  // Derived state: should we show the simple view?
-  const isSimpleMode = dashboardMode === "simple" && wizardProfile?.wizardCompleted;
+  const isBeckham = wizardProfile?.fiscalRegime === "beckham";
 
   if (!hydrated || !sessionActive) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100dvh', background: C.BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 24, height: 24, border: `2px solid ${C.IVA}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
-
   if (!profile.onboardingComplete) return null;
 
-  const hour = now.getHours();
-  const greeting =
-    hour < 13 ? t.dashboard.greetingMorning
-    : hour < 20 ? t.dashboard.greetingAfternoon
-    : t.dashboard.greetingEvening;
-
-  const dateStr = now.toLocaleDateString(language === "es" ? "es-ES" : "en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  const periods: { key: Period; label: string }[] = [
-    { key: "prev", label: t.dashboard.periodPrev },
-    { key: "curr", label: t.dashboard.periodCurr },
-    { key: "ytd",  label: t.dashboard.periodYTD  },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
       <Navigation />
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {greeting}, {profile.name.split(" ")[0]} 👋
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">{dateStr}</p>
+      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+
+        {/* ── Beckham banner ─────────────────────────────────────────────── */}
+        {isBeckham && wizardProfile && wizardProfile.beckhamStartYear && (
+          <div style={{ marginBottom: 24 }}>
+            <BeckhamCountdown
+              beckhamStartYear={wizardProfile.beckhamStartYear}
+              annualNetIncome={snapshot.projectedAnnualNetIncome}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            {/* Checker button */}
-            <button
-              onClick={() => router.push("/checker")}
-              className="hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-            >
-              {t.checker.title}
-            </button>
+        )}
 
-            {/* Backtest button */}
-            <button
-              onClick={() => router.push("/backtest")}
-              className="hidden sm:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-            >
-              {t.simpleView.backtest}
-            </button>
+        {/* ── Quarter tabs + date ─────────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[1, 2, 3, 4].map(q => {
+              const active = selQ === q;
+              const hasTxs = transactions.some(tx => {
+                const d = new Date(tx.date);
+                return currentQuarter(d) === q && d.getFullYear() === currY;
+              });
+              return (
+                <button
+                  key={q}
+                  onClick={() => setSelQ(q)}
+                  style={{
+                    background: active ? C.INK : 'transparent',
+                    color: active ? 'white' : hasTxs ? C.INK : C.MUTED,
+                    border: `1px solid ${active ? C.INK : C.BORDER}`,
+                    borderRadius: 999, padding: '7px 16px',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  {q}T
+                </button>
+              );
+            })}
+          </div>
 
-            {/* Configurar / wizard button */}
+          {/* Date + actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.08em' }}>
+              {now.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()}
+            </span>
             <button
               onClick={() => setShowWizard(true)}
-              className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+              style={{ background: 'transparent', border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              <Settings2 className="w-3.5 h-3.5" />
-              {t.simpleView.configure}
+              ⚙ {t.simpleView.configure}
             </button>
-
-            {/* View mode toggle — only show if wizard is complete */}
-            {wizardProfile?.wizardCompleted && (
-              <button
-                onClick={() => setDashboardMode(isSimpleMode ? "full" : "simple")}
-                className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-                title={isSimpleMode ? t.simpleView.fullView : t.simpleView.simpleViewBtn}
-              >
-                {isSimpleMode ? (
-                  <><LayoutGrid className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t.simpleView.fullView}</span></>
-                ) : (
-                  <><Layers className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t.simpleView.simpleViewBtn}</span></>
-                )}
-              </button>
-            )}
-
-            {/* Add transaction */}
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm"
+              style={{ background: C.INK, color: 'white', border: 'none', borderRadius: 999, padding: '8px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">{t.dashboard.addButton}</span>
+              + {t.dashboard.addButton}
             </button>
           </div>
         </div>
 
-        {/* ── Simple View ── */}
-        {isSimpleMode && wizardProfile && (
-          <SimpleView
-            snapshot={currSnapshot}
-            wizardProfile={wizardProfile}
-            onAddTransaction={() => setShowForm(true)}
-            checkerHistory={checkerHistory}
-          />
-        )}
+        {/* ── Status + headline ───────────────────────────────────────────── */}
+        <div className="mono" style={{ fontSize: 11, color: C.IVA, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 10 }}>
+          {selQ}T {selY} · {statusLabel}
+        </div>
 
-        {/* ── Full View ── */}
-        {!isSimpleMode && (
+        {gross > 0 ? (
           <>
-            {/* Period selector */}
-            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 w-full">
-              {periods.map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setPeriod(key)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                    period === key
-                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+            <div style={{ fontSize: 20, color: C.MUTED, marginBottom: 4, lineHeight: 1.4 }}>
+              Facturado este trimestre{' '}
+              <strong style={{ color: C.INK }}>€{fmt(gross)}</strong>,
             </div>
-
-            <div className="space-y-4">
-              <TaxReserveMeter
-                snapshot={snapshot}
-                periodLabel={periodLabel}
-                showGapBanner={period !== "ytd"}
-              />
-              <FinancialBreakdown
-                transactions={periodTransactions}
-                snapshot={snapshot}
-              />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <DeductionAssistant />
-                <QuarterlyCountdown />
-              </div>
+            <div style={{ fontSize: 26, fontWeight: 500, marginBottom: 28 }}>
+              tuyos:{' '}
+              <span className="serif" style={{ fontSize: 30 }}>€{fmt(spendable)}</span>
             </div>
           </>
+        ) : (
+          <div style={{ fontSize: 18, color: C.MUTED, marginBottom: 28, lineHeight: 1.5 }}>
+            {selQ === currQ
+              ? <>Sin facturas aún este trimestre. <button onClick={() => setShowForm(true)} style={{ background: 'none', border: 'none', color: C.IVA, cursor: 'pointer', fontFamily: 'inherit', fontSize: 18, fontWeight: 600, padding: 0 }}>Añade la primera →</button></>
+              : <>Sin facturas registradas en {selQ}T {selY}.</>
+            }
+          </div>
         )}
+
+        {/* ── Hero dark card ──────────────────────────────────────────────── */}
+        <div style={{
+          background: C.INK, color: 'white', borderRadius: 18,
+          padding: '28px 32px', marginBottom: 28,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap',
+        }}>
+          <div>
+            <div className="mono" style={{ fontSize: 11, color: C.IRPF, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 12 }}>
+              {isPast ? `Venció el ${dueLabel}` : `A pagar el ${dueLabel}`}
+            </div>
+            <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 0.95, letterSpacing: '-0.03em' }}>
+              €{fmt(taxDue)}
+            </div>
+            <div className="mono" style={{ fontSize: 12, color: C.WARM, marginTop: 10, lineHeight: 1.6 }}>
+              M303 · IVA €{fmt(ivaAmt)}{' '}+{' '}M130 · IRPF €{fmt(irpfAdv)}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div className="mono" style={{ fontSize: 10, color: C.WARM, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
+              {gross > 0 ? 'Ya reservado' : 'Reserva estimada'}
+            </div>
+            {gross > 0 && taxDue <= gross ? (
+              <div style={{ fontSize: 16, color: '#9ec77c', fontWeight: 600 }}>✓ 100% cubierto</div>
+            ) : (
+              <div style={{ fontSize: 13, color: C.WARM }}>Añade facturas para confirmar</div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Weekly bar chart ────────────────────────────────────────────── */}
+        <div className="mono" style={{ fontSize: 10, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 12 }}>
+          Ingresos por semana · {selQ}T {selY}
+        </div>
+        <div style={{ display: 'flex', gap: 4, height: 80, alignItems: 'flex-end', marginBottom: 6, borderBottom: `1px solid ${C.BORDER}`, paddingBottom: 4 }}>
+          {barHeights.map((h, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: `${Math.max(h, 4)}%`,
+                background: i < Math.floor((now.getDate() + (now.getMonth() - ((selQ - 1) * 3)) * 30) / 7) && isCurrent
+                  ? C.INK
+                  : isCurrent ? C.IVA : (h > 0 ? C.INK : C.BORDER),
+                borderRadius: '2px 2px 0 0',
+                opacity: isCurrent && i > Math.floor((now.getDate() + (now.getMonth() - ((selQ - 1) * 3)) * 30) / 7) ? 0.4 : 0.85,
+              }}
+            />
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28 }}>
+          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>S1 · {m1.toUpperCase()}</span>
+          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>{m2.toUpperCase()}</span>
+          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>{m3.toUpperCase()} · S13</span>
+        </div>
+
+        {/* ── 4-bucket table ──────────────────────────────────────────────── */}
+        <div style={{ borderTop: `1px solid ${C.BORDER}`, paddingTop: 20, marginBottom: 28 }}>
+          {[
+            { label: 'Tuyo',                     value: spendable, color: C.INK,  dashed: false },
+            { label: 'IVA · Modelo 303',          value: ivaAmt,   color: C.IVA,  dashed: false },
+            { label: 'IRPF adelantado · M130',    value: irpfAdv,  color: C.IRPF, dashed: false },
+            { label: 'IRPF Renta estimado',       value: irpfEnd,  color: C.IRPF, dashed: true  },
+          ].map(({ label, value, color, dashed }, i) => (
+            <div
+              key={label}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0',
+                borderBottom: i < 3 ? `1px solid ${C.BORDER_SOFT}` : 'none',
+              }}
+            >
+              <div style={{
+                width: 11, height: 11, borderRadius: 3, flexShrink: 0,
+                background: dashed ? 'transparent' : color,
+                border: dashed ? `2px dashed ${color}` : 'none',
+              }} />
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{label}</div>
+              <div className="mono" style={{ fontSize: 11, color: C.MUTED, width: 40, textAlign: 'right' }}>
+                {gross > 0 ? pctOf(value) + '%' : '—'}
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 600, fontVariantNumeric: 'tabular-nums', width: 100, textAlign: 'right' }}>
+                €{fmt(value)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Quick links ─────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
+          {[
+            { label: t.checker.title, onClick: () => router.push('/checker') },
+            { label: t.simpleView.backtest, onClick: () => router.push('/backtest') },
+          ].map(({ label, onClick }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              style={{
+                background: 'transparent', border: `1px solid ${C.BORDER}`,
+                borderRadius: 999, padding: '7px 16px', fontSize: 12,
+                color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+          {wizardProfile && (
+            <div style={{ marginLeft: 'auto' }}>
+              <PreguntameButton
+                snapshot={snapshot}
+                wizardProfile={wizardProfile}
+                checkerHistory={checkerHistory}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ── Deduction assistant ──────────────────────────────────────────── */}
+        <DeductionAssistant />
+
       </main>
 
-      {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
+      {showForm   && <TransactionForm onClose={() => setShowForm(false)} />}
       {showWizard && <SetupWizard onClose={() => setShowWizard(false)} />}
     </div>
   );

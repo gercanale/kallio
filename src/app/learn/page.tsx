@@ -37,7 +37,7 @@ export default function LearnPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 sm:pb-0 transition-colors">
       <Navigation />
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6 max-w-3xl">
+      <main className="pt-14 px-4 lg:px-8 py-6 max-w-3xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
