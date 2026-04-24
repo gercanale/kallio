@@ -1,20 +1,57 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
+/* ─── Kallio Direction-A design tokens ─────────────────────────────────────── */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Core palette */
+  --bg:          #fdfaf3;   /* warm linen — app background */
+  --ink:         #1a1f2e;   /* deep navy — primary text, buttons */
+  --muted:       #6b6456;   /* warm stone — secondary text, captions */
+  --border:      #e8dfc8;   /* primary card/divider border */
+  --border-soft: #f0e8d3;   /* internal separators */
+  --card:        #ffffff;   /* white card surface */
+
+  /* Semantic accent colours — use ONLY as specified */
+  --iva:         #c44536;   /* terracotta — IVA / tax liability */
+  --irpf:        #d4a017;   /* mustard gold — IRPF advance / warnings */
+  --ok:          #5a7a3e;   /* sage green — confirmations, "Tuyo" */
+
+  /* Projection card */
+  --proj-bg:     #fbf2d9;
+  --proj-border: #ecd98b;
+
+  /* Radii */
+  --radius-card: 12px;
+  --radius-pill: 999px;
+
+  /* Legacy aliases (kept so existing Tailwind utilities still resolve) */
+  --background:  var(--bg);
+  --foreground:  var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Instrument Serif — italic only, one word per title */
+.serif {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* JetBrains Mono — micro-labels, numbers, codes */
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+/* Hide number input spinners */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+input[type="number"] { -moz-appearance: textfield; }

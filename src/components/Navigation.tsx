@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, Moon, Sun, ChevronDown, BookOpen } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, ChevronDown, BookOpen } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION, APP_VARIANT } from "@/lib/version";
@@ -22,8 +22,6 @@ export function Navigation() {
   const router = useRouter();
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
-  const theme = useKallioStore((s) => s.theme);
-  const setTheme = useKallioStore((s) => s.setTheme);
   const signOut = useKallioStore((s) => s.signOut);
   const t = useT();
 
@@ -88,13 +86,6 @@ export function Navigation() {
           >
             <span className="text-base leading-none">{currentLang.flag}</span>
             <span>{currentLang.short}</span>
-          </button>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium transition-all ${btnInactive}`}
-          >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            <span>{theme === "dark" ? t.nav.themeLight : t.nav.themeDark}</span>
           </button>
         </div>
       </nav>
@@ -162,10 +153,6 @@ export function Navigation() {
             )}
           </div>
 
-          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className={sidebarBtn}>
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span>{theme === "dark" ? t.nav.themeLight : t.nav.themeDark}</span>
-          </button>
           <button onClick={handleSignOut} className={sidebarBtn}>
             <LogOut className="w-4 h-4" />
             <span>{t.settings.signOut}</span>
