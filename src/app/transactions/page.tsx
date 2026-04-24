@@ -98,7 +98,7 @@ export default function TransactionsPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
       <Navigation />
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6">
+      <main className="pt-14 px-4 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t.transactions.title}</h1>
           <button

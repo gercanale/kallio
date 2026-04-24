@@ -3,47 +3,49 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, LogOut, ChevronDown, BookOpen } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
-import { APP_VERSION, APP_VARIANT } from "@/lib/version";
+import { APP_VERSION } from "@/lib/version";
 import type { Language } from "@/lib/i18n";
 
+const C = {
+  BG:     '#ffffff',
+  INK:    '#1a1f2e',
+  MUTED:  '#6b6456',
+  BORDER: '#e8dfc8',
+  IVA:    '#c44536',
+};
+
 const LANGS: { code: Language; flag: string; label: string; short: string }[] = [
-  { code: "es", flag: "🇪🇸", label: "Español", short: "ES" },
-  { code: "en", flag: "🇬🇧", label: "English", short: "EN" },
+  { code: "es", flag: "🇪🇸", label: "Español",  short: "ES" },
+  { code: "en", flag: "🇬🇧", label: "English",  short: "EN" },
   { code: "it", flag: "🇮🇹", label: "Italiano", short: "IT" },
-  { code: "de", flag: "🇩🇪", label: "Deutsch", short: "DE" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch",  short: "DE" },
   { code: "fr", flag: "🇫🇷", label: "Français", short: "FR" },
 ];
 
 export function Navigation() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const language = useKallioStore((s) => s.language);
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const language  = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
-  const signOut = useKallioStore((s) => s.signOut);
-  const t = useT();
+  const signOut   = useKallioStore((s) => s.signOut);
+  const t         = useT();
 
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!langOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) {
-        setLangOpen(false);
-      }
+    const close = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, [langOpen]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-  };
-
+  const handleSignOut = async () => { await signOut(); router.push("/"); };
   const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
   const cycleLang = () => {
     const idx = LANGS.findIndex((l) => l.code === language);
@@ -51,101 +53,88 @@ export function Navigation() {
   };
 
   const NAV_ITEMS = [
-    { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
-    { href: "/transactions", icon: ArrowLeftRight, label: t.nav.transactions },
-    { href: "/settings", icon: Settings, label: t.nav.settings },
-    { href: "/learn", icon: BookOpen, label: t.nav.learn },
+    { href: "/dashboard",     icon: LayoutDashboard, label: t.nav.dashboard    },
+    { href: "/transactions",  icon: ArrowLeftRight,  label: t.nav.transactions },
+    { href: "/settings",      icon: Settings,        label: t.nav.settings     },
+    { href: "/learn",         icon: BookOpen,        label: t.nav.learn        },
   ];
-
-  const btnInactive = "text-slate-400 dark:text-slate-500";
-  const sidebarBtn = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-all";
 
   return (
     <>
-      {/* ── Mobile bottom bar ──────────────────────────────────────────────── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 z-40">
-        <div className="flex items-center justify-around h-16 px-2">
-          {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-            const active = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  active ? "text-teal-600 dark:text-teal-400" : btnInactive
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-          <button
-            onClick={cycleLang}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${btnInactive}`}
-          >
-            <span className="text-base leading-none">{currentLang.flag}</span>
-            <span>{currentLang.short}</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex-col z-40">
+      {/* ── Desktop / tablet top bar ─────────────────────────────────────── */}
+      <header
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 40,
+          background: C.BG, borderBottom: `1px solid ${C.BORDER}`,
+          display: 'flex', alignItems: 'center',
+          padding: '0 32px', gap: 32, fontFamily: 'Inter, sans-serif',
+        }}
+        className="hidden sm:flex"
+      >
         {/* Logo */}
-        <div className="px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/faviconnobg.png" alt="Kallio" className="w-7 h-7" />
-            <span className="font-bold text-teal-700 dark:text-teal-400 text-xl">Kallio</span>
-          </Link>
-          <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums mt-0.5 block">
-            v{APP_VERSION} · {APP_VARIANT}
+        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', flexShrink: 0 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: C.IVA, display: 'inline-block' }} />
+          <span style={{ fontWeight: 700, fontSize: 17, color: C.INK }}>Kallio</span>
+          <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', marginLeft: 4 }}>
+            v{APP_VERSION}
           </span>
-        </div>
+        </Link>
 
-        {/* Nav items */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+        {/* Nav links */}
+        <nav style={{ display: 'flex', gap: 4, flex: 1 }}>
+          {NAV_ITEMS.map(({ href, label }) => {
             const active = pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
-                }`}
+                style={{
+                  padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 500,
+                  textDecoration: 'none', transition: 'all 0.15s',
+                  background: active ? C.INK : 'transparent',
+                  color: active ? 'white' : C.MUTED,
+                }}
               >
-                <Icon className="w-4 h-4" />
                 {label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom actions */}
-        <div className="px-3 pb-5 space-y-1 border-t border-slate-100 dark:border-slate-700 pt-3">
-          {/* Language dropdown */}
-          <div className="relative" ref={langRef}>
-            <button onClick={() => setLangOpen((o) => !o)} className={sidebarBtn}>
-              <span className="text-base leading-none">{currentLang.flag}</span>
-              <span className="flex-1 text-left">{currentLang.label}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+        {/* Right: language + sign out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          {/* Language picker */}
+          <div style={{ position: 'relative' }} ref={langRef}>
+            <button
+              onClick={() => setLangOpen(o => !o)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5,
+                fontSize: 13, fontWeight: 600, color: C.MUTED,
+              }}
+            >
+              <span style={{ fontSize: 15 }}>{currentLang.flag}</span>
+              <span>{currentLang.short}</span>
             </button>
             {langOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-50">
-                {LANGS.map((lang) => (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                background: C.BG, border: `1px solid ${C.BORDER}`, borderRadius: 12,
+                overflow: 'hidden', minWidth: 140, boxShadow: '0 8px 24px rgba(26,31,46,0.08)', zIndex: 50,
+              }}>
+                {LANGS.map(lang => (
                   <button
                     key={lang.code}
                     onClick={() => { setLanguage(lang.code); setLangOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
-                      lang.code === language
-                        ? "bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300"
-                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
-                    }`}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '9px 14px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 13, fontWeight: 500, textAlign: 'left',
+                      background: lang.code === language ? '#f5f0e8' : 'transparent',
+                      color: lang.code === language ? C.INK : C.MUTED,
+                    }}
                   >
-                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span style={{ fontSize: 15 }}>{lang.flag}</span>
                     <span>{lang.label}</span>
                   </button>
                 ))}
@@ -153,12 +142,56 @@ export function Navigation() {
             )}
           </div>
 
-          <button onClick={handleSignOut} className={sidebarBtn}>
-            <LogOut className="w-4 h-4" />
-            <span>{t.settings.signOut}</span>
+          <button
+            onClick={handleSignOut}
+            title={t.settings.signOut}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.MUTED, display: 'flex', alignItems: 'center' }}
+          >
+            <LogOut size={15} />
           </button>
         </div>
-      </aside>
+      </header>
+
+      {/* ── Mobile bottom bar ────────────────────────────────────────────── */}
+      <nav
+        className="sm:hidden"
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, height: 60, zIndex: 40,
+          background: C.BG, borderTop: `1px solid ${C.BORDER}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+          padding: '0 8px', fontFamily: 'Inter, sans-serif',
+        }}
+      >
+        {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '6px 12px', borderRadius: 10, textDecoration: 'none',
+                fontSize: 10, fontWeight: 500,
+                color: active ? C.INK : C.MUTED,
+              }}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+        <button
+          onClick={cycleLang}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            padding: '6px 12px', background: 'transparent', border: 'none', cursor: 'pointer',
+            fontSize: 10, fontWeight: 600, color: C.MUTED, fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontSize: 17 }}>{currentLang.flag}</span>
+          <span>{currentLang.short}</span>
+        </button>
+      </nav>
     </>
   );
 }
