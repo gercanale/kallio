@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, Moon, Sun, ChevronDown } from "lucide-react";
+import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, ChevronDown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useState, useEffect, useRef } from "react";
@@ -25,12 +25,8 @@ export default function LandingPage() {
   const activateSession = useKallioStore((s) => s.activateSession);
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
-  const theme = useKallioStore((s) => s.theme);
-  const setTheme = useKallioStore((s) => s.setTheme);
   const router = useRouter();
   const t = useT();
-
-  const dark = theme === "dark";
 
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -80,33 +76,28 @@ export default function LandingPage() {
     { icon: Calendar, title: t.landing.feature3Title, desc: t.landing.feature3Desc },
   ];
 
-  // Theme tokens
-  const bg = dark
-    ? "bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900"
-    : "bg-gradient-to-br from-white via-teal-50 to-slate-100";
-  const logoColor = dark ? "text-white" : "text-teal-700";
-  const badgeBg = dark ? "bg-teal-500/20 border-teal-500/30 text-teal-300" : "bg-teal-100 border-teal-200 text-teal-700";
-  const badgeDot = dark ? "bg-teal-400" : "bg-teal-500";
-  const heroColor = dark ? "text-white" : "text-slate-900";
-  const subtitleColor = dark ? "text-slate-400" : "text-slate-500";
-  const cardBg = dark ? "bg-white/5 border-white/10" : "bg-white border-slate-200";
-  const cardTitle = dark ? "text-white" : "text-slate-900";
-  const cardDesc = dark ? "text-slate-400" : "text-slate-500";
-  const trustColor = dark ? "text-slate-500" : "text-slate-400";
-  const footerColor = dark ? "text-slate-700" : "text-slate-400";
-  const navBtnColor = dark ? "text-teal-300 hover:text-white" : "text-teal-600 hover:text-teal-800";
-  const dropdownBg = dark ? "bg-slate-900 border-slate-700 shadow-xl" : "bg-white border-slate-200 shadow-lg";
-  const dropdownItem = dark ? "text-slate-300 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
-  const dropdownActive = dark ? "bg-teal-500/20 text-teal-300" : "bg-teal-50 text-teal-700";
-  const themeToggleColor = dark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-800";
-  const demoBtnBg = dark ? "bg-white/10 hover:bg-white/20 border-white/10 text-white" : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800";
-  const welcomeCardBg = dark ? "bg-white/10 border-white/20" : "bg-white border-slate-200 shadow-sm";
-  const welcomeTitle = dark ? "text-white" : "text-slate-900";
-  const welcomeSub = dark ? "text-slate-400" : "text-slate-500";
+  // Design tokens (light-only)
+  const bg = "bg-gradient-to-br from-white via-teal-50 to-slate-100";
+  const logoColor = "text-teal-700";
+  const badgeBg = "bg-teal-100 border-teal-200 text-teal-700";
+  const badgeDot = "bg-teal-500";
+  const heroColor = "text-slate-900";
+  const subtitleColor = "text-slate-500";
+  const cardBg = "bg-white border-slate-200";
+  const cardTitle = "text-slate-900";
+  const cardDesc = "text-slate-500";
+  const trustColor = "text-slate-400";
+  const footerColor = "text-slate-400";
+  const navBtnColor = "text-teal-600 hover:text-teal-800";
+  const dropdownBg = "bg-white border-slate-200 shadow-lg";
+  const dropdownItem = "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+  const dropdownActive = "bg-teal-50 text-teal-700";
+  const demoBtnBg = "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800";
+  const welcomeCardBg = "bg-white border-slate-200 shadow-sm";
+  const welcomeTitle = "text-slate-900";
+  const welcomeSub = "text-slate-500";
 
-  const featureIconColors = dark
-    ? ["bg-teal-500/20 text-teal-400", "bg-emerald-500/20 text-emerald-400", "bg-amber-500/20 text-amber-400"]
-    : ["bg-teal-100 text-teal-600", "bg-emerald-100 text-emerald-600", "bg-amber-100 text-amber-600"];
+  const featureIconColors = ["bg-teal-100 text-teal-600", "bg-emerald-100 text-emerald-600", "bg-amber-100 text-amber-600"];
 
   return (
     <div className={`min-h-screen ${bg} flex flex-col transition-colors duration-300`}>
@@ -116,14 +107,6 @@ export default function LandingPage() {
           <span className={`font-bold text-xl tracking-tight ${logoColor}`}>Kallio</span>
         </div>
         <div className="flex items-center gap-3">
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(dark ? "light" : "dark")}
-            className={`${themeToggleColor} transition-colors`}
-            aria-label="Toggle theme"
-          >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
           {/* Language dropdown */}
           <div className="relative" ref={langRef}>
             <button
@@ -178,7 +161,7 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <p className={`text-xl lg:text-2xl font-semibold mb-5 ${dark ? "text-slate-300" : "text-slate-600"}`}>
+          <p className={`text-xl lg:text-2xl font-semibold mb-5 text-slate-600`}>
             {t.landing.heroSub}
           </p>
 

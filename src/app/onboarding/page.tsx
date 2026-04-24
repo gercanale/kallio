@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Moon, Sun } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2 } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { createClient } from "@/lib/supabase";
@@ -25,9 +25,6 @@ export default function OnboardingPage() {
   const activateSession = useKallioStore((s) => s.activateSession);
   const language = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
-  const theme = useKallioStore((s) => s.theme);
-  const setTheme = useKallioStore((s) => s.setTheme);
-  const dark = theme === "dark";
   const t = useT();
 
   const [langChosen, setLangChosen] = useState(false);
@@ -84,28 +81,26 @@ export default function OnboardingPage() {
     t.onboarding.actOther,
   ];
 
-  // Theme tokens
-  const bg = dark ? "bg-slate-950" : "bg-slate-50";
-  const progressTrack = dark ? "bg-slate-800" : "bg-slate-200";
-  const textPrimary = dark ? "text-slate-100" : "text-slate-900";
-  const textSecondary = dark ? "text-slate-400" : "text-slate-600";
-  const textMuted = dark ? "text-slate-500" : "text-slate-500";
-  const inputBg = dark
-    ? "bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-teal-500"
-    : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-teal-400";
-  const cardActive = dark ? "border-teal-500 bg-teal-900/40" : "border-teal-500 bg-teal-50";
-  const cardActiveText = "text-teal-400";
-  const cardInactive = dark ? "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300";
-  const cardInactiveTitle = dark ? "text-slate-100" : "text-slate-900";
-  const summaryBg = dark ? "bg-teal-900/30 border-teal-800" : "bg-gradient-to-r from-teal-50 to-teal-50 border-teal-100";
-  const summaryTitle = dark ? "text-teal-400" : "text-teal-700";
-  const summaryLabel = dark ? "text-slate-500" : "text-slate-500";
-  const summaryValue = dark ? "text-slate-200" : "text-slate-700";
-  const irpfSubBg = dark ? "bg-slate-800/60 rounded-xl p-4 mb-6" : "bg-slate-50 rounded-xl p-4 mb-6";
-  const irpfRateActive = dark ? "border-teal-500 bg-teal-900/40" : "border-teal-500 bg-teal-50";
-  const irpfRateInactive = dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white";
-  const stepDotInactive = dark ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-500";
-  const stepConnector = dark ? "bg-slate-700" : "bg-slate-200";
+  // Design tokens (light-only)
+  const bg = "bg-slate-50";
+  const progressTrack = "bg-slate-200";
+  const textPrimary = "text-slate-900";
+  const textSecondary = "text-slate-600";
+  const textMuted = "text-slate-500";
+  const inputBg = "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-teal-400";
+  const cardActive = "border-teal-500 bg-teal-50";
+  const cardActiveText = "text-teal-600";
+  const cardInactive = "border-slate-200 bg-white text-slate-600 hover:border-slate-300";
+  const cardInactiveTitle = "text-slate-900";
+  const summaryBg = "bg-gradient-to-r from-teal-50 to-teal-50 border-teal-100";
+  const summaryTitle = "text-teal-700";
+  const summaryLabel = "text-slate-500";
+  const summaryValue = "text-slate-700";
+  const irpfSubBg = "bg-slate-50 rounded-xl p-4 mb-6";
+  const irpfRateActive = "border-teal-500 bg-teal-50";
+  const irpfRateInactive = "border-slate-200 bg-white";
+  const stepDotInactive = "bg-slate-200 text-slate-500";
+  const stepConnector = "bg-slate-200";
   const stepConnectorActive = "bg-teal-600";
 
   return (
@@ -118,16 +113,6 @@ export default function OnboardingPage() {
         />
       </div>
 
-      {/* Top bar: theme toggle */}
-      <div className="flex justify-end items-center gap-3 px-6 pt-4">
-        <button
-          onClick={() => setTheme(dark ? "light" : "dark")}
-          className={`transition-colors ${dark ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}
-          aria-label="Toggle theme"
-        >
-          {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-      </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-8">
         <div className="w-full max-w-md">
@@ -452,8 +437,8 @@ export default function OnboardingPage() {
               </div>
 
               {irpfAdvanceLater && (
-                <div className={`rounded-xl px-4 py-3 mb-4 ${dark ? "bg-amber-900/20 border border-amber-800/40" : "bg-amber-50 border border-amber-200"}`}>
-                  <p className={`text-xs leading-relaxed ${dark ? "text-amber-300" : "text-amber-700"}`}>
+                <div className="rounded-xl px-4 py-3 mb-4 bg-amber-50 border border-amber-200">
+                  <p className="text-xs leading-relaxed text-amber-700">
                     ⚠ {t.onboarding.irpfAdvanceLaterInfo}
                   </p>
                 </div>
