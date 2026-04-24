@@ -66,7 +66,7 @@ export function Navigation() {
         style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 40,
           background: C.BG, borderBottom: `1px solid ${C.BORDER}`,
-          display: 'flex', alignItems: 'center',
+          alignItems: 'center',
           padding: '0 32px', gap: 32, fontFamily: 'Inter, sans-serif',
         }}
         className="hidden sm:flex"
@@ -154,11 +154,11 @@ export function Navigation() {
 
       {/* ── Mobile bottom bar ────────────────────────────────────────────── */}
       <nav
-        className="sm:hidden"
+        className="flex sm:hidden"
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, height: 60, zIndex: 40,
           background: C.BG, borderTop: `1px solid ${C.BORDER}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+          alignItems: 'center', justifyContent: 'space-around',
           padding: '0 8px', fontFamily: 'Inter, sans-serif',
         }}
       >

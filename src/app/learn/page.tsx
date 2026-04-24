@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { Navigation } from "@/components/Navigation";
 import { getAllExplanations, LEARN_GROUPS, type ConceptKey } from "@/lib/tax-explanations";
+
+const C = {
+  BG: '#fdfaf3', INK: '#1a1f2e', MUTED: '#6b6456',
+  BORDER: '#e8dfc8', IVA: '#c44536', OK: '#5a7a3e', CARD: '#ffffff',
+};
 
 export default function LearnPage() {
   const language = useKallioStore((s) => s.language);
@@ -17,7 +22,6 @@ export default function LearnPage() {
   const toggle = (key: ConceptKey) =>
     setExpanded((prev) => (prev === key ? null : key));
 
-  // Filter by search
   const searchLower = search.toLowerCase();
   const matchesConcept = (key: ConceptKey) => {
     if (!searchLower) return true;
@@ -34,19 +38,17 @@ export default function LearnPage() {
   })).filter((g) => g.concepts.length > 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 sm:pb-0 transition-colors">
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
       <Navigation />
 
-      <main className="pt-14 px-4 lg:px-8 py-6 max-w-3xl">
+      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {isES ? "Glosario fiscal" : "Tax glossary"}
-            </h1>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, letterSpacing: '-0.02em' }}>
+            {isES ? "Glosario fiscal" : "Tax glossary"}
+          </h1>
+          <p style={{ fontSize: 14, color: C.MUTED, lineHeight: 1.5 }}>
             {isES
               ? "Todo lo que necesitas saber sobre impuestos de autónomo, en lenguaje claro."
               : "Everything you need to know about freelance taxes, in plain language."}
@@ -54,36 +56,44 @@ export default function LearnPage() {
         </div>
 
         {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div style={{ position: 'relative', marginBottom: 24 }}>
+          <Search
+            size={15}
+            style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.MUTED }}
+          />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isES ? "Buscar concepto…" : "Search concept…"}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 dark:text-slate-100 placeholder:text-slate-400 transition-colors"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+              padding: '10px 14px 10px 38px', fontSize: 14, color: C.INK,
+              fontFamily: 'inherit', outline: 'none',
+            }}
           />
         </div>
 
         {/* Groups */}
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {visibleGroups.length === 0 && (
-            <div className="text-center py-12 text-slate-400">
-              <BookOpen className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">{isES ? "No hay resultados" : "No results found"}</p>
+            <div style={{ textAlign: 'center', padding: '48px 0', color: C.MUTED }}>
+              <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📖</div>
+              <p style={{ fontSize: 14 }}>{isES ? "No hay resultados" : "No results found"}</p>
             </div>
           )}
 
           {visibleGroups.map((group) => (
             <section key={group.key}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{group.icon}</span>
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 18 }}>{group.icon}</span>
+                <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
                   {isES ? group.titleES : group.titleEN}
-                </h2>
+                </span>
               </div>
 
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {group.concepts.map((key) => {
                   const exp = explanations[key];
                   const isOpen = expanded === key;
@@ -91,29 +101,33 @@ export default function LearnPage() {
                   return (
                     <div
                       key={key}
-                      className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm"
+                      style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, overflow: 'hidden' }}
                     >
                       <button
                         onClick={() => toggle(key)}
-                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '14px 20px', background: 'transparent', border: 'none',
+                          cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                        }}
                       >
-                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <span style={{ fontSize: 14, fontWeight: 600, color: C.INK }}>
                           {exp.title}
                         </span>
                         {isOpen
-                          ? <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                          : <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+                          ? <ChevronUp size={16} style={{ color: C.MUTED, flexShrink: 0 }} />
+                          : <ChevronDown size={16} style={{ color: C.MUTED, flexShrink: 0 }} />}
                       </button>
 
                       {isOpen && (
-                        <div className="px-5 pb-4 space-y-3 border-t border-slate-100 dark:border-slate-700 pt-3">
-                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <div style={{ padding: '0 20px 16px', borderTop: `1px solid ${C.BORDER}`, paddingTop: 14 }}>
+                          <p style={{ fontSize: 14, color: C.MUTED, lineHeight: 1.7, marginBottom: exp.example ? 12 : 0 }}>
                             {exp.body}
                           </p>
                           {exp.example && (
-                            <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl px-4 py-3 border border-teal-100 dark:border-teal-800">
-                              <p className="text-xs text-teal-800 dark:text-teal-300 leading-relaxed">
-                                <span className="font-semibold">
+                            <div style={{ background: '#eef3eb', borderRadius: 10, padding: '10px 14px', border: `1px solid #c8ddc0` }}>
+                              <p style={{ fontSize: 13, color: '#3d5a29', lineHeight: 1.6 }}>
+                                <span style={{ fontWeight: 600 }}>
                                   {isES ? "Ejemplo: " : "Example: "}
                                 </span>
                                 {exp.example}
@@ -131,8 +145,8 @@ export default function LearnPage() {
         </div>
 
         {/* Footer note */}
-        <div className="mt-8 px-4 py-4 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-center">
+        <div style={{ marginTop: 32, background: '#f0e8d3', borderRadius: 12, padding: '14px 20px' }}>
+          <p style={{ fontSize: 12, color: C.MUTED, lineHeight: 1.6, textAlign: 'center' }}>
             {isES
               ? "Kallio aplica las reglas fiscales de Estimación Directa Simplificada (España 2025). Para casos complejos, consulta con un gestor."
               : "Kallio applies Simplified Direct Assessment tax rules (Spain 2025). For complex situations, consult a tax professional."}

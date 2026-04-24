@@ -29,13 +29,13 @@ const LANGS: { code: Language; flag: string; label: string; short: string }[] = 
 ];
 
 export default function LandingPage() {
-  const hydrated     = useHydrated();
-  const profile      = useKallioStore((s) => s.profile);
+  const hydrated      = useHydrated();
+  const profile       = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
-  const language     = useKallioStore((s) => s.language);
-  const setLanguage  = useKallioStore((s) => s.setLanguage);
-  const router       = useRouter();
-  const t            = useT();
+  const language      = useKallioStore((s) => s.language);
+  const setLanguage   = useKallioStore((s) => s.setLanguage);
+  const router        = useRouter();
+  const t             = useT();
 
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -58,8 +58,8 @@ export default function LandingPage() {
     if (sessionActive) router.replace("/dashboard");
   }, [hydrated, sessionActive, router]);
 
-  const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
-  const hasAccount  = hydrated && profile.onboardingComplete && !sessionActive;
+  const currentLang   = LANGS.find((l) => l.code === language) ?? LANGS[0];
+  const hasAccount    = hydrated && profile.onboardingComplete && !sessionActive;
   const activateSession = useKallioStore((s) => s.activateSession);
 
   const handleDemo = () => {
@@ -81,15 +81,13 @@ export default function LandingPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 48px', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-        {/* Logo */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'clamp(16px, 3vw, 24px) clamp(16px, 4vw, 48px)', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 20 }}>
           <span style={{ width: 9, height: 9, borderRadius: 2, background: C.IVA, display: 'inline-block' }} />
           Kallio
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          {/* Language picker */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ position: 'relative' }} ref={langRef}>
             <button
               onClick={() => setLangOpen(o => !o)}
@@ -136,39 +134,27 @@ export default function LandingPage() {
               {t.landing.access}
             </Link>
           )}
-
-          <Link
-            href="/login"
-            style={{
-              background: C.INK, color: 'white', borderRadius: 999,
-              padding: '10px 22px', fontSize: 14, fontWeight: 500,
-              textDecoration: 'none', display: 'inline-block',
-            }}
-          >
-            {t.landing.startFree} →
-          </Link>
         </div>
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', padding: '64px 48px 80px', boxSizing: 'border-box' }}>
+      <main style={{ flex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', padding: 'clamp(32px, 5vw, 64px) clamp(16px, 4vw, 48px) clamp(40px, 6vw, 80px)', boxSizing: 'border-box' }}>
 
-        {/* Badge */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 16px', fontSize: 12, fontWeight: 500, color: C.MUTED, marginBottom: 32 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.OK, display: 'inline-block' }} />
           {t.landing.badge}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 80, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 5vw, 80px)', alignItems: 'start' }}>
 
           {/* Left: headline + CTAs */}
           <div>
-            <h1 style={{ fontSize: 58, fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20, margin: '0 0 20px' }}>
+            <h1 style={{ fontSize: 'clamp(36px, 5vw, 58px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 20px' }}>
               {t.landing.hero}{' '}
               <span className="serif" style={{ fontWeight: 400 }}>{t.landing.heroHighlight}</span>
             </h1>
 
-            <p style={{ fontSize: 20, fontWeight: 600, color: C.INK, marginBottom: 12, lineHeight: 1.4 }}>
+            <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', fontWeight: 600, color: C.INK, marginBottom: 12, lineHeight: 1.4 }}>
               {t.landing.heroSub}
             </p>
 
@@ -176,7 +162,6 @@ export default function LandingPage() {
               {t.landing.subtitle}
             </p>
 
-            {/* Welcome back card */}
             {hasAccount && (
               <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, maxWidth: 440 }}>
                 <div>
@@ -192,16 +177,13 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* CTAs */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 36, flexWrap: 'wrap' }}>
-              {!hasAccount && (
-                <Link
-                  href="/login"
-                  style={{ background: C.INK, color: 'white', borderRadius: 999, padding: '14px 32px', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-                >
-                  {t.landing.startFree} →
-                </Link>
-              )}
+              <Link
+                href="/login"
+                style={{ background: C.INK, color: 'white', borderRadius: 999, padding: '14px 32px', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              >
+                {t.landing.startFree} →
+              </Link>
               <button
                 onClick={handleDemo}
                 style={{ background: C.CARD, color: C.INK, border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '14px 32px', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -210,7 +192,6 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Trust badges */}
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
               {[t.landing.trust1, t.landing.trust2, t.landing.trust3].map((txt, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.MUTED }}>
@@ -224,9 +205,9 @@ export default function LandingPage() {
           {/* Right: feature cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { dot: C.IVA,  label: 'IVA · Modelo 303',   title: t.landing.feature1Title, desc: t.landing.feature1Desc },
-              { dot: C.IRPF, label: 'IRPF · Modelo 130',  title: t.landing.feature2Title, desc: t.landing.feature2Desc },
-              { dot: C.OK,   label: 'RENTA · anual',       title: t.landing.feature3Title, desc: t.landing.feature3Desc },
+              { dot: C.IVA,  label: 'IVA · Modelo 303',  title: t.landing.feature1Title, desc: t.landing.feature1Desc },
+              { dot: C.IRPF, label: 'IRPF · Modelo 130', title: t.landing.feature2Title, desc: t.landing.feature2Desc },
+              { dot: C.OK,   label: 'RENTA · anual',      title: t.landing.feature3Title, desc: t.landing.feature3Desc },
             ].map(({ dot, label, title, desc }) => (
               <div key={label} style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '20px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -238,7 +219,6 @@ export default function LandingPage() {
               </div>
             ))}
 
-            {/* Mini tax preview card */}
             <div style={{ background: C.INK, color: 'white', borderRadius: 14, padding: '20px 24px' }}>
               <div className="mono" style={{ fontSize: 10, color: C.IRPF, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
                 Ejemplo · €5.000/mes
@@ -261,7 +241,7 @@ export default function LandingPage() {
       </main>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer style={{ textAlign: 'center', padding: '24px 48px', borderTop: `1px solid ${C.BORDER}` }}>
+      <footer style={{ textAlign: 'center', padding: 'clamp(16px, 3vw, 24px) clamp(16px, 4vw, 48px)', borderTop: `1px solid ${C.BORDER}` }}>
         <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.08em' }}>
           KALLIO · MVP · {new Date().getFullYear()} · Para autónomos digitales en España
         </span>
