@@ -124,31 +124,31 @@ export default function TransactionsPage() {
         </div>
 
         {/* Summary cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <TrendingUp size={14} style={{ color: C.OK }} />
-              <span style={{ fontSize: 12, color: C.MUTED }}>{t.transactions.incomeLabel}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 24 }}>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <TrendingUp size={13} style={{ color: C.OK, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.incomeLabel}</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: C.OK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.OK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {formatCurrency(totalIncome)}
             </p>
           </div>
-          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <TrendingDown size={14} style={{ color: C.IVA }} />
-              <span style={{ fontSize: 12, color: C.MUTED }}>{t.transactions.expenseLabel}</span>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <TrendingDown size={13} style={{ color: C.IVA, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.expenseLabel}</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: C.IVA, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.IVA, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {formatCurrency(totalExpenses)}
             </p>
           </div>
-          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <Sparkles size={14} style={{ color: C.IRPF }} />
-              <span style={{ fontSize: 12, color: C.MUTED }}>{t.transactions.deductibleLabel}</span>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <Sparkles size={13} style={{ color: C.IRPF, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.deductibleLabel}</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: C.INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {deductibleCount}
             </p>
           </div>
@@ -357,14 +357,12 @@ function TransactionRow({
         <p style={{ fontSize: 12, color: C.MUTED, margin: '2px 0 0' }}>{vatLabel} {tx.ivaRate}%</p>
       </div>
 
-      {/* Action icons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+      {/* Action icons — desktop: all actions */}
+      <div className="hidden sm:flex" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }}>
         {deleteConfirm ? (
           <>
             <Tip label={t.actions.cancel}>
-              <IconBtn onClick={() => setDeleteConfirm(false)}>
-                <X size={14} />
-              </IconBtn>
+              <IconBtn onClick={() => setDeleteConfirm(false)}><X size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.delete}>
               <IconBtn onClick={() => deleteTransaction(tx.id)} activeStyle={{ background: C.IVA, color: 'white' }}>
@@ -375,25 +373,16 @@ function TransactionRow({
         ) : (
           <>
             <Tip label={t.actions.explain ?? "¿Por qué?"}>
-              <IconBtn onClick={onExplain}>
-                <HelpCircle size={14} />
-              </IconBtn>
+              <IconBtn onClick={onExplain}><HelpCircle size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.edit}>
-              <IconBtn onClick={onEdit}>
-                <Pencil size={14} />
-              </IconBtn>
+              <IconBtn onClick={onEdit}><Pencil size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.duplicate}>
-              <IconBtn onClick={() => duplicateTransaction(tx.id)}>
-                <Copy size={14} />
-              </IconBtn>
+              <IconBtn onClick={() => duplicateTransaction(tx.id)}><Copy size={14} /></IconBtn>
             </Tip>
             <Tip label={tx.reviewed ? t.actions.markPending : t.actions.markReviewed}>
-              <IconBtn
-                onClick={() => markReviewed(tx.id, !tx.reviewed)}
-                activeStyle={tx.reviewed ? { color: C.OK } : undefined}
-              >
+              <IconBtn onClick={() => markReviewed(tx.id, !tx.reviewed)} activeStyle={tx.reviewed ? { color: C.OK } : undefined}>
                 {tx.reviewed ? <Clock size={14} /> : <CheckCircle size={14} />}
               </IconBtn>
             </Tip>
@@ -406,10 +395,25 @@ function TransactionRow({
               </IconBtn>
             </Tip>
             <Tip label={t.actions.delete}>
-              <IconBtn onClick={() => setDeleteConfirm(true)}>
-                <Trash2 size={14} />
-              </IconBtn>
+              <IconBtn onClick={() => setDeleteConfirm(true)}><Trash2 size={14} /></IconBtn>
             </Tip>
+          </>
+        )}
+      </div>
+
+      {/* Action icons — mobile: edit + delete only */}
+      <div className="flex sm:hidden" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }}>
+        {deleteConfirm ? (
+          <>
+            <IconBtn onClick={() => setDeleteConfirm(false)}><X size={14} /></IconBtn>
+            <IconBtn onClick={() => deleteTransaction(tx.id)} activeStyle={{ background: C.IVA, color: 'white' }}>
+              <Trash2 size={14} />
+            </IconBtn>
+          </>
+        ) : (
+          <>
+            <IconBtn onClick={onEdit}><Pencil size={14} /></IconBtn>
+            <IconBtn onClick={() => setDeleteConfirm(true)}><Trash2 size={14} /></IconBtn>
           </>
         )}
       </div>
