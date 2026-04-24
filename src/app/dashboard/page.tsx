@@ -13,6 +13,8 @@ import {
   getQuarterDeadlines,
   daysUntilDeadline,
 } from "@/lib/tax-engine";
+import { getAllExplanations } from "@/lib/tax-explanations";
+import type { ConceptKey } from "@/lib/tax-explanations";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { SetupWizard } from "@/components/SetupWizard";
@@ -34,6 +36,66 @@ const C = {
   CARD:        '#ffffff',
   WARM:        '#c9bfa8',
 };
+
+// ─── Info tooltip ────────────────────────────────────────────────────────────
+function InfoTooltip({ conceptKey }: { conceptKey: ConceptKey }) {
+  const [visible, setVisible] = useState(false);
+  const router   = useRouter();
+  const language = useKallioStore((s) => s.language);
+  const exp      = getAllExplanations(language === "es" ? "es" : "en")[conceptKey];
+  const snippet = exp.body.length > 110 ? exp.body.slice(0, 110) + "…" : exp.body;
+
+  return (
+    <div
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+    >
+      <button
+        onClick={() => router.push("/learn")}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          display: 'flex', alignItems: 'center', lineHeight: 1,
+          color: C.MUTED, opacity: 0.55,
+        }}
+        aria-label={`Qué es ${exp.title}`}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+        </svg>
+      </button>
+
+      {visible && (
+        <div style={{
+          position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%',
+          transform: 'translateX(-50%)',
+          background: C.CARD, border: `1px solid ${C.BORDER}`,
+          borderRadius: 14, padding: '14px 16px',
+          width: 252, zIndex: 200,
+          boxShadow: '0 8px 28px rgba(26,31,46,0.13)',
+          pointerEvents: 'none',
+        }}>
+          {/* arrow */}
+          <div style={{
+            position: 'absolute', bottom: -6, left: '50%',
+            transform: 'translateX(-50%) rotate(45deg)',
+            width: 10, height: 10, background: C.CARD,
+            border: `1px solid ${C.BORDER}`, borderTop: 'none', borderLeft: 'none',
+          }} />
+          <p style={{ fontSize: 12, fontWeight: 700, color: C.INK, margin: '0 0 5px', lineHeight: 1.3 }}>
+            {exp.title}
+          </p>
+          <p style={{ fontSize: 12, color: C.MUTED, lineHeight: 1.65, margin: '0 0 10px' }}>
+            {snippet}
+          </p>
+          <span style={{ fontSize: 11, color: C.IVA, fontWeight: 600 }}>
+            Ver en glosario →
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Weekly bar chart helper ──────────────────────────────────────────────────
 function weeklyIncomeHeights(txs: Transaction[], quarter: number, year: number): number[] {
@@ -288,11 +350,11 @@ export default function DashboardPage() {
         {/* ── 4-bucket table ──────────────────────────────────────────────── */}
         <div style={{ borderTop: `1px solid ${C.BORDER}`, paddingTop: 20, marginBottom: 28 }}>
           {[
-            { label: 'Tuyo',                     value: spendable, color: C.INK,  dashed: false },
-            { label: 'IVA · Modelo 303',          value: ivaAmt,   color: C.IVA,  dashed: false },
-            { label: 'IRPF adelantado · M130',    value: irpfAdv,  color: C.IRPF, dashed: false },
-            { label: 'IRPF Renta estimado',       value: irpfEnd,  color: C.IRPF, dashed: true  },
-          ].map(({ label, value, color, dashed }, i) => (
+            { label: 'Tuyo',                  value: spendable, color: C.INK,  dashed: false, concept: 'spendable'    as ConceptKey },
+            { label: 'IVA · Modelo 303',      value: ivaAmt,   color: C.IVA,  dashed: false, concept: 'iva_payable'  as ConceptKey },
+            { label: 'IRPF adelantado · M130', value: irpfAdv, color: C.IRPF, dashed: false, concept: 'irpf_advance' as ConceptKey },
+            { label: 'IRPF Renta estimado',   value: irpfEnd,  color: C.IRPF, dashed: true,  concept: 'irpf_gap'     as ConceptKey },
+          ].map(({ label, value, color, dashed, concept }, i) => (
             <div
               key={label}
               style={{
@@ -305,7 +367,10 @@ export default function DashboardPage() {
                 background: dashed ? 'transparent' : color,
                 border: dashed ? `2px dashed ${color}` : 'none',
               }} />
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{label}</div>
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {label}
+                <InfoTooltip conceptKey={concept} />
+              </div>
               <div className="mono" style={{ fontSize: 11, color: C.MUTED, width: 40, textAlign: 'right' }}>
                 {gross > 0 ? pctOf(value) + '%' : '—'}
               </div>
