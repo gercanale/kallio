@@ -28,18 +28,24 @@ import { ExplainDrawer } from "@/components/ExplainDrawer";
 import { formatCurrency, formatDate } from "@/lib/tax-engine";
 import type { Transaction, TransactionType } from "@/lib/types";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  software_subscriptions: "bg-teal-100 text-teal-700",
-  hardware_equipment: "bg-blue-100 text-blue-700",
-  professional_services: "bg-teal-100 text-teal-700",
-  marketing_advertising: "bg-pink-100 text-pink-700",
-  travel_transport: "bg-amber-100 text-amber-700",
-  meals_entertainment: "bg-orange-100 text-orange-700",
-  phone_internet: "bg-cyan-100 text-cyan-700",
-  training_education: "bg-teal-100 text-teal-700",
-  other_deductible: "bg-slate-100 text-slate-700",
-  personal: "bg-red-100 text-red-600",
-  unclear: "bg-yellow-100 text-yellow-700",
+const C = {
+  BG: '#fdfaf3', INK: '#1a1f2e', MUTED: '#6b6456',
+  BORDER: '#e8dfc8', IVA: '#c44536', IRPF: '#d4a017',
+  OK: '#5a7a3e', CARD: '#ffffff',
+};
+
+const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
+  software_subscriptions: { bg: '#eef3eb', color: '#3d5a29' },
+  hardware_equipment: { bg: '#f0ede8', color: '#4a3f35' },
+  professional_services: { bg: '#eef3eb', color: '#3d5a29' },
+  marketing_advertising: { bg: '#fdf0ee', color: '#8b2a1e' },
+  travel_transport: { bg: '#fdf6e3', color: '#7a5a0a' },
+  meals_entertainment: { bg: '#fdf3e8', color: '#8b5a20' },
+  phone_internet: { bg: '#e8f0f3', color: '#1e5a6b' },
+  training_education: { bg: '#eef3eb', color: '#3d5a29' },
+  other_deductible: { bg: '#eef3eb', color: '#3d5a29' },
+  personal: { bg: '#fdf0ee', color: '#c44536' },
+  unclear: { bg: '#fdf7e3', color: '#7a6020' },
 };
 
 export default function TransactionsPage() {
@@ -67,8 +73,9 @@ export default function TransactionsPage() {
 
   if (!hydrated || !sessionActive) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100dvh', background: C.BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 24, height: 24, border: `2px solid ${C.IVA}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -95,63 +102,71 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0 transition-colors">
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
       <Navigation />
 
-      <main className="lg:ml-56 px-4 lg:px-8 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t.transactions.title}</h1>
+      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t.transactions.title}</h1>
           <button
             onClick={() => openForm("expense")}
-            className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: C.INK, color: 'white', border: 'none',
+              borderRadius: 10, padding: '10px 16px', fontSize: 14,
+              fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+            }}
           >
-            <Plus className="w-4 h-4" />
+            <Plus size={16} />
             {t.transactions.addButton}
           </button>
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.incomeLabel}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 24 }}>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <TrendingUp size={13} style={{ color: C.OK, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.incomeLabel}</span>
             </div>
-            <p className="text-sm font-bold text-emerald-600 tabular-nums">
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.OK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {formatCurrency(totalIncome)}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <TrendingDown className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.expenseLabel}</span>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <TrendingDown size={13} style={{ color: C.IVA, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.expenseLabel}</span>
             </div>
-            <p className="text-sm font-bold text-red-600 tabular-nums">
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.IVA, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {formatCurrency(totalExpenses)}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-800/60 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">{t.transactions.deductibleLabel}</span>
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <Sparkles size={13} style={{ color: C.IRPF, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.deductibleLabel}</span>
             </div>
-            <p className="text-sm font-bold text-teal-700 tabular-nums">
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
               {deductibleCount}
             </p>
           </div>
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
+        <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f0e8d3', borderRadius: 12, marginBottom: 16 }}>
           {(["all", "income", "expense"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filter === f
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              }`}
+              style={{
+                flex: 1, padding: '6px 0', borderRadius: 8, border: 'none',
+                fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                fontFamily: 'inherit', transition: 'background 0.15s, color 0.15s',
+                background: filter === f ? C.CARD : 'transparent',
+                color: filter === f ? C.INK : C.MUTED,
+              }}
             >
               {f === "all" ? t.transactions.filterAll : f === "income" ? t.transactions.filterIncome : t.transactions.filterExpense}
             </button>
@@ -159,32 +174,42 @@ export default function TransactionsPage() {
         </div>
 
         {/* Quick add buttons */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
           <button
             onClick={() => openForm("income")}
-            className="flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-all"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '12px 0', background: C.OK, color: 'white', border: 'none',
+              borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
           >
-            <ArrowUpRight className="w-4 h-4" />
+            <ArrowUpRight size={16} />
             {t.transactions.addIncome}
           </button>
           <button
             onClick={() => openForm("expense")}
-            className="flex items-center justify-center gap-2 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '12px 0', background: C.IVA, color: 'white', border: 'none',
+              borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
           >
-            <ArrowDownLeft className="w-4 h-4" />
+            <ArrowDownLeft size={16} />
             {t.transactions.addExpense}
           </button>
         </div>
 
         {/* Transaction list */}
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <Filter className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm dark:text-slate-400">{t.transactions.emptyTitle}</p>
-            <p className="text-xs mt-1 dark:text-slate-500">{t.transactions.emptySubtitle}</p>
+          <div style={{ textAlign: 'center', padding: '64px 0', color: C.MUTED }}>
+            <Filter size={32} style={{ display: 'block', margin: '0 auto 12px', opacity: 0.4 }} />
+            <p style={{ fontSize: 14, margin: 0 }}>{t.transactions.emptyTitle}</p>
+            <p style={{ fontSize: 12, margin: '4px 0 0' }}>{t.transactions.emptySubtitle}</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {filtered.map((tx) => (
               <TransactionRow
                 key={tx.id}
@@ -249,7 +274,7 @@ function TransactionRow({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isIncome = tx.type === "income";
-  const categoryColor = CATEGORY_COLORS[tx.category] ?? "bg-slate-100 text-slate-700";
+  const catColors = CATEGORY_COLORS[tx.category] ?? { bg: '#f0ede8', color: '#4a3f35' };
   const categoryLabel = categoryLabels[tx.category] ?? tx.category;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,104 +288,132 @@ function TransactionRow({
     reader.readAsDataURL(file);
   };
 
-  const iconBtn = "w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0";
-  const iconBtnBase = `${iconBtn} text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200`;
-
   return (
-    <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm px-4 py-3 flex items-center gap-3">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-slate-100 dark:bg-slate-700"}`}>
-        {isIncome ? <ArrowUpRight className="w-4 h-4 text-emerald-600" /> : <ArrowDownLeft className="w-4 h-4 text-slate-500" />}
+    <div style={{
+      background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14,
+      padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      {/* Type icon */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: isIncome ? '#eef3eb' : '#fdf0ee',
+      }}>
+        {isIncome
+          ? <ArrowUpRight size={16} style={{ color: C.OK }} />
+          : <ArrowDownLeft size={16} style={{ color: C.IVA }} />}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+      {/* Description + badges */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 14, fontWeight: 500, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {tx.merchant ?? tx.description}
           </p>
           {!isIncome && (
-            <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium flex-shrink-0 ${categoryColor}`}>
+            <span style={{
+              fontSize: 11, padding: '2px 6px', borderRadius: 6, fontWeight: 500, flexShrink: 0,
+              background: catColors.bg, color: catColors.color,
+            }}>
               {categoryLabel}
             </span>
           )}
           {!isIncome && tx.isDeductible && (
-            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-teal-50 text-teal-600 flex-shrink-0">
+            <span style={{
+              fontSize: 11, padding: '2px 6px', borderRadius: 6, fontWeight: 500, flexShrink: 0,
+              background: '#eef3eb', color: C.OK,
+            }}>
               {deductibleBadge}
             </span>
           )}
           {!isIncome && tx.confidence === "unclear" && !tx.deductionPromptAnswered && (
-            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-yellow-50 text-yellow-700 flex-shrink-0">
+            <span style={{
+              fontSize: 11, padding: '2px 6px', borderRadius: 6, fontWeight: 500, flexShrink: 0,
+              background: '#fdf7e3', color: '#7a6020',
+            }}>
               {pendingBadge}
             </span>
           )}
           {tx.reviewed && (
-            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-emerald-50 text-emerald-700 flex-shrink-0">
+            <span style={{
+              fontSize: 11, padding: '2px 6px', borderRadius: 6, fontWeight: 500, flexShrink: 0,
+              background: '#eef3eb', color: C.OK,
+            }}>
               ✓ Revisado
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(tx.date)}</p>
+        <p style={{ fontSize: 12, color: C.MUTED, margin: '2px 0 0' }}>{formatDate(tx.date)}</p>
       </div>
 
-      <div className="text-right flex-shrink-0">
-        <p className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+      {/* Amount + VAT */}
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <p style={{
+          fontSize: 14, fontWeight: 700, margin: 0, fontVariantNumeric: 'tabular-nums',
+          color: isIncome ? C.OK : C.IVA,
+        }}>
           {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500">{vatLabel} {tx.ivaRate}%</p>
+        <p style={{ fontSize: 12, color: C.MUTED, margin: '2px 0 0' }}>{vatLabel} {tx.ivaRate}%</p>
       </div>
 
-      {/* Action icons */}
-      <div className="flex items-center gap-0.5 flex-shrink-0">
+      {/* Action icons — desktop: all actions */}
+      <div className="hidden sm:flex" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }}>
         {deleteConfirm ? (
           <>
             <Tip label={t.actions.cancel}>
-              <button onClick={() => setDeleteConfirm(false)} className={iconBtnBase}>
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={() => setDeleteConfirm(false)}><X size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.delete}>
-              <button onClick={() => deleteTransaction(tx.id)} className={`${iconBtn} bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50`}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={() => deleteTransaction(tx.id)} activeStyle={{ background: C.IVA, color: 'white' }}>
+                <Trash2 size={14} />
+              </IconBtn>
             </Tip>
           </>
         ) : (
           <>
             <Tip label={t.actions.explain ?? "¿Por qué?"}>
-              <button onClick={onExplain} className={`${iconBtnBase} hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:text-teal-600 dark:hover:text-teal-400`}>
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={onExplain}><HelpCircle size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.edit}>
-              <button onClick={onEdit} className={iconBtnBase}>
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={onEdit}><Pencil size={14} /></IconBtn>
             </Tip>
             <Tip label={t.actions.duplicate}>
-              <button onClick={() => duplicateTransaction(tx.id)} className={iconBtnBase}>
-                <Copy className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={() => duplicateTransaction(tx.id)}><Copy size={14} /></IconBtn>
             </Tip>
             <Tip label={tx.reviewed ? t.actions.markPending : t.actions.markReviewed}>
-              <button
-                onClick={() => markReviewed(tx.id, !tx.reviewed)}
-                className={tx.reviewed ? `${iconBtn} text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30` : iconBtnBase}
-              >
-                {tx.reviewed ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
-              </button>
+              <IconBtn onClick={() => markReviewed(tx.id, !tx.reviewed)} activeStyle={tx.reviewed ? { color: C.OK } : undefined}>
+                {tx.reviewed ? <Clock size={14} /> : <CheckCircle size={14} />}
+              </IconBtn>
             </Tip>
             <Tip label={tx.attachmentName ? t.actions.viewAttachment : t.actions.attachment}>
-              <button
+              <IconBtn
                 onClick={() => tx.attachmentName && tx.attachmentData ? window.open(tx.attachmentData, "_blank") : fileInputRef.current?.click()}
-                className={tx.attachmentName ? `${iconBtn} text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30` : iconBtnBase}
+                activeStyle={tx.attachmentName ? { color: C.OK } : undefined}
               >
-                <Paperclip className="w-3.5 h-3.5" />
-              </button>
+                <Paperclip size={14} />
+              </IconBtn>
             </Tip>
             <Tip label={t.actions.delete}>
-              <button onClick={() => setDeleteConfirm(true)} className={`${iconBtn} text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600`}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <IconBtn onClick={() => setDeleteConfirm(true)}><Trash2 size={14} /></IconBtn>
             </Tip>
+          </>
+        )}
+      </div>
+
+      {/* Action icons — mobile: edit + delete only */}
+      <div className="flex sm:hidden" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }}>
+        {deleteConfirm ? (
+          <>
+            <IconBtn onClick={() => setDeleteConfirm(false)}><X size={14} /></IconBtn>
+            <IconBtn onClick={() => deleteTransaction(tx.id)} activeStyle={{ background: C.IVA, color: 'white' }}>
+              <Trash2 size={14} />
+            </IconBtn>
+          </>
+        ) : (
+          <>
+            <IconBtn onClick={onEdit}><Pencil size={14} /></IconBtn>
+            <IconBtn onClick={() => setDeleteConfirm(true)}><Trash2 size={14} /></IconBtn>
           </>
         )}
       </div>
@@ -370,13 +423,39 @@ function TransactionRow({
   );
 }
 
+function IconBtn({
+  onClick,
+  children,
+  activeStyle,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  activeStyle?: React.CSSProperties;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: 28, height: 28, borderRadius: 8, border: 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+        background: hovered ? '#f0ede8' : 'transparent',
+        color: C.MUTED,
+        ...activeStyle,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 function Tip({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="relative group/tip">
+    <div title={label}>
       {children}
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
-        {label}
-      </span>
     </div>
   );
 }

@@ -6,6 +6,17 @@ import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useT } from "@/lib/useT";
 
+// ─── Direction A tokens ───────────────────────────────────────────────────────
+const C = {
+  BG:     '#fdfaf3',
+  INK:    '#1a1f2e',
+  MUTED:  '#6b6456',
+  BORDER: '#e8dfc8',
+  IVA:    '#c44536',
+  CARD:   '#ffffff',
+  OK:     '#5a7a3e',
+};
+
 type Mode = "login" | "signup";
 
 export default function LoginPage() {
@@ -57,40 +68,46 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <span className="text-white font-bold text-2xl tracking-tight">Kallio</span>
-          <p className="text-slate-400 text-sm mt-1">
+    <div style={{ minHeight: '100dvh', background: C.BG, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: 'Inter, sans-serif', color: C.INK }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 22, marginBottom: 8 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: C.IVA, display: 'inline-block' }} />
+            Kallio
+          </div>
+          <p style={{ fontSize: 14, color: C.MUTED, margin: 0 }}>
             {mode === "login" ? t.auth.loginSubtitle : t.auth.signupSubtitle}
           </p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <div className="flex rounded-xl overflow-hidden border border-white/10 mb-6">
-            <button
-              type="button"
-              onClick={() => { setMode("login"); setError(null); setSuccessMsg(null); }}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                mode === "login" ? "bg-teal-600 text-white" : "text-slate-400 hover:text-white"
-              }`}
-            >
-              {t.auth.login}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode("signup"); setError(null); setSuccessMsg(null); }}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                mode === "signup" ? "bg-teal-600 text-white" : "text-slate-400 hover:text-white"
-              }`}
-            >
-              {t.auth.signup}
-            </button>
+        {/* Card */}
+        <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 28, boxShadow: '0 4px 20px rgba(26,31,46,0.06)' }}>
+
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', border: `1px solid ${C.BORDER}`, borderRadius: 10, overflow: 'hidden', marginBottom: 24 }}>
+            {(['login', 'signup'] as Mode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setMode(m); setError(null); setSuccessMsg(null); }}
+                style={{
+                  flex: 1, padding: '9px 0', fontSize: 14, fontWeight: 500,
+                  background: mode === m ? C.INK : 'transparent',
+                  color: mode === m ? 'white' : C.MUTED,
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {m === 'login' ? t.auth.login : t.auth.signup}
+              </button>
+            ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: C.MUTED, marginBottom: 6 }}>
                 {t.auth.emailLabel}
               </label>
               <input
@@ -100,15 +117,22 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 placeholder="tu@email.com"
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: C.BG, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+                  padding: '10px 14px', fontSize: 14, color: C.INK,
+                  fontFamily: 'inherit', outline: 'none',
+                }}
+                onFocus={(e) => e.target.style.borderColor = C.INK}
+                onBlur={(e) => e.target.style.borderColor = C.BORDER}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: C.MUTED, marginBottom: 6 }}>
                 {t.auth.passwordLabel}
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -117,42 +141,54 @@ export default function LoginPage() {
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                   placeholder="••••••••"
                   minLength={6}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 pr-10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: C.BG, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+                    padding: '10px 40px 10px 14px', fontSize: 14, color: C.INK,
+                    fontFamily: 'inherit', outline: 'none',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = C.INK}
+                  onBlur={(e) => e.target.style.borderColor = C.BORDER}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.MUTED, padding: 0, display: 'flex' }}
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              <div style={{ fontSize: 13, color: C.IVA, background: '#fdf0ee', border: `1px solid #f5cdc8`, borderRadius: 8, padding: '10px 14px' }}>
                 {error}
-              </p>
+              </div>
             )}
             {successMsg && (
-              <p className="text-emerald-400 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+              <div style={{ fontSize: 13, color: C.OK, background: '#f0f5ec', border: `1px solid #c8ddc0`, borderRadius: 8, padding: '10px 14px' }}>
                 {successMsg}
-              </p>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors"
+              style={{
+                width: '100%', background: loading ? C.MUTED : C.INK, color: 'white',
+                border: 'none', borderRadius: 10, padding: '12px 0',
+                fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit', marginTop: 4,
+              }}
             >
               {loading ? t.auth.loading : mode === "login" ? t.auth.loginBtn : t.auth.signupBtn}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          Kallio · {new Date().getFullYear()}
+        <p style={{ textAlign: 'center', fontSize: 12, color: C.BORDER, marginTop: 24, letterSpacing: '0.05em' }}>
+          KALLIO · {new Date().getFullYear()}
         </p>
       </div>
     </div>
