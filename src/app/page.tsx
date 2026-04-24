@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Calendar, CheckCircle2, LogIn, ChevronDown } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useState, useEffect, useRef } from "react";
@@ -10,34 +9,46 @@ import { createClient } from "@/lib/supabase";
 import { useT } from "@/lib/useT";
 import type { Language } from "@/lib/i18n";
 
+// ─── Direction A tokens ───────────────────────────────────────────────────────
+const C = {
+  BG:     '#fdfaf3',
+  INK:    '#1a1f2e',
+  MUTED:  '#6b6456',
+  BORDER: '#e8dfc8',
+  IVA:    '#c44536',
+  IRPF:   '#d4a017',
+  OK:     '#5a7a3e',
+  CARD:   '#ffffff',
+};
+
 const LANGS: { code: Language; flag: string; label: string; short: string }[] = [
-  { code: "es", flag: "🇪🇸", label: "Español", short: "ES" },
-  { code: "en", flag: "🇬🇧", label: "English", short: "EN" },
+  { code: "es", flag: "🇪🇸", label: "Español",  short: "ES" },
+  { code: "en", flag: "🇬🇧", label: "English",  short: "EN" },
   { code: "it", flag: "🇮🇹", label: "Italiano", short: "IT" },
-  { code: "de", flag: "🇩🇪", label: "Deutsch", short: "DE" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch",  short: "DE" },
   { code: "fr", flag: "🇫🇷", label: "Français", short: "FR" },
 ];
 
 export default function LandingPage() {
-  const hydrated = useHydrated();
-  const profile = useKallioStore((s) => s.profile);
+  const hydrated     = useHydrated();
+  const profile      = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const activateSession = useKallioStore((s) => s.activateSession);
-  const language = useKallioStore((s) => s.language);
-  const setLanguage = useKallioStore((s) => s.setLanguage);
-  const router = useRouter();
-  const t = useT();
+  const language     = useKallioStore((s) => s.language);
+  const setLanguage  = useKallioStore((s) => s.setLanguage);
+  const router       = useRouter();
+  const t            = useT();
 
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!langOpen) return;
-    const handleClick = (e: MouseEvent) => {
+    const close = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, [langOpen]);
 
   useEffect(() => {
@@ -48,6 +59,7 @@ export default function LandingPage() {
   }, [sessionActive, router]);
 
   const currentLang = LANGS.find((l) => l.code === language) ?? LANGS[0];
+  const hasAccount  = hydrated && profile.onboardingComplete && !sessionActive;
 
   const handleDemo = () => {
     useKallioStore.getState().loadDemo();
@@ -55,183 +67,203 @@ export default function LandingPage() {
     router.push("/dashboard");
   };
 
-  const handleContinue = () => {
-    activateSession();
-    router.push("/dashboard");
-  };
-
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100dvh', background: C.BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 24, height: 24, border: `2px solid ${C.IVA}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  const hasExistingAccount = hydrated && profile.onboardingComplete && !sessionActive;
-
-  const features = [
-    { icon: Shield, title: t.landing.feature1Title, desc: t.landing.feature1Desc },
-    { icon: Sparkles, title: t.landing.feature2Title, desc: t.landing.feature2Desc },
-    { icon: Calendar, title: t.landing.feature3Title, desc: t.landing.feature3Desc },
-  ];
-
-  // Design tokens (light-only)
-  const bg = "bg-gradient-to-br from-white via-teal-50 to-slate-100";
-  const logoColor = "text-teal-700";
-  const badgeBg = "bg-teal-100 border-teal-200 text-teal-700";
-  const badgeDot = "bg-teal-500";
-  const heroColor = "text-slate-900";
-  const subtitleColor = "text-slate-500";
-  const cardBg = "bg-white border-slate-200";
-  const cardTitle = "text-slate-900";
-  const cardDesc = "text-slate-500";
-  const trustColor = "text-slate-400";
-  const footerColor = "text-slate-400";
-  const navBtnColor = "text-teal-600 hover:text-teal-800";
-  const dropdownBg = "bg-white border-slate-200 shadow-lg";
-  const dropdownItem = "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
-  const dropdownActive = "bg-teal-50 text-teal-700";
-  const demoBtnBg = "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800";
-  const welcomeCardBg = "bg-white border-slate-200 shadow-sm";
-  const welcomeTitle = "text-slate-900";
-  const welcomeSub = "text-slate-500";
-
-  const featureIconColors = ["bg-teal-100 text-teal-600", "bg-emerald-100 text-emerald-600", "bg-amber-100 text-amber-600"];
-
   return (
-    <div className={`min-h-screen ${bg} flex flex-col transition-colors duration-300`}>
-      <header className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <img src="/faviconnobg.png" alt="Kallio" className="w-7 h-7" />
-          <span className={`font-bold text-xl tracking-tight ${logoColor}`}>Kallio</span>
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── Nav ─────────────────────────────────────────────────────────── */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 48px', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 20 }}>
+          <span style={{ width: 9, height: 9, borderRadius: 2, background: C.IVA, display: 'inline-block' }} />
+          Kallio
         </div>
-        <div className="flex items-center gap-3">
-          {/* Language dropdown */}
-          <div className="relative" ref={langRef}>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {/* Language picker */}
+          <div style={{ position: 'relative' }} ref={langRef}>
             <button
-              onClick={() => setLangOpen((o) => !o)}
-              className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${navBtnColor}`}
+              onClick={() => setLangOpen(o => !o)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: C.MUTED }}
             >
-              <span className="text-base leading-none">{currentLang.flag}</span>
+              <span style={{ fontSize: 16 }}>{currentLang.flag}</span>
               <span>{currentLang.short}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+              <span style={{ fontSize: 10, opacity: 0.6 }}>▾</span>
             </button>
             {langOpen && (
-              <div className={`absolute top-full right-0 mt-2 border rounded-xl overflow-hidden z-50 min-w-[150px] ${dropdownBg}`}>
-                {LANGS.map((lang) => (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, overflow: 'hidden', minWidth: 150, boxShadow: '0 8px 24px rgba(26,31,46,0.08)', zIndex: 50 }}>
+                {LANGS.map(lang => (
                   <button
                     key={lang.code}
                     onClick={() => { setLanguage(lang.code); setLangOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
-                      lang.code === language ? dropdownActive : dropdownItem
-                    }`}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 16px', background: lang.code === language ? '#f5f0e8' : 'transparent',
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 14, fontWeight: 500, color: lang.code === language ? C.INK : C.MUTED,
+                      textAlign: 'left',
+                    }}
                   >
-                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span style={{ fontSize: 16 }}>{lang.flag}</span>
                     <span>{lang.label}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
-          {hasExistingAccount ? (
-            <button onClick={handleContinue} className={`text-sm font-medium transition-colors ${navBtnColor}`}>
-              {t.landing.continueBtn}
+
+          {hasAccount ? (
+            <button
+              onClick={() => { activateSession(); router.push('/dashboard'); }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: C.INK }}
+            >
+              {t.landing.continueBtn} →
             </button>
           ) : (
-            <Link href="/login" className={`text-sm font-medium transition-colors ${navBtnColor}`}>
+            <Link
+              href="/login"
+              style={{ fontSize: 14, fontWeight: 600, color: C.INK, textDecoration: 'none' }}
+            >
               {t.landing.access}
             </Link>
           )}
+
+          <Link
+            href="/login"
+            style={{
+              background: C.INK, color: 'white', borderRadius: 999,
+              padding: '10px 22px', fontSize: 14, fontWeight: 500,
+              textDecoration: 'none', display: 'inline-block',
+            }}
+          >
+            {t.landing.startFree} →
+          </Link>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-12 lg:py-0 lg:flex lg:items-center lg:gap-16">
-        {/* Left column: hero */}
-        <div className="flex-1 flex flex-col items-start text-left pb-12 lg:pb-0">
-          <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-xs font-medium mb-8 ${badgeBg}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${badgeDot}`} />
-            {t.landing.badge}
-          </div>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <main style={{ flex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', padding: '64px 48px 80px', boxSizing: 'border-box' }}>
 
-          <h1 className={`text-5xl lg:text-6xl xl:text-7xl font-black leading-tight mb-4 ${heroColor}`}>
-            {t.landing.hero}{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
-              {t.landing.heroHighlight}
-            </span>
-          </h1>
-
-          <p className={`text-xl lg:text-2xl font-semibold mb-5 text-slate-600`}>
-            {t.landing.heroSub}
-          </p>
-
-          <p className={`text-base lg:text-lg leading-relaxed mb-10 max-w-lg ${subtitleColor}`}>
-            {t.landing.subtitle}
-          </p>
-
-          {hasExistingAccount && (
-            <div className="w-full max-w-sm mb-6">
-              <div className={`border rounded-2xl p-4 flex items-center justify-between gap-4 ${welcomeCardBg}`}>
-                <div className="text-left">
-                  <p className={`text-sm font-semibold ${welcomeTitle}`}>{t.landing.welcomeBack}</p>
-                  <p className={`text-xs ${welcomeSub}`}>{profile.name} · {profile.activityType}</p>
-                </div>
-                <button
-                  onClick={handleContinue}
-                  className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex-shrink-0"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  {t.landing.enter}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 mb-10">
-            {!hasExistingAccount && (
-              <Link
-                href="/login"
-                className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-lg"
-              >
-                {t.landing.startFree}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            )}
-            <button
-              onClick={handleDemo}
-              className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all border ${demoBtnBg}`}
-            >
-              {t.landing.viewDemo}
-            </button>
-          </div>
-
-          <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm ${trustColor}`}>
-            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust1}</div>
-            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust2}</div>
-            <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{t.landing.trust3}</div>
-          </div>
+        {/* Badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 16px', fontSize: 12, fontWeight: 500, color: C.MUTED, marginBottom: 32 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.OK, display: 'inline-block' }} />
+          {t.landing.badge}
         </div>
 
-        {/* Right column: feature cards */}
-        <div className="w-full lg:w-96 xl:w-[440px] flex-shrink-0 flex flex-col gap-4 pb-12 lg:pb-0">
-          {features.map(({ icon: Icon, title, desc }, i) => (
-            <div key={title} className={`border rounded-2xl p-6 ${cardBg}`}>
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-xl ${featureIconColors[i]} flex items-center justify-center flex-shrink-0`}>
-                  <Icon className="w-5 h-5" />
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 80, alignItems: 'start' }}>
+
+          {/* Left: headline + CTAs */}
+          <div>
+            <h1 style={{ fontSize: 58, fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20, margin: '0 0 20px' }}>
+              {t.landing.hero}{' '}
+              <span className="serif" style={{ fontWeight: 400 }}>{t.landing.heroHighlight}</span>
+            </h1>
+
+            <p style={{ fontSize: 20, fontWeight: 600, color: C.INK, marginBottom: 12, lineHeight: 1.4 }}>
+              {t.landing.heroSub}
+            </p>
+
+            <p style={{ fontSize: 16, color: C.MUTED, lineHeight: 1.7, marginBottom: 40, maxWidth: 500 }}>
+              {t.landing.subtitle}
+            </p>
+
+            {/* Welcome back card */}
+            {hasAccount && (
+              <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, maxWidth: 440 }}>
                 <div>
-                  <h3 className={`font-semibold text-base mb-1 ${cardTitle}`}>{title}</h3>
-                  <p className={`text-sm leading-relaxed ${cardDesc}`}>{desc}</p>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{t.landing.welcomeBack}</div>
+                  <div style={{ fontSize: 13, color: C.MUTED }}>{profile.name} · {profile.activityType}</div>
                 </div>
+                <button
+                  onClick={() => { activateSession(); router.push('/dashboard'); }}
+                  style={{ background: C.INK, color: 'white', border: 'none', borderRadius: 999, padding: '10px 20px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                >
+                  {t.landing.enter} →
+                </button>
+              </div>
+            )}
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 36, flexWrap: 'wrap' }}>
+              {!hasAccount && (
+                <Link
+                  href="/login"
+                  style={{ background: C.INK, color: 'white', borderRadius: 999, padding: '14px 32px', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                >
+                  {t.landing.startFree} →
+                </Link>
+              )}
+              <button
+                onClick={handleDemo}
+                style={{ background: C.CARD, color: C.INK, border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '14px 32px', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {t.landing.viewDemo}
+              </button>
+            </div>
+
+            {/* Trust badges */}
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+              {[t.landing.trust1, t.landing.trust2, t.landing.trust3].map((txt, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.MUTED }}>
+                  <span style={{ color: C.OK, fontSize: 14 }}>✓</span>
+                  {txt}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: feature cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { dot: C.IVA,  label: 'IVA · Modelo 303',   title: t.landing.feature1Title, desc: t.landing.feature1Desc },
+              { dot: C.IRPF, label: 'IRPF · Modelo 130',  title: t.landing.feature2Title, desc: t.landing.feature2Desc },
+              { dot: C.OK,   label: 'RENTA · anual',       title: t.landing.feature3Title, desc: t.landing.feature3Desc },
+            ].map(({ dot, label, title, desc }) => (
+              <div key={label} style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '20px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: dot, display: 'inline-block' }} />
+                  <span className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{title}</div>
+                <div style={{ fontSize: 13, color: C.MUTED, lineHeight: 1.6 }}>{desc}</div>
+              </div>
+            ))}
+
+            {/* Mini tax preview card */}
+            <div style={{ background: C.INK, color: 'white', borderRadius: 14, padding: '20px 24px' }}>
+              <div className="mono" style={{ fontSize: 10, color: C.IRPF, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+                Ejemplo · €5.000/mes
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { label: 'IVA reservado',      amount: '€3.150', color: C.IVA  },
+                  { label: 'IRPF adelantado',     amount: '€3.000', color: C.IRPF },
+                  { label: 'Tuyo este trimestre', amount: '€8.850', color: '#9ec77c' },
+                ].map(({ label, amount, color }) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13, color: '#c9bfa8' }}>{label}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color }}>{amount}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </main>
 
-      <footer className={`text-center pb-8 text-xs ${footerColor}`}>
-        Kallio · MVP · {new Date().getFullYear()}
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer style={{ textAlign: 'center', padding: '24px 48px', borderTop: `1px solid ${C.BORDER}` }}>
+        <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.08em' }}>
+          KALLIO · MVP · {new Date().getFullYear()} · Para autónomos digitales en España
+        </span>
       </footer>
     </div>
   );
