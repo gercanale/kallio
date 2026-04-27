@@ -439,15 +439,18 @@ export default function DashboardPage() {
               {label}
             </button>
           ))}
-          {wizardProfile && (
-            <div style={{ marginLeft: 'auto' }}>
-              <PreguntameButton
-                snapshot={ytd}
-                wizardProfile={wizardProfile}
-                checkerHistory={checkerHistory}
-              />
-            </div>
-          )}
+          <div style={{ marginLeft: 'auto' }}>
+            <PreguntameButton
+              snapshot={ytd}
+              wizardProfile={wizardProfile ?? {
+                fiscalRegime: 'eds', beckhamStartYear: null,
+                incomeStructure: 'multi_client', activity: 'consultoria_tech',
+                deductibilityRate: 1, incomeStability: 'stable',
+                expensesVolume: 'some', wizardCompleted: false,
+              }}
+              checkerHistory={checkerHistory}
+            />
+          </div>
         </div>
 
       </main>
