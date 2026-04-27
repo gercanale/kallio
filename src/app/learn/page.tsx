@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
+import { translations } from "@/lib/i18n";
 import { Navigation } from "@/components/Navigation";
 import { getAllExplanations, LEARN_GROUPS, type ConceptKey } from "@/lib/tax-explanations";
 
@@ -13,7 +14,7 @@ const C = {
 
 export default function LearnPage() {
   const language = useKallioStore((s) => s.language);
-  const isES = language === "es";
+  const tl = translations[language].learn;
   const explanations = getAllExplanations(language === "es" ? "es" : "en");
 
   const [search, setSearch] = useState("");
@@ -46,12 +47,10 @@ export default function LearnPage() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, letterSpacing: '-0.02em' }}>
-            {isES ? "Glosario fiscal" : "Tax glossary"}
+            {tl.title}
           </h1>
           <p style={{ fontSize: 14, color: C.MUTED, lineHeight: 1.5 }}>
-            {isES
-              ? "Todo lo que necesitas saber sobre impuestos de autónomo, en lenguaje claro."
-              : "Everything you need to know about freelance taxes, in plain language."}
+            {tl.subtitle}
           </p>
         </div>
 
@@ -65,7 +64,7 @@ export default function LearnPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={isES ? "Buscar concepto…" : "Search concept…"}
+            placeholder={tl.searchPlaceholder}
             style={{
               width: '100%', boxSizing: 'border-box',
               background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 10,
@@ -80,7 +79,7 @@ export default function LearnPage() {
           {visibleGroups.length === 0 && (
             <div style={{ textAlign: 'center', padding: '48px 0', color: C.MUTED }}>
               <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📖</div>
-              <p style={{ fontSize: 14 }}>{isES ? "No hay resultados" : "No results found"}</p>
+              <p style={{ fontSize: 14 }}>{tl.noResults}</p>
             </div>
           )}
 
@@ -89,7 +88,7 @@ export default function LearnPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <span style={{ fontSize: 18 }}>{group.icon}</span>
                 <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
-                  {isES ? group.titleES : group.titleEN}
+                  {language === 'es' ? group.titleES : group.titleEN}
                 </span>
               </div>
 
@@ -128,7 +127,7 @@ export default function LearnPage() {
                             <div style={{ background: '#eef3eb', borderRadius: 10, padding: '10px 14px', border: `1px solid #c8ddc0` }}>
                               <p style={{ fontSize: 13, color: '#3d5a29', lineHeight: 1.6 }}>
                                 <span style={{ fontWeight: 600 }}>
-                                  {isES ? "Ejemplo: " : "Example: "}
+                                  {tl.exampleLabel}
                                 </span>
                                 {exp.example}
                               </p>
@@ -147,9 +146,7 @@ export default function LearnPage() {
         {/* Footer note */}
         <div style={{ marginTop: 32, background: '#f0e8d3', borderRadius: 12, padding: '14px 20px' }}>
           <p style={{ fontSize: 12, color: C.MUTED, lineHeight: 1.6, textAlign: 'center' }}>
-            {isES
-              ? "Kallio aplica las reglas fiscales de Estimación Directa Simplificada (España 2025). Para casos complejos, consulta con un gestor."
-              : "Kallio applies Simplified Direct Assessment tax rules (Spain 2025). For complex situations, consult a tax professional."}
+            {tl.disclaimer}
           </p>
         </div>
       </main>
