@@ -153,7 +153,7 @@ export default function DashboardPage() {
         {/* ── Header row: year + actions ──────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
           <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            AÑO {currY} · YTD
+            {t.dashboard.yearLabel.replace('{{year}}', String(currY))}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -175,11 +175,11 @@ export default function DashboardPage() {
         {hasData ? (
           <>
             <p style={{ fontSize: 18, color: C.INK, margin: '0 0 4px', lineHeight: 1.4, fontWeight: 400 }}>
-              De los <strong>€{fmt(gross)}</strong> que facturaste este año,
+              {t.dashboard.billedThis.replace('{{amount}}', fmt(gross))}
             </p>
             <p style={{ fontSize: 22, fontWeight: 500, margin: '0 0 8px', lineHeight: 1.3 }}>
-              esto es{' '}
-              <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>tuyo de verdad:</span>
+              {t.dashboard.yoursReally}{' '}
+              <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>{t.dashboard.yoursReallyItalic}</span>
             </p>
 
             <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', margin: '8px 0 6px', fontVariantNumeric: 'tabular-nums' }}>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
             </div>
 
             <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 24px' }}>
-              {spendablePct}% de lo facturado · Lo demás no era tuyo nunca
+              {t.dashboard.pctOfBilled.replace('{{pct}}', String(spendablePct))}
             </p>
 
             {/* ── Stacked color bar ─────────────────────────────────────── */}
@@ -205,12 +205,12 @@ export default function DashboardPage() {
         ) : (
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 20, color: C.MUTED, lineHeight: 1.5, margin: '0 0 16px' }}>
-              Sin facturas aún este año.{' '}
+              {t.dashboard.noInvoicesYet}{' '}
               <button
                 onClick={() => setShowForm(true)}
                 style={{ background: 'none', border: 'none', color: C.IVA, cursor: 'pointer', fontFamily: 'inherit', fontSize: 20, fontWeight: 600, padding: 0 }}
               >
-                Añade la primera →
+                {t.dashboard.addFirst}
               </button>
             </p>
           </div>
@@ -221,36 +221,40 @@ export default function DashboardPage() {
           {[
             {
               dot: C.INK, dashed: false,
-              label: 'Tuyo',
+              label: t.dashboard.bucketYours,
               value: spendable,
               pct: pctOf(spendable),
-              sub: 'Para vivir, ahorrar e invertir. Ya restamos todo lo demás.',
+              sub: t.dashboard.bucketYoursSub,
               tag: null,
             },
             {
               dot: C.IVA, dashed: false,
-              label: 'IVA reservado',
+              label: t.dashboard.bucketIva,
               value: ivaRes,
               pct: pctOf(ivaRes),
-              sub: 'Cobrado a tus clientes. Nunca fue tuyo — se lo pasas a Hacienda trimestralmente (Modelo 303).',
+              sub: t.dashboard.bucketIvaSub,
               tag: null,
             },
             {
               dot: C.IRPF, dashed: false,
-              label: 'IRPF adelantado',
+              label: t.dashboard.bucketIrpfPaid,
               value: irpfPaid,
               pct: pctOf(irpfPaid),
-              sub: 'Retenciones de tus clientes + pagos fraccionados. Ya pagado este año.',
-              tag: 'ya pagado',
+              sub: t.dashboard.bucketIrpfPaidSub,
+              tag: t.dashboard.bucketIrpfPaidTag,
             },
             {
               dot: C.IRPF, dashed: true,
-              label: 'IRPF estimado restante',
+              label: t.dashboard.bucketIrpfGap,
               value: irpfGap,
-              pct: `proyección · ~${pctOf(irpfGap)}`,
+              pct: t.dashboard.bucketIrpfGapPct.replace('{{pct}}', pctOf(irpfGap)),
               sub: irpfGap > 0
-                ? `Al 20% estás adelantando de menos. A tu ritmo, en la Renta ${currY} (jun ${currY + 1}) te tocará pagar ~${formatCurrency(irpfGap)} más. Estimamos ${Math.round(effRate * 100)}% efectivo.`
-                : `Vas bien cubierto. Tus pagos fraccionados cubren tu IRPF estimado para este año.`,
+                ? t.dashboard.bucketIrpfGapSubBad
+                    .replace('{{year}}', String(currY))
+                    .replace('{{yearNext}}', String(currY + 1))
+                    .replace('{{amount}}', formatCurrency(irpfGap))
+                    .replace('{{rate}}', String(Math.round(effRate * 100)))
+                : t.dashboard.bucketIrpfGapSubOk,
               tag: null,
             },
           ].map(({ dot, dashed, label, value, pct, sub, tag }, i) => (
@@ -307,10 +311,10 @@ export default function DashboardPage() {
           }}>
             <div>
               <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
-                PRÓXIMO VENCIMIENTO
+                {t.dashboard.upcomingDeadline}
               </div>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>
-                {nextDL.label} · Modelo 130 + 303
+                {nextDL.label} · {t.dashboard.deadlineModels}
                 {nextDLAmt > 0 && (
                   <span style={{ color: C.IVA, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
                 )}
@@ -324,7 +328,7 @@ export default function DashboardPage() {
                 fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
               }}
             >
-              Simular Renta {currY} →
+              {t.dashboard.simulateRenta.replace('{{year}}', String(currY))}
             </button>
           </div>
         )}
@@ -342,7 +346,7 @@ export default function DashboardPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span className="mono" style={{ fontSize: 10, color: C.IRPF, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                  PROYECCIÓN DE RENTA {currY}
+                  {t.dashboard.rentaProjection.replace('{{year}}', String(currY))}
                 </span>
               </div>
               <span style={{ fontSize: 14, color: C.MUTED, lineHeight: 1 }}>{rentaOpen ? '▲' : '▼'}</span>
@@ -351,18 +355,19 @@ export default function DashboardPage() {
             {rentaOpen && (
               <div style={{ padding: '16px 20px 20px', background: C.CARD, borderTop: `1px solid ${C.BORDER}` }}>
                 <p style={{ fontSize: 14, color: C.INK, lineHeight: 1.7, margin: '0 0 20px' }}>
-                  Si sigues facturando a este ritmo{' '}
-                  <strong>(€{fmt(projectedYE)} proyectado para fin de año)</strong>,
-                  en la Renta {currY} que harás en junio {currY + 1} te tocará pagar{' '}
-                  <strong style={{ color: C.IVA }}>~{formatCurrency(rentaGap)} extra</strong>.
+                  {t.dashboard.rentaBody
+                    .replace('{{amount}}', fmt(projectedYE))
+                    .replace('{{year}}', String(currY))
+                    .replace('{{yearNext}}', String(currY + 1))
+                    .replace('~{{gap}}', `~${formatCurrency(rentaGap)}`)}
                 </p>
 
                 {/* Three metric chips */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
                   {[
-                    { label: 'FACTURACIÓN YE',  value: `€${fmt(projectedYE)}`, sub: 'proyectado', color: C.INK },
-                    { label: 'TIPO EFECTIVO',   value: `~${Math.round(effRate * 100)}%`, sub: `vs ${Math.round(advRate * 100)}% adelantado`, color: C.IRPF },
-                    { label: 'A PAGAR EN RENTA', value: formatCurrency(rentaGap), sub: 'estimado', color: C.IVA },
+                    { label: t.dashboard.rentaMetricYELabel, value: `€${fmt(projectedYE)}`, sub: t.dashboard.rentaMetricYESub, color: C.INK },
+                    { label: t.dashboard.rentaMetricRateLabel, value: `~${Math.round(effRate * 100)}%`, sub: t.dashboard.rentaMetricRateSub.replace('{{pct}}', String(Math.round(advRate * 100))), color: C.IRPF },
+                    { label: t.dashboard.rentaMetricOwedLabel, value: formatCurrency(rentaGap), sub: t.dashboard.rentaMetricOwedSub, color: C.IVA },
                   ].map(({ label, value, sub, color }) => (
                     <div key={label} style={{ background: '#fdfaf3', border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: '12px 14px' }}>
                       <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
@@ -382,7 +387,9 @@ export default function DashboardPage() {
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
-                    {aparted ? `✓ ${formatCurrency(rentaGap)} anotado` : `Apartar ${formatCurrency(rentaGap)} automáticamente`}
+                    {aparted
+                      ? t.dashboard.apartDone.replace('{{amount}}', formatCurrency(rentaGap))
+                      : t.dashboard.apartAuto.replace('{{amount}}', formatCurrency(rentaGap))}
                   </button>
                   <button
                     onClick={() => router.push('/renta')}
@@ -392,7 +399,7 @@ export default function DashboardPage() {
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
-                    Simular otros escenarios
+                    {t.dashboard.otherScenarios}
                   </button>
                 </div>
               </div>
@@ -412,12 +419,12 @@ export default function DashboardPage() {
           >
             <div>
               <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
-                GASTOS SIN ACTIVAR
+                {t.dashboard.untappedLabel}
               </div>
               <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>
-                {untappedCount} gastos típicos sin activar
+                {t.dashboard.untappedDesc.replace('{{count}}', String(untappedCount))}
                 {untappedSaving > 0 && (
-                  <span style={{ color: C.OK, marginLeft: 8 }}>· +€{fmt(untappedSaving)} deducibles/trimestre</span>
+                  <span style={{ color: C.OK, marginLeft: 8 }}>{t.dashboard.untappedSaving.replace('{{amount}}', fmt(untappedSaving))}</span>
                 )}
               </div>
             </div>

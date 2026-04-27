@@ -48,12 +48,13 @@ function InfoModal({ text, onClose }: { text: string; onClose: () => void }) {
 
 function InfoButton({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
   return (
     <>
       <button
         onClick={() => setOpen(true)}
         className="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex-shrink-0"
-        aria-label="Info"
+        aria-label={t.common.info}
       >
         <HelpCircle className="w-3.5 h-3.5" />
       </button>

@@ -87,7 +87,7 @@ export function HelpButton() {
               </h2>
               <button
                 onClick={() => setOpen(false)}
-                aria-label="Cerrar"
+                aria-label={t.common.close}
                 className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               >
                 <X size={18} />
