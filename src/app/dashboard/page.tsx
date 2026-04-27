@@ -7,150 +7,68 @@ import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import {
   calculateTaxSnapshot,
-  quarterDateRange,
+  calculateYTDSnapshot,
   currentQuarter,
   nowInSpain,
   getQuarterDeadlines,
   daysUntilDeadline,
+  formatCurrency,
 } from "@/lib/tax-engine";
-import { getAllExplanations } from "@/lib/tax-explanations";
-import type { ConceptKey } from "@/lib/tax-explanations";
+import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
+import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { SetupWizard } from "@/components/SetupWizard";
-import { DeductionAssistant } from "@/components/DeductionAssistant";
 import { BeckhamCountdown } from "@/components/BeckhamCountdown";
 import { PreguntameButton } from "@/components/PreguntameButton";
-import type { Transaction } from "@/lib/types";
 
 // ─── Direction A tokens ───────────────────────────────────────────────────────
 const C = {
-  BG:          '#fdfaf3',
-  INK:         '#1a1f2e',
-  MUTED:       '#6b6456',
-  BORDER:      '#e8dfc8',
-  BORDER_SOFT: '#f0e8d3',
-  IVA:         '#c44536',
-  IRPF:        '#d4a017',
-  OK:          '#5a7a3e',
-  CARD:        '#ffffff',
-  WARM:        '#c9bfa8',
+  BG:     '#fdfaf3',
+  INK:    '#1a1f2e',
+  MUTED:  '#6b6456',
+  BORDER: '#e8dfc8',
+  IVA:    '#c44536',
+  IRPF:   '#d4a017',
+  OK:     '#5a7a3e',
+  CARD:   '#ffffff',
+  WARM:   '#c9bfa8',
 };
 
-// ─── Info tooltip ────────────────────────────────────────────────────────────
-function InfoTooltip({ conceptKey }: { conceptKey: ConceptKey }) {
-  const [visible, setVisible] = useState(false);
-  const router   = useRouter();
-  const language = useKallioStore((s) => s.language);
-  const exp      = getAllExplanations(language === "es" ? "es" : "en")[conceptKey];
-  const snippet = exp.body.length > 110 ? exp.body.slice(0, 110) + "…" : exp.body;
+const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
 
-  return (
-    <div
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
-    >
-      <button
-        onClick={() => router.push("/learn")}
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-          display: 'flex', alignItems: 'center', lineHeight: 1,
-          color: C.MUTED, opacity: 0.55,
-        }}
-        aria-label={`Qué es ${exp.title}`}
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-        </svg>
-      </button>
-
-      {visible && (
-        <div style={{
-          position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%',
-          transform: 'translateX(-50%)',
-          background: C.CARD, border: `1px solid ${C.BORDER}`,
-          borderRadius: 14, padding: '14px 16px',
-          width: 252, zIndex: 200,
-          boxShadow: '0 8px 28px rgba(26,31,46,0.13)',
-          pointerEvents: 'none',
-        }}>
-          {/* arrow */}
-          <div style={{
-            position: 'absolute', bottom: -6, left: '50%',
-            transform: 'translateX(-50%) rotate(45deg)',
-            width: 10, height: 10, background: C.CARD,
-            border: `1px solid ${C.BORDER}`, borderTop: 'none', borderLeft: 'none',
-          }} />
-          <p style={{ fontSize: 12, fontWeight: 700, color: C.INK, margin: '0 0 5px', lineHeight: 1.3 }}>
-            {exp.title}
-          </p>
-          <p style={{ fontSize: 12, color: C.MUTED, lineHeight: 1.65, margin: '0 0 10px' }}>
-            {snippet}
-          </p>
-          <span style={{ fontSize: 11, color: C.IVA, fontWeight: 600 }}>
-            Ver en glosario →
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Weekly bar chart helper ──────────────────────────────────────────────────
-function weeklyIncomeHeights(txs: Transaction[], quarter: number, year: number): number[] {
-  const { start } = quarterDateRange(quarter, year);
-  const weeks = new Array(13).fill(0);
-  for (const tx of txs) {
-    if (tx.type !== "income") continue;
-    const d = new Date(tx.date);
-    const dayOffset = Math.floor((d.getTime() - start.getTime()) / 86_400_000);
-    if (dayOffset < 0 || dayOffset > 91) continue;
-    const wi = Math.min(Math.floor(dayOffset / 7), 12);
-    weeks[wi] += tx.amount / (1 + tx.ivaRate / 100);
-  }
-  const max = Math.max(...weeks, 1);
-  return weeks.map(v => Math.round((v / max) * 100));
-}
-
-// ─── Quarter deadline label ───────────────────────────────────────────────────
-function deadlineLabel(quarter: number, year: number): string {
+// ─── Next deadline helper ─────────────────────────────────────────────────────
+function nextDeadline(year: number, now: Date) {
   const deadlines = getQuarterDeadlines(year);
-  const d = deadlines.find(x => x.quarter === quarter);
-  if (!d) return "";
-  const dt = new Date(d.modelo130Deadline);
-  return dt.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-}
-
-// ─── Quarter months label for bar chart axis ──────────────────────────────────
-function quarterMonthLabels(quarter: number): [string, string, string] {
-  const months = [
-    ["Ene","Feb","Mar"], ["Abr","May","Jun"],
-    ["Jul","Ago","Sep"], ["Oct","Nov","Dic"],
-  ];
-  return months[quarter - 1] as [string, string, string];
+  const upcoming = deadlines
+    .map(d => ({ ...d, date: new Date(d.modelo130Deadline) }))
+    .filter(d => d.date >= now)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  if (upcoming.length === 0) return null;
+  const d = upcoming[0];
+  const label = d.date.toLocaleDateString("es-ES", { day: "numeric", month: "long" });
+  return { quarter: d.quarter, label, date: d.date };
 }
 
 export default function DashboardPage() {
-  const router       = useRouter();
-  const hydrated     = useHydrated();
-  const profile      = useKallioStore((s) => s.profile);
+  const router        = useRouter();
+  const hydrated      = useHydrated();
+  const profile       = useKallioStore((s) => s.profile);
   const sessionActive = useKallioStore((s) => s.sessionActive);
-  const transactions = useKallioStore((s) => s.transactions);
-  const wizardProfile   = useKallioStore((s) => s.wizardProfile);
-  const checkerHistory  = useKallioStore((s) => s.checkerHistory);
-  const t            = useT();
+  const transactions  = useKallioStore((s) => s.transactions);
+  const wizardProfile = useKallioStore((s) => s.wizardProfile);
+  const checkerHistory      = useKallioStore((s) => s.checkerHistory);
+  const activatedBuckets    = useKallioStore((s) => s.activatedBuckets);
+  const t             = useT();
 
   const [showForm,   setShowForm]   = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [rentaOpen,  setRentaOpen]  = useState(false);
+  const [aparted,    setAparted]    = useState(false);
 
   const now   = useMemo(() => nowInSpain(), []);
   const currQ = currentQuarter(now);
   const currY = now.getFullYear();
-
-  // Quarter selection: 1–4
-  const [selQ, setSelQ] = useState(currQ);
-  const selY = currY; // always current year for MVP
 
   useEffect(() => {
     if (!hydrated) return;
@@ -158,39 +76,17 @@ export default function DashboardPage() {
     else if (!profile.onboardingComplete) router.replace("/onboarding");
   }, [hydrated, sessionActive, profile.onboardingComplete, router]);
 
-  const snapshot = useMemo(
-    () => calculateTaxSnapshot(transactions, profile, selQ, selY),
-    [transactions, profile, selQ, selY]
+  // ── YTD snapshot (annual view) ──────────────────────────────────────────────
+  const ytd = useMemo(
+    () => calculateYTDSnapshot(transactions, profile, currY),
+    [transactions, profile, currY]
   );
 
-  const barHeights = useMemo(
-    () => weeklyIncomeHeights(transactions, selQ, selY),
-    [transactions, selQ, selY]
+  // ── Current quarter snapshot (for "Próximo vencimiento" amount) ─────────────
+  const currQSnap = useMemo(
+    () => calculateTaxSnapshot(transactions, profile, currQ, currY),
+    [transactions, profile, currQ, currY]
   );
-
-  const fmt = (n: number) =>
-    n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
-
-  // Derived display values
-  const gross         = snapshot.grossIncome;
-  const spendable     = Math.max(0, gross - snapshot.totalTaxReserve);
-  const taxDue        = snapshot.ivaPayable + snapshot.irpfAdvancePayable;
-  const ivaAmt        = snapshot.ivaPayable;
-  const irpfAdv       = snapshot.irpfAdvancePayable;
-  const irpfEnd       = snapshot.yearEndIRPFGap;
-  const pctOf = (n: number) => gross > 0 ? Math.round((n / gross) * 100) : 0;
-
-  // Quarter status
-  const deadlineISO = getQuarterDeadlines(selY).find(d => d.quarter === selQ)?.modelo130Deadline ?? "";
-  const daysLeft    = deadlineISO ? daysUntilDeadline(deadlineISO) : 0;
-  const isPast      = daysLeft < 0;
-  const isCurrent   = selQ === currQ;
-  const statusLabel = isCurrent
-    ? `en curso · ${daysLeft} días`
-    : isPast ? "pasado" : "próximo";
-
-  const dueLabel   = deadlineLabel(selQ, selY);
-  const [m1, m2, m3] = quarterMonthLabels(selQ);
 
   const isBeckham = wizardProfile?.fiscalRegime === "beckham";
 
@@ -204,54 +100,62 @@ export default function DashboardPage() {
   }
   if (!profile.onboardingComplete) return null;
 
+  // ── Derived values ────────────────────────────────────────────────────────
+  const gross       = ytd.grossIncome;
+  const spendable   = Math.max(0, ytd.trueSpendableBalance);
+  const ivaRes      = ytd.ivaPayable;
+  const irpfPaid    = ytd.irpfPaidViaAdvances;
+  const irpfGap     = ytd.yearEndIRPFGap;
+  const barTotal    = spendable + ivaRes + irpfPaid + irpfGap;
+  const pctOf       = (n: number) => gross > 0 ? `${Math.round((n / gross) * 100)}%` : '—';
+  const spendablePct = gross > 0 ? Math.round((spendable / gross) * 100) : 0;
+
+  // Bar segment widths (relative to barTotal to fill 100%)
+  const seg = (n: number) => barTotal > 0 ? `${(n / barTotal) * 100}%` : '0%';
+
+  // Next deadline
+  const nextDL = nextDeadline(currY, now);
+  const nextDLAmt = currQSnap.ivaPayable + currQSnap.irpfAdvancePayable;
+
+  // Gastos nudge — how many potential buckets are not yet activated
+  const allBuckets     = useMemo(() => getBucketsForActivity(wizardProfile?.activity ?? null), [wizardProfile]);
+  const activeCount    = Object.keys(activatedBuckets).length;
+  const untappedCount  = allBuckets.length - activeCount;
+  const untappedSaving = useMemo(() => allBuckets.reduce((sum, b) => {
+    if (b.id in activatedBuckets) return sum;
+    return sum + quarterlyDeductible(b, b.defaultAmount);
+  }, 0), [allBuckets, activatedBuckets]);
+
+  // Renta projection
+  const projectedYE   = ytd.projectedAnnualNetIncome;
+  const effRate       = ytd.effectiveIRPFRate;
+  const advRate       = 0.20; // Modelo 130 advance rate
+  const rentaGap      = ytd.yearEndIRPFGap;
+
+  const hasData = gross > 0;
+
   return (
-    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80 }}>
       <Navigation />
 
-      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 700, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Beckham banner ─────────────────────────────────────────────── */}
-        {isBeckham && wizardProfile && wizardProfile.beckhamStartYear && (
-          <div style={{ marginBottom: 24 }}>
+        {isBeckham && wizardProfile?.beckhamStartYear && (
+          <div style={{ marginBottom: 20 }}>
             <BeckhamCountdown
               beckhamStartYear={wizardProfile.beckhamStartYear}
-              annualNetIncome={snapshot.projectedAnnualNetIncome}
+              annualNetIncome={ytd.projectedAnnualNetIncome}
             />
           </div>
         )}
 
-        {/* ── Quarter tabs + date ─────────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[1, 2, 3, 4].map(q => {
-              const active = selQ === q;
-              const hasTxs = transactions.some(tx => {
-                const d = new Date(tx.date);
-                return currentQuarter(d) === q && d.getFullYear() === currY;
-              });
-              return (
-                <button
-                  key={q}
-                  onClick={() => setSelQ(q)}
-                  style={{
-                    background: active ? C.INK : 'transparent',
-                    color: active ? 'white' : hasTxs ? C.INK : C.MUTED,
-                    border: `1px solid ${active ? C.INK : C.BORDER}`,
-                    borderRadius: 999, padding: '7px 16px',
-                    fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {q}T
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Date + actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.08em' }}>
-              {now.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()}
-            </span>
+        {/* ── Header row: year + actions ──────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+          <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            AÑO {currY} · YTD
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => setShowWizard(true)}
               style={{ background: 'transparent', border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -267,134 +171,270 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Status + headline ───────────────────────────────────────────── */}
-        <div className="mono" style={{ fontSize: 11, color: C.IVA, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 10 }}>
-          {selQ}T {selY} · {statusLabel}
-        </div>
-
-        {gross > 0 ? (
+        {/* ── Hero headline + big number ──────────────────────────────────── */}
+        {hasData ? (
           <>
-            <div style={{ fontSize: 20, color: C.MUTED, marginBottom: 4, lineHeight: 1.4 }}>
-              Facturado este trimestre{' '}
-              <strong style={{ color: C.INK }}>€{fmt(gross)}</strong>,
+            <p style={{ fontSize: 18, color: C.INK, margin: '0 0 4px', lineHeight: 1.4, fontWeight: 400 }}>
+              De los <strong>€{fmt(gross)}</strong> que facturaste este año,
+            </p>
+            <p style={{ fontSize: 22, fontWeight: 500, margin: '0 0 8px', lineHeight: 1.3 }}>
+              esto es{' '}
+              <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>tuyo de verdad:</span>
+            </p>
+
+            <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', margin: '8px 0 6px', fontVariantNumeric: 'tabular-nums' }}>
+              {fmt(spendable)}€
             </div>
-            <div style={{ fontSize: 26, fontWeight: 500, marginBottom: 28 }}>
-              tuyos:{' '}
-              <span className="serif" style={{ fontSize: 30 }}>€{fmt(spendable)}</span>
+
+            <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 24px' }}>
+              {spendablePct}% de lo facturado · Lo demás no era tuyo nunca
+            </p>
+
+            {/* ── Stacked color bar ─────────────────────────────────────── */}
+            <div style={{ height: 8, borderRadius: 999, overflow: 'hidden', display: 'flex', marginBottom: 28, background: C.BORDER }}>
+              <div style={{ width: seg(spendable), background: C.INK,  transition: 'width 0.6s ease' }} />
+              <div style={{ width: seg(ivaRes),    background: C.IVA,  transition: 'width 0.6s ease' }} />
+              <div style={{ width: seg(irpfPaid),  background: C.IRPF, transition: 'width 0.6s ease' }} />
+              <div style={{ width: seg(irpfGap),   background: `${C.IRPF}55`, transition: 'width 0.6s ease' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>€0</span>
+              <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>€{fmt(gross)}</span>
             </div>
           </>
         ) : (
-          <div style={{ fontSize: 18, color: C.MUTED, marginBottom: 28, lineHeight: 1.5 }}>
-            {selQ === currQ
-              ? <>Sin facturas aún este trimestre. <button onClick={() => setShowForm(true)} style={{ background: 'none', border: 'none', color: C.IVA, cursor: 'pointer', fontFamily: 'inherit', fontSize: 18, fontWeight: 600, padding: 0 }}>Añade la primera →</button></>
-              : <>Sin facturas registradas en {selQ}T {selY}.</>
-            }
+          <div style={{ marginBottom: 32 }}>
+            <p style={{ fontSize: 20, color: C.MUTED, lineHeight: 1.5, margin: '0 0 16px' }}>
+              Sin facturas aún este año.{' '}
+              <button
+                onClick={() => setShowForm(true)}
+                style={{ background: 'none', border: 'none', color: C.IVA, cursor: 'pointer', fontFamily: 'inherit', fontSize: 20, fontWeight: 600, padding: 0 }}
+              >
+                Añade la primera →
+              </button>
+            </p>
           </div>
         )}
 
-        {/* ── Hero dark card ──────────────────────────────────────────────── */}
-        <div style={{
-          background: C.INK, color: 'white', borderRadius: 18,
-          padding: '28px 32px', marginBottom: 28,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap',
-        }}>
-          <div>
-            <div className="mono" style={{ fontSize: 11, color: C.IRPF, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 12 }}>
-              {isPast ? `Venció el ${dueLabel}` : `A pagar el ${dueLabel}`}
-            </div>
-            <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 0.95, letterSpacing: '-0.03em' }}>
-              €{fmt(taxDue)}
-            </div>
-            <div className="mono" style={{ fontSize: 12, color: C.WARM, marginTop: 10, lineHeight: 1.6 }}>
-              M303 · IVA €{fmt(ivaAmt)}{' '}+{' '}M130 · IRPF €{fmt(irpfAdv)}
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className="mono" style={{ fontSize: 10, color: C.WARM, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
-              {gross > 0 ? 'Ya reservado' : 'Reserva estimada'}
-            </div>
-            {gross > 0 && taxDue <= gross ? (
-              <div style={{ fontSize: 16, color: '#9ec77c', fontWeight: 600 }}>✓ 100% cubierto</div>
-            ) : (
-              <div style={{ fontSize: 13, color: C.WARM }}>Añade facturas para confirmar</div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Weekly bar chart ────────────────────────────────────────────── */}
-        <div className="mono" style={{ fontSize: 10, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 12 }}>
-          Ingresos por semana · {selQ}T {selY}
-        </div>
-        <div style={{ display: 'flex', gap: 4, height: 80, alignItems: 'flex-end', marginBottom: 6, borderBottom: `1px solid ${C.BORDER}`, paddingBottom: 4 }}>
-          {barHeights.map((h, i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                height: `${Math.max(h, 4)}%`,
-                background: i < Math.floor((now.getDate() + (now.getMonth() - ((selQ - 1) * 3)) * 30) / 7) && isCurrent
-                  ? C.INK
-                  : isCurrent ? C.IVA : (h > 0 ? C.INK : C.BORDER),
-                borderRadius: '2px 2px 0 0',
-                opacity: isCurrent && i > Math.floor((now.getDate() + (now.getMonth() - ((selQ - 1) * 3)) * 30) / 7) ? 0.4 : 0.85,
-              }}
-            />
-          ))}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28 }}>
-          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>S1 · {m1.toUpperCase()}</span>
-          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>{m2.toUpperCase()}</span>
-          <span className="mono" style={{ fontSize: 10, color: C.MUTED }}>{m3.toUpperCase()} · S13</span>
-        </div>
-
         {/* ── 4-bucket table ──────────────────────────────────────────────── */}
-        <div style={{ borderTop: `1px solid ${C.BORDER}`, paddingTop: 20, marginBottom: 28 }}>
+        <div style={{ borderTop: `1px solid ${C.BORDER}`, marginBottom: 24 }}>
           {[
-            { label: 'Tuyo',                  value: spendable, color: C.INK,  dashed: false, concept: 'spendable'    as ConceptKey },
-            { label: 'IVA · Modelo 303',      value: ivaAmt,   color: C.IVA,  dashed: false, concept: 'iva_payable'  as ConceptKey },
-            { label: 'IRPF adelantado · M130', value: irpfAdv, color: C.IRPF, dashed: false, concept: 'irpf_advance' as ConceptKey },
-            { label: 'IRPF Renta estimado',   value: irpfEnd,  color: C.IRPF, dashed: true,  concept: 'irpf_gap'     as ConceptKey },
-          ].map(({ label, value, color, dashed, concept }, i) => (
+            {
+              dot: C.INK, dashed: false,
+              label: 'Tuyo',
+              value: spendable,
+              pct: pctOf(spendable),
+              sub: 'Para vivir, ahorrar e invertir. Ya restamos todo lo demás.',
+              tag: null,
+            },
+            {
+              dot: C.IVA, dashed: false,
+              label: 'IVA reservado',
+              value: ivaRes,
+              pct: pctOf(ivaRes),
+              sub: 'Cobrado a tus clientes. Nunca fue tuyo — se lo pasas a Hacienda trimestralmente (Modelo 303).',
+              tag: null,
+            },
+            {
+              dot: C.IRPF, dashed: false,
+              label: 'IRPF adelantado',
+              value: irpfPaid,
+              pct: pctOf(irpfPaid),
+              sub: 'Retenciones de tus clientes + pagos fraccionados. Ya pagado este año.',
+              tag: 'ya pagado',
+            },
+            {
+              dot: C.IRPF, dashed: true,
+              label: 'IRPF estimado restante',
+              value: irpfGap,
+              pct: `proyección · ~${pctOf(irpfGap)}`,
+              sub: irpfGap > 0
+                ? `Al 20% estás adelantando de menos. A tu ritmo, en la Renta ${currY} (jun ${currY + 1}) te tocará pagar ~${formatCurrency(irpfGap)} más. Estimamos ${Math.round(effRate * 100)}% efectivo.`
+                : `Vas bien cubierto. Tus pagos fraccionados cubren tu IRPF estimado para este año.`,
+              tag: null,
+            },
+          ].map(({ dot, dashed, label, value, pct, sub, tag }, i) => (
             <div
               key={label}
               style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0',
-                borderBottom: i < 3 ? `1px solid ${C.BORDER_SOFT}` : 'none',
+                display: 'grid',
+                gridTemplateColumns: '16px 1fr auto auto',
+                gap: '0 12px',
+                padding: '14px 0',
+                borderBottom: i < 3 ? `1px solid ${C.BORDER}` : 'none',
+                alignItems: 'start',
               }}
             >
+              {/* Dot */}
               <div style={{
-                width: 11, height: 11, borderRadius: 3, flexShrink: 0,
-                background: dashed ? 'transparent' : color,
-                border: dashed ? `2px dashed ${color}` : 'none',
+                width: 11, height: 11, borderRadius: 3, marginTop: 3, flexShrink: 0,
+                background: dashed ? 'transparent' : dot,
+                border: dashed ? `2px dashed ${dot}` : 'none',
               }} />
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {label}
-                <InfoTooltip conceptKey={concept} />
+
+              {/* Label + description */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>{label}</span>
+                  {tag && (
+                    <span style={{ fontSize: 10, fontWeight: 600, color: C.OK, background: '#eef3eb', border: `1px solid #c8ddc0`, borderRadius: 999, padding: '2px 8px', letterSpacing: '0.04em' }}>
+                      {tag}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 12, color: C.MUTED, margin: '3px 0 0', lineHeight: 1.55 }}>{sub}</p>
               </div>
-              <div className="mono" style={{ fontSize: 11, color: C.MUTED, width: 40, textAlign: 'right' }}>
-                {gross > 0 ? pctOf(value) + '%' : '—'}
+
+              {/* Percentage */}
+              <div className="mono" style={{ fontSize: 11, color: C.MUTED, textAlign: 'right', paddingTop: 2, whiteSpace: 'nowrap' }}>
+                {pct}
               </div>
-              <div style={{ fontSize: 17, fontWeight: 600, fontVariantNumeric: 'tabular-nums', width: 100, textAlign: 'right' }}>
-                €{fmt(value)}
+
+              {/* Amount */}
+              <div style={{ fontSize: 17, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', paddingTop: 1, whiteSpace: 'nowrap' }}>
+                {formatCurrency(value)}
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Quick links ─────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
+        {/* ── Próximo vencimiento ─────────────────────────────────────────── */}
+        {nextDL && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+            padding: '14px 20px', background: C.CARD, border: `1px solid ${C.BORDER}`,
+            borderRadius: 14, marginBottom: 16,
+          }}>
+            <div>
+              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
+                PRÓXIMO VENCIMIENTO
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>
+                {nextDL.label} · Modelo 130 + 303
+                {nextDLAmt > 0 && (
+                  <span style={{ color: C.IVA, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/renta')}
+              style={{
+                background: C.INK, color: 'white', border: 'none', borderRadius: 999,
+                padding: '10px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              Simular Renta {currY} →
+            </button>
+          </div>
+        )}
+
+        {/* ── Proyección de Renta ─────────────────────────────────────────── */}
+        {hasData && rentaGap > 0 && (
+          <div style={{ border: `1px solid ${C.BORDER}`, borderRadius: 14, overflow: 'hidden', marginBottom: 24 }}>
+            <button
+              onClick={() => setRentaOpen(o => !o)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 20px', background: '#fdf7e8', border: 'none', cursor: 'pointer',
+                fontFamily: 'inherit', gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="mono" style={{ fontSize: 10, color: C.IRPF, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  PROYECCIÓN DE RENTA {currY}
+                </span>
+              </div>
+              <span style={{ fontSize: 14, color: C.MUTED, lineHeight: 1 }}>{rentaOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {rentaOpen && (
+              <div style={{ padding: '16px 20px 20px', background: C.CARD, borderTop: `1px solid ${C.BORDER}` }}>
+                <p style={{ fontSize: 14, color: C.INK, lineHeight: 1.7, margin: '0 0 20px' }}>
+                  Si sigues facturando a este ritmo{' '}
+                  <strong>(€{fmt(projectedYE)} proyectado para fin de año)</strong>,
+                  en la Renta {currY} que harás en junio {currY + 1} te tocará pagar{' '}
+                  <strong style={{ color: C.IVA }}>~{formatCurrency(rentaGap)} extra</strong>.
+                </p>
+
+                {/* Three metric chips */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
+                  {[
+                    { label: 'FACTURACIÓN YE',  value: `€${fmt(projectedYE)}`, sub: 'proyectado', color: C.INK },
+                    { label: 'TIPO EFECTIVO',   value: `~${Math.round(effRate * 100)}%`, sub: `vs ${Math.round(advRate * 100)}% adelantado`, color: C.IRPF },
+                    { label: 'A PAGAR EN RENTA', value: formatCurrency(rentaGap), sub: 'estimado', color: C.IVA },
+                  ].map(({ label, value, sub, color }) => (
+                    <div key={label} style={{ background: '#fdfaf3', border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: '12px 14px' }}>
+                      <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{value}</div>
+                      <div style={{ fontSize: 10, color: C.MUTED, marginTop: 4 }}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => { setAparted(true); }}
+                    style={{
+                      background: aparted ? C.OK : C.INK, color: 'white', border: 'none',
+                      borderRadius: 999, padding: '11px 20px', fontSize: 13, fontWeight: 500,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    {aparted ? `✓ ${formatCurrency(rentaGap)} anotado` : `Apartar ${formatCurrency(rentaGap)} automáticamente`}
+                  </button>
+                  <button
+                    onClick={() => router.push('/renta')}
+                    style={{
+                      background: 'transparent', color: C.INK, border: `1px solid ${C.BORDER}`,
+                      borderRadius: 999, padding: '11px 20px', fontSize: 13, fontWeight: 500,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Simular otros escenarios
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Gastos nudge ─────────────────────────────────────────────── */}
+        {untappedCount > 0 && (
+          <div
+            onClick={() => router.push('/gastos')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px', background: C.CARD, border: `1px solid ${C.BORDER}`,
+              borderRadius: 14, marginBottom: 16, cursor: 'pointer',
+            }}
+          >
+            <div>
+              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
+                GASTOS SIN ACTIVAR
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>
+                {untappedCount} gastos típicos sin activar
+                {untappedSaving > 0 && (
+                  <span style={{ color: C.OK, marginLeft: 8 }}>· +€{fmt(untappedSaving)} deducibles/trimestre</span>
+                )}
+              </div>
+            </div>
+            <span style={{ fontSize: 18, color: C.MUTED }}>→</span>
+          </div>
+        )}
+
+        {/* ── Quick links + PreguntameButton ──────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24, alignItems: 'center' }}>
           {[
-            { label: t.checker.title, onClick: () => router.push('/checker') },
-            { label: t.simpleView.backtest, onClick: () => router.push('/backtest') },
-          ].map(({ label, onClick }) => (
+            { label: t.checker.title,      href: '/checker'  },
+            { label: t.simpleView.backtest, href: '/backtest' },
+          ].map(({ label, href }) => (
             <button
               key={label}
-              onClick={onClick}
-              style={{
-                background: 'transparent', border: `1px solid ${C.BORDER}`,
-                borderRadius: 999, padding: '7px 16px', fontSize: 12,
-                color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit',
-              }}
+              onClick={() => router.push(href)}
+              style={{ background: 'transparent', border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '7px 16px', fontSize: 12, color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {label}
             </button>
@@ -402,7 +442,7 @@ export default function DashboardPage() {
           {wizardProfile && (
             <div style={{ marginLeft: 'auto' }}>
               <PreguntameButton
-                snapshot={snapshot}
+                snapshot={ytd}
                 wizardProfile={wizardProfile}
                 checkerHistory={checkerHistory}
               />
@@ -410,13 +450,10 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ── Deduction assistant ──────────────────────────────────────────── */}
-        <DeductionAssistant />
-
       </main>
 
       {showForm   && <TransactionForm onClose={() => setShowForm(false)} />}
-      {showWizard && <SetupWizard onClose={() => setShowWizard(false)} />}
+      {showWizard && <SetupWizard     onClose={() => setShowWizard(false)} />}
     </div>
   );
 }

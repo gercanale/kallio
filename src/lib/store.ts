@@ -206,6 +206,10 @@ interface KallioState {
   checkerHistory: CheckerRun[];
   addCheckerRun: (run: CheckerRun) => void;
 
+  // Gastos buckets — which typical expenses are activated + their amounts
+  activatedBuckets: Record<string, number>; // id → custom amount (0 = use bucket default)
+  setActivatedBucket: (id: string, amount: number | null) => void; // null = deactivate
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getQuarterStatus: (quarter: number, year: number) => QuarterStatus;
@@ -299,6 +303,14 @@ export const useKallioStore = create<KallioState>()(
       setDashboardMode: (mode) => set({ dashboardMode: mode }),
       checkerHistory: [],
       addCheckerRun: (run) => set((s) => ({ checkerHistory: [run, ...s.checkerHistory] })),
+
+      activatedBuckets: {},
+      setActivatedBucket: (id, amount) =>
+        set((s) => {
+          const next = { ...s.activatedBuckets };
+          if (amount === null) { delete next[id]; } else { next[id] = amount; }
+          return { activatedBuckets: next };
+        }),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -638,6 +650,7 @@ export const useKallioStore = create<KallioState>()(
         wizardProfile: state.wizardProfile,
         dashboardMode: state.dashboardMode,
         checkerHistory: state.checkerHistory,
+        activatedBuckets: state.activatedBuckets,
       }),
     }
   )
