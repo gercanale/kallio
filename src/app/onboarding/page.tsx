@@ -6,7 +6,7 @@ import { useKallioStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase";
 import { REGIONS } from "@/lib/regional-tax";
 import { DEDUCTIBILITY_RATES } from "@/lib/wizard-config";
-import type { Language } from "@/lib/i18n";
+import { translations, type Language } from "@/lib/i18n";
 import type { UserProfile } from "@/lib/types";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -38,31 +38,8 @@ const LANGS: { code: Language; flag: string; label: string }[] = [
   { code: "fr", flag: "🇫🇷", label: "Français" },
 ];
 
-const REGIME_OPTS: { k: RegimeKey; icon: string; t: string; s: string; note: string }[] = [
-  { k: 'A', icon: '●', t: 'Soy autónomo español o residente',   s: 'Pago IRPF progresivo — el tipo sube con mis ingresos', note: 'El caso más común'          },
-  { k: 'B', icon: '◆', t: 'Tengo Beckham o nómada digital',     s: 'Pago un tipo fijo del 24% — llegué a España desde fuera', note: 'Régimen especial'        },
-  { k: 'C', icon: '▲', t: 'Soy empleado y también facturo',     s: 'Tengo nómina y hago trabajos por cuenta propia', note: 'Dos fuentes · cuidado con tramos' },
-  { k: 'D', icon: '?', t: 'No estoy seguro',                    s: 'Te ayudamos a identificarlo en 2 preguntas', note: 'Te guiamos'                            },
-];
-
-const ACTIVITY_OPTS: { k: string; t: string; badge: string; color: string }[] = [
-  { k: 'tech',   t: 'Consultoría / Tech',          badge: 'gastos 100%',            color: C.OK   },
-  { k: 'design', t: 'Diseño / Creatividad',         badge: 'gastos 100%',            color: C.OK   },
-  { k: 'teach',  t: 'Formación / Docencia',         badge: 'IVA exento (a veces)',   color: C.IRPF },
-  { k: 'health', t: 'Salud / Bienestar',            badge: 'IVA exento (a veces)',   color: C.IRPF },
-  { k: 'trade',  t: 'Comercio / Producto',          badge: 'gastos 60–70%',          color: C.IVA  },
-  { k: 'build',  t: 'Construcción / Arquitectura',  badge: 'gastos 75%',             color: C.IVA  },
-  { k: 'mkt',    t: 'Marketing / Comunicación',     badge: 'gastos 100%',            color: C.OK   },
-  { k: 'other',  t: 'Otro',                         badge: 'lo configuramos juntos', color: C.MUTED},
-];
-
-const CLIENTES_OPTS: { k: ClientesKey; t: string; s: string }[] = [
-  { k: 'es',    t: 'En España o la UE',                  s: 'Cobro IVA del 21% en mis facturas'       },
-  { k: 'fuera', t: 'Fuera de la UE — empresas extranjeras', s: 'Facturo sin IVA a mis clientes'       },
-  { k: 'mix',   t: 'Tengo clientes en los dos',          s: 'Mezcla de nacionales e internacionales'  },
-];
-
-const ACTIVITY_LABEL: Record<string, string> = {
+// Activity keys for DB save — language-independent
+const ACTIVITY_LABEL_ES: Record<string, string> = {
   tech:   'Consultoría / Tech',
   design: 'Diseño / Creatividad',
   teach:  'Formación / Docencia',
@@ -71,19 +48,6 @@ const ACTIVITY_LABEL: Record<string, string> = {
   build:  'Construcción / Arquitectura',
   mkt:    'Marketing / Comunicación',
   other:  'Otro',
-};
-
-const CLIENTES_LABEL: Record<ClientesKey, string> = {
-  es:    'España + EU · IVA 21%',
-  fuera: 'Fuera UE · sin IVA',
-  mix:   'Mezcla España + fuera UE · IVA mixto',
-};
-
-const REGIME_LABEL: Record<RegimeKey, string> = {
-  A: 'Autónomo español · IRPF progresivo',
-  B: 'Beckham · Tipo fijo 24%',
-  C: 'Empleado + freelance · IRPF progresivo',
-  D: 'Por determinar · IRPF progresivo',
 };
 
 // Screen 01–06 for progress counter (04=summary and 07=next don't show counter)
@@ -155,13 +119,13 @@ function Pill({ onClick, disabled, children, variant = 'primary' }: {
   );
 }
 
-function NavRow({ onBack, onNext, nextLabel = 'Siguiente →', nextDisabled = false }: {
-  onBack?: () => void; onNext: () => void; nextLabel?: string; nextDisabled?: boolean;
+function NavRow({ onBack, onNext, nextLabel = 'Siguiente →', backLabel = '← Atrás', nextDisabled = false }: {
+  onBack?: () => void; onNext: () => void; nextLabel?: string; backLabel?: string; nextDisabled?: boolean;
 }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 32 }}>
       {onBack
-        ? <Pill variant="ghost" onClick={onBack}>← Atrás</Pill>
+        ? <Pill variant="ghost" onClick={onBack}>{backLabel}</Pill>
         : <span />}
       <Pill onClick={onNext} disabled={nextDisabled}>{nextLabel}</Pill>
     </div>
@@ -183,6 +147,56 @@ export default function OnboardingPage() {
   const isRePrompt = profile.onboardingComplete && (!profile.region || !profile.ingresoMensual);
 
   const [screen, setScreen] = useState<Screen>(isRePrompt ? 'clients' : 'lang');
+
+  const t = translations[language].onboardingWizard;
+
+  const REGIME_OPTS: { k: RegimeKey; icon: string; t: string; s: string; note: string }[] = [
+    { k: 'A', icon: '●', t: t.regimeA_t, s: t.regimeA_s, note: t.regimeA_note },
+    { k: 'B', icon: '◆', t: t.regimeB_t, s: t.regimeB_s, note: t.regimeB_note },
+    { k: 'C', icon: '▲', t: t.regimeC_t, s: t.regimeC_s, note: t.regimeC_note },
+    { k: 'D', icon: '?', t: t.regimeD_t, s: t.regimeD_s, note: t.regimeD_note },
+  ];
+
+  const ACTIVITY_OPTS: { k: string; t: string; badge: string; color: string }[] = [
+    { k: 'tech',   t: t.actTech,   badge: t.badgeFull,      color: C.OK   },
+    { k: 'design', t: t.actDesign, badge: t.badgeFull,      color: C.OK   },
+    { k: 'teach',  t: t.actTeach,  badge: t.badgeVatExempt, color: C.IRPF },
+    { k: 'health', t: t.actHealth, badge: t.badgeVatExempt, color: C.IRPF },
+    { k: 'trade',  t: t.actTrade,  badge: t.badgePct,       color: C.IVA  },
+    { k: 'build',  t: t.actBuild,  badge: t.badgePct75,     color: C.IVA  },
+    { k: 'mkt',    t: t.actMkt,    badge: t.badgeFull,      color: C.OK   },
+    { k: 'other',  t: t.actOther,  badge: t.badgeCustom,    color: C.MUTED},
+  ];
+
+  const CLIENTES_OPTS: { k: ClientesKey; t: string; s: string }[] = [
+    { k: 'es',    t: t.clientEs_t,    s: t.clientEs_s    },
+    { k: 'fuera', t: t.clientFuera_t, s: t.clientFuera_s },
+    { k: 'mix',   t: t.clientMix_t,   s: t.clientMix_s   },
+  ];
+
+  const ACTIVITY_LABEL: Record<string, string> = {
+    tech:   t.actLabelTech,
+    design: t.actLabelDesign,
+    teach:  t.actLabelTeach,
+    health: t.actLabelHealth,
+    trade:  t.actLabelTrade,
+    build:  t.actLabelBuild,
+    mkt:    t.actLabelMkt,
+    other:  t.actLabelOther,
+  };
+
+  const CLIENTES_LABEL: Record<ClientesKey, string> = {
+    es:    t.clientLabelEs,
+    fuera: t.clientLabelFuera,
+    mix:   t.clientLabelMix,
+  };
+
+  const REGIME_LABEL: Record<RegimeKey, string> = {
+    A: t.regimeLabelA,
+    B: t.regimeLabelB,
+    C: t.regimeLabelC,
+    D: t.regimeLabelD,
+  };
 
   // Form state
   const [regimeKey, setRegimeKey] = useState<RegimeKey>('A');
@@ -237,7 +251,7 @@ export default function OnboardingPage() {
       } catch (_) { /* graceful fail if columns don't exist yet */ }
     } else {
       // Full first-time onboarding
-      const activityType = ACTIVITY_LABEL[activityKey] ?? activityKey;
+      const activityType = ACTIVITY_LABEL_ES[activityKey] ?? activityKey;
 
       await completeOnboarding({
         name: profile.name || '',
@@ -346,10 +360,10 @@ export default function OnboardingPage() {
     return (
       <Frame step={1}>
         <h1 style={{ fontSize: 34, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 8 }}>
-          ¿Cuál es tu <span className="serif">situación</span> en España?
+          {t.fiscalTitle}
         </h1>
         <p style={{ fontSize: 15, color: C.MUTED, lineHeight: 1.6, marginBottom: 28 }}>
-          Esto determina cómo te calculo los impuestos. Si te equivocas, todo lo que te muestre después estará mal.
+          {t.fiscalSubtitle}
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
@@ -390,10 +404,10 @@ export default function OnboardingPage() {
         {regimeKey === 'B' && (
           <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: '16px 20px', marginBottom: 4 }}>
             <div className="mono" style={{ fontSize: 10, color: C.IVA, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Beckham · año de inicio
+              {t.beckhamSectionLabel}
             </div>
             <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>
-              ¿En qué año empezaste el régimen Beckham?
+              {t.beckhamYearQuestion}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {beckhamYears.map(y => {
@@ -419,6 +433,8 @@ export default function OnboardingPage() {
         <NavRow
           onBack={() => setScreen('lang')}
           onNext={() => setScreen('activity')}
+          backLabel={t.back}
+          nextLabel={t.next}
         />
       </Frame>
     );
@@ -429,10 +445,10 @@ export default function OnboardingPage() {
     return (
       <Frame step={2}>
         <h1 style={{ fontSize: 34, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 8 }}>
-          ¿A qué te <span className="serif">dedicas</span> principalmente?
+          {t.activityTitle}
         </h1>
         <p style={{ fontSize: 15, color: C.MUTED, lineHeight: 1.6, marginBottom: 28 }}>
-          Tu actividad cambia qué puedes deducir y si debes cobrar IVA a tus clientes.
+          {t.activitySubtitle}
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -468,6 +484,8 @@ export default function OnboardingPage() {
         <NavRow
           onBack={() => setScreen('fiscal')}
           onNext={() => setScreen('clients')}
+          backLabel={t.back}
+          nextLabel={t.next}
         />
       </Frame>
     );
@@ -478,10 +496,10 @@ export default function OnboardingPage() {
     return (
       <Frame step={3}>
         <h1 style={{ fontSize: 34, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 8 }}>
-          ¿Dónde están tus <span className="serif">clientes</span>?
+          {t.clientsTitle}
         </h1>
         <p style={{ fontSize: 15, color: C.MUTED, lineHeight: 1.6, marginBottom: 24 }}>
-          Esto decide si cobras IVA. Para clientes fuera de la UE, tus facturas van sin IVA — y eso cambia mucho tu reserva.
+          {t.clientsSubtitle}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
@@ -521,11 +539,11 @@ export default function OnboardingPage() {
         {/* Region picker */}
         <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: '18px 20px', marginBottom: 4 }}>
           <div className="mono" style={{ fontSize: 10, color: C.IVA, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-            Una cosa más · 10 segundos
+            {t.regionLabel}
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>¿En qué comunidad autónoma resides?</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{t.regionQuestion}</div>
           <div style={{ fontSize: 13, color: C.MUTED, marginBottom: 14, lineHeight: 1.5 }}>
-            Cada comunidad tiene sus propias deducciones en la Renta. Las aplico automáticamente.
+            {t.regionDesc}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {REGIONS.map(r => {
@@ -550,6 +568,8 @@ export default function OnboardingPage() {
         <NavRow
           onBack={isRePrompt ? undefined : () => setScreen('activity')}
           onNext={() => setScreen('summary')}
+          backLabel={t.back}
+          nextLabel={t.next}
         />
       </Frame>
     );
@@ -557,28 +577,28 @@ export default function OnboardingPage() {
 
   // ─── SCREEN: summary ──────────────────────────────────────────────────────
   if (screen === 'summary') {
-    const regionName = REGIONS.find(r => r.code === region)?.name ?? (region || 'No seleccionada');
+    const regionName = REGIONS.find(r => r.code === region)?.name ?? (region || t.summaryNoRegion);
     const rows = isRePrompt
       ? [
-          ['Clientes', CLIENTES_LABEL[clientesKey]],
-          ['Región', `${regionName} · deducciones autonómicas activas`],
+          [t.summaryClients, CLIENTES_LABEL[clientesKey]],
+          [t.summaryRegion,  `${regionName} ${t.summaryRegionalNote}`],
         ]
       : [
-          ['Régimen',   REGIME_LABEL[regimeKey]],
-          ['Actividad', `${ACTIVITY_LABEL[activityKey]} · gastos deducibles`],
-          ['Clientes',  CLIENTES_LABEL[clientesKey]],
-          ['Región',    `${regionName} · deducciones autonómicas activas`],
+          [t.summaryRegime,   REGIME_LABEL[regimeKey]],
+          [t.summaryActivity, `${ACTIVITY_LABEL[activityKey]} ${t.summaryExpensesNote}`],
+          [t.summaryClients,  CLIENTES_LABEL[clientesKey]],
+          [t.summaryRegion,   `${regionName} ${t.summaryRegionalNote}`],
         ];
 
     return (
       <Frame showStep={false}>
         <div style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.OK, display: 'inline-block' }} />
-          <span className="mono" style={{ letterSpacing: '0.14em', color: C.OK, textTransform: 'uppercase' }}>Perfecto.</span>
+          <span className="mono" style={{ letterSpacing: '0.14em', color: C.OK, textTransform: 'uppercase' }}>{t.summaryPerfect}</span>
         </div>
 
         <h1 style={{ fontSize: 38, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 32 }}>
-          Esto es lo que <span className="serif">entiendo</span> de ti.
+          {t.summaryTitle}
         </h1>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
@@ -596,12 +616,12 @@ export default function OnboardingPage() {
         </div>
 
         <p style={{ fontSize: 16, color: C.INK, lineHeight: 1.55, marginBottom: 24 }}>
-          Ahora necesito <strong>un dato</strong> para mostrarte cuánto deberías reservar este trimestre.
+          {t.summaryOneData}
         </p>
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Pill onClick={() => setScreen('income')}>Vamos →</Pill>
-          <Pill variant="ghost" onClick={() => setScreen('clients')}>Corregir algo</Pill>
+          <Pill onClick={() => setScreen('income')}>{t.summaryGo}</Pill>
+          <Pill variant="ghost" onClick={() => setScreen('clients')}>{t.summaryCorrect}</Pill>
         </div>
       </Frame>
     );
@@ -612,13 +632,16 @@ export default function OnboardingPage() {
     return (
       <Frame step={5}>
         <div className="mono" style={{ fontSize: 11, color: C.IVA, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-          Una pregunta
+          {t.incomeLabel}
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 14 }}>
-          ¿Cuánto <span className="serif">facturas</span> aproximadamente al mes?
+          {t.incomeTitle}
         </h1>
-        <p style={{ fontSize: 15, color: C.MUTED, lineHeight: 1.6, marginBottom: 32 }}>
-          Si varía mucho, usa una estimación de los últimos 3 meses. No tiene que ser exacto.
+        <p style={{ fontSize: 15, color: C.MUTED, lineHeight: 1.6, marginBottom: 16 }}>
+          {t.incomeSubtitle}
+        </p>
+        <p style={{ fontSize: 13, color: C.IVA, fontWeight: 500, marginBottom: 20 }}>
+          {t.incomeVatNote}
         </p>
 
         {/* Big € input */}
@@ -640,21 +663,22 @@ export default function OnboardingPage() {
               fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em', padding: 0,
             }}
           />
-          <div className="mono" style={{ fontSize: 18, color: C.MUTED, flexShrink: 0 }}>/ mes</div>
+          <div className="mono" style={{ fontSize: 18, color: C.MUTED, flexShrink: 0 }}>{t.incomePerMonth}</div>
         </div>
 
         <div style={{ fontSize: 13, color: C.MUTED, marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <span style={{ color: C.IRPF, flexShrink: 0 }}>⟡</span>
           <span>
-            <strong style={{ color: C.INK }}>¿Por qué pregunto esto?</strong>{' '}
-            Con este dato ya calculo tu reserva — sin esperar a que añadas todas tus facturas.
+            <strong style={{ color: C.INK }}>{t.incomeWhyTitle}</strong>{' '}
+            {t.incomeWhyBody}
           </span>
         </div>
 
         <NavRow
           onBack={() => setScreen('summary')}
           onNext={() => setScreen('reveal')}
-          nextLabel="Ver mi reserva →"
+          backLabel={t.back}
+          nextLabel={t.incomeCta}
           nextDisabled={!ingresoStr || ingresoMensual <= 0}
         />
       </Frame>
@@ -666,10 +690,10 @@ export default function OnboardingPage() {
     return (
       <Frame step={6}>
         <div className="mono" style={{ fontSize: 11, color: C.IVA, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>
-          Tu reserva · {quarterLabel}
+          {t.revealLabel.replace('{{quarter}}', quarterLabel)}
         </div>
         <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3, marginBottom: 4, color: C.INK }}>
-          Este trimestre deberías <span className="serif">reservar</span>:
+          {t.revealTitle}
         </div>
 
         {/* Hero number */}
@@ -677,7 +701,7 @@ export default function OnboardingPage() {
           {fmt(total)}<span style={{ color: C.MUTED, fontWeight: 400 }}>€</span>
         </div>
         <div className="mono" style={{ fontSize: 14, color: C.MUTED, marginBottom: 28 }}>
-          de los €{fmt(quarterly)} que estimas facturar
+          {t.revealQuarterlyOf.replace('{{quarterly}}', fmt(quarterly))}
         </div>
 
         {/* Split card */}
@@ -686,10 +710,10 @@ export default function OnboardingPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: C.IVA }} />
-                <div style={{ fontSize: 14, fontWeight: 600 }}>IVA · Modelo 303</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{t.revealIvaTitle}</div>
               </div>
               <div style={{ fontSize: 12, color: C.MUTED, paddingLeft: 16, lineHeight: 1.4 }}>
-                Lo que devuelves a Hacienda{clientesKey === 'mix' ? ' · sólo sobre facturas ES' : ''}
+                {t.revealIvaDesc}{clientesKey === 'mix' ? ` ${t.revealIvaMixNote}` : ''}
               </div>
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: C.IVA }}>{clientesKey === 'fuera' ? '—' : `€${fmt(ivaReserve)}`}</div>
@@ -698,10 +722,10 @@ export default function OnboardingPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: C.IRPF }} />
-                <div style={{ fontSize: 14, fontWeight: 600 }}>IRPF · Modelo 130</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{t.revealIrpfTitle}</div>
               </div>
               <div style={{ fontSize: 12, color: C.MUTED, paddingLeft: 16, lineHeight: 1.4 }}>
-                Adelanto del 20% · tu impuesto sobre la renta
+                {t.revealIrpfDesc}
               </div>
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: C.IRPF }}>€{fmt(irpfReserve)}</div>
@@ -716,24 +740,24 @@ export default function OnboardingPage() {
         }}>
           <div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: '0.14em', color: C.OK, textTransform: 'uppercase', marginBottom: 4 }}>
-              Tu dinero disponible
+              {t.revealAvailableLabel}
             </div>
-            <div style={{ fontSize: 13, color: C.WARM }}>Lo que queda para vivir, ahorrar o invertir</div>
+            <div style={{ fontSize: 13, color: C.WARM }}>{t.revealAvailableDesc}</div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 700, color: '#9ec77c' }}>€{fmt(disponible)}</div>
         </div>
 
         <div className="mono" style={{ fontSize: 11, color: C.MUTED, marginBottom: 24, fontStyle: 'italic' }}>
-          Estimación basada en €{fmt(ingresoMensual)}/mes. Se actualiza cuando añadas tus facturas reales.
+          {t.revealEstimationNote.replace('{{monthly}}', fmt(ingresoMensual))}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Pill variant="ghost" onClick={() => setScreen('income')}>← Atrás</Pill>
+          <Pill variant="ghost" onClick={() => setScreen('income')}>{t.back}</Pill>
           <Pill
             onClick={async () => { await handleSave(); }}
             disabled={finishing}
           >
-            {finishing ? 'Guardando…' : 'Entendido — ir al dashboard →'}
+            {finishing ? t.revealSaving : t.revealCta}
           </Pill>
         </div>
       </Frame>
@@ -746,13 +770,13 @@ export default function OnboardingPage() {
       <Frame showStep={false}>
         <div style={{ paddingTop: 20 }}>
           <div className="mono" style={{ fontSize: 11, color: C.IVA, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-            Una cosa más
+            {t.nextLabel}
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 16 }}>
-            Ahora mismo trabajo con una <span className="serif">estimación</span>.
+            {t.nextTitle}
           </h1>
           <p style={{ fontSize: 17, color: C.INK, lineHeight: 1.6, marginBottom: 36, maxWidth: 520 }}>
-            Para que los números sean exactos, añade tu primera factura real. Te lleva menos de un minuto.
+            {t.nextBody}
           </p>
 
           {/* Big CTA */}
@@ -772,8 +796,8 @@ export default function OnboardingPage() {
               fontSize: 22, color: C.IRPF, flexShrink: 0,
             }}>+</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 2 }}>Añadir mi primera factura</div>
-              <div style={{ fontSize: 13, color: C.WARM }}>PDF, email, o añade el importe directamente · 30 segundos</div>
+              <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 2 }}>{t.nextCtaTitle}</div>
+              <div style={{ fontSize: 13, color: C.WARM }}>{t.nextCtaDesc}</div>
             </div>
             <div style={{ fontSize: 18 }}>→</div>
           </button>
@@ -786,7 +810,7 @@ export default function OnboardingPage() {
               fontFamily: 'inherit', display: 'block',
             }}
           >
-            Explorar el dashboard primero
+            {t.nextSkip}
           </button>
         </div>
       </Frame>
