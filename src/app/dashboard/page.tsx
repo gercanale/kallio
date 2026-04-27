@@ -19,7 +19,6 @@ import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { SetupWizard } from "@/components/SetupWizard";
-import { DeductionAssistant } from "@/components/DeductionAssistant";
 import { BeckhamCountdown } from "@/components/BeckhamCountdown";
 import { PreguntameButton } from "@/components/PreguntameButton";
 
@@ -450,9 +449,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* ── Deduction assistant ──────────────────────────────────────────── */}
-        <DeductionAssistant />
 
       </main>
 
