@@ -14,6 +14,8 @@ import {
   daysUntilDeadline,
   formatCurrency,
 } from "@/lib/tax-engine";
+import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
+import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
 import { SetupWizard } from "@/components/SetupWizard";
@@ -56,7 +58,8 @@ export default function DashboardPage() {
   const sessionActive = useKallioStore((s) => s.sessionActive);
   const transactions  = useKallioStore((s) => s.transactions);
   const wizardProfile = useKallioStore((s) => s.wizardProfile);
-  const checkerHistory = useKallioStore((s) => s.checkerHistory);
+  const checkerHistory      = useKallioStore((s) => s.checkerHistory);
+  const activatedBuckets    = useKallioStore((s) => s.activatedBuckets);
   const t             = useT();
 
   const [showForm,   setShowForm]   = useState(false);
@@ -114,6 +117,15 @@ export default function DashboardPage() {
   // Next deadline
   const nextDL = nextDeadline(currY, now);
   const nextDLAmt = currQSnap.ivaPayable + currQSnap.irpfAdvancePayable;
+
+  // Gastos nudge — how many potential buckets are not yet activated
+  const allBuckets     = useMemo(() => getBucketsForActivity(wizardProfile?.activity ?? null), [wizardProfile]);
+  const activeCount    = Object.keys(activatedBuckets).length;
+  const untappedCount  = allBuckets.length - activeCount;
+  const untappedSaving = useMemo(() => allBuckets.reduce((sum, b) => {
+    if (b.id in activatedBuckets) return sum;
+    return sum + quarterlyDeductible(b, b.defaultAmount);
+  }, 0), [allBuckets, activatedBuckets]);
 
   // Renta projection
   const projectedYE   = ytd.projectedAnnualNetIncome;
@@ -386,6 +398,31 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Gastos nudge ─────────────────────────────────────────────── */}
+        {untappedCount > 0 && (
+          <div
+            onClick={() => router.push('/gastos')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px', background: C.CARD, border: `1px solid ${C.BORDER}`,
+              borderRadius: 14, marginBottom: 16, cursor: 'pointer',
+            }}
+          >
+            <div>
+              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
+                GASTOS SIN ACTIVAR
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>
+                {untappedCount} gastos típicos sin activar
+                {untappedSaving > 0 && (
+                  <span style={{ color: C.OK, marginLeft: 8 }}>· +€{fmt(untappedSaving)} deducibles/trimestre</span>
+                )}
+              </div>
+            </div>
+            <span style={{ fontSize: 18, color: C.MUTED }}>→</span>
           </div>
         )}
 
