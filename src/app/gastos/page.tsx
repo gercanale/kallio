@@ -29,6 +29,7 @@ const C = {
   IRPF:   '#d4a017',
   OK:     '#5a7a3e',
   CARD:   '#ffffff',
+  WARM:   '#c9bfa8',
 };
 
 const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
