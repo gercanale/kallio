@@ -53,12 +53,13 @@ export async function POST(req: Request) {
   }
 
   // 3. Parse request
-  const { contextObject, userMessage, conversationHistory, llmEnabled } =
+  const { contextObject, userMessage, conversationHistory, llmEnabled, language } =
     (await req.json()) as {
       contextObject: CoachContext;
       userMessage: string;
       conversationHistory: { role: 'user' | 'assistant'; content: string }[];
       llmEnabled: boolean;
+      language?: string;
     };
 
   // 4. Toggle gate — checked server-side
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
   }
 
   // 9. Build system prompt
-  const systemPrompt = buildSystemPrompt(contextObject);
+  const systemPrompt = buildSystemPrompt(contextObject, language ?? 'es');
 
   // 10. Call Anthropic API
   try {

@@ -38,7 +38,11 @@ function fmt(n: number): string {
   }).format(n);
 }
 
-export function buildSystemPrompt(ctx: CoachContext): string {
+const LANGUAGE_NAMES: Record<string, string> = {
+  es: 'Spanish', en: 'English', it: 'Italian', de: 'German', fr: 'French',
+};
+
+export function buildSystemPrompt(ctx: CoachContext, language = 'es'): string {
   const isBeckham = ctx.user.fiscalRegime === 'beckham';
   const advanceLabel = isBeckham ? 'IRNR' : 'IRPF';
   const regimeLabel =
@@ -48,7 +52,11 @@ export function buildSystemPrompt(ctx: CoachContext): string {
       ? 'Régimen Beckham (IRNR)'
       : 'Sociedad Limitada (SL)';
 
+  const langName = LANGUAGE_NAMES[language] ?? 'Spanish';
+
   return `Eres el coach fiscal de Kallio, una herramienta para autónomos en España.
+IMPORTANT: You MUST respond ONLY in ${langName}. Never mix languages. Even if the user writes in a different language, always respond in ${langName}.
+
 Tu función es explicar y estimar — NUNCA asesorar legalmente ni presentar declaraciones.
 
 ═══ IDENTIDAD ═══

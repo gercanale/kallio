@@ -757,6 +757,14 @@ export const translations = {
       inputPlaceholder: "Escribe tu pregunta...",
       send: "Enviar",
       preguntameBtn: "Pregúntame",
+      inputDisabled: "Sesión completada",
+      closeLabel: "Cerrar",
+      errorMsg: "En este momento no puedo procesar tu pregunta. Prueba de nuevo en unos segundos.",
+      chip1: "¿Cómo se calcula mi dinero disponible?",
+      chip2: "¿Por qué reservo tanto en impuestos?",
+      chip3: "¿Qué pasa si pago tarde?",
+      chip4: "¿Podría pagar menos con deducciones?",
+      chip5: "¿Qué le pregunto a mi gestor?",
     },
 
     help: {
@@ -1581,6 +1589,14 @@ export const translations = {
       inputPlaceholder: "Type your question...",
       send: "Send",
       preguntameBtn: "Ask me",
+      inputDisabled: "Session complete",
+      closeLabel: "Close",
+      errorMsg: "I can't process your question right now. Please try again in a few seconds.",
+      chip1: "How is my available money calculated?",
+      chip2: "Why do I set aside so much in taxes?",
+      chip3: "What happens if I pay late?",
+      chip4: "Could I pay less with deductions?",
+      chip5: "What should I ask my accountant?",
     },
 
     help: {
@@ -2399,6 +2415,14 @@ export const translations = {
       inputPlaceholder: "Scrivi la tua domanda...",
       send: "Invia",
       preguntameBtn: "Chiedimi",
+      inputDisabled: "Sessione completata",
+      closeLabel: "Chiudi",
+      errorMsg: "Al momento non posso elaborare la tua domanda. Riprova tra qualche secondo.",
+      chip1: "Come viene calcolato il mio denaro disponibile?",
+      chip2: "Perché riservo tanto per le tasse?",
+      chip3: "Cosa succede se pago in ritardo?",
+      chip4: "Potrei pagare meno con le deduzioni?",
+      chip5: "Cosa chiedo al mio commercialista?",
     },
 
     help: {
@@ -3218,6 +3242,14 @@ export const translations = {
       inputPlaceholder: "Schreib deine Frage...",
       send: "Senden",
       preguntameBtn: "Frag mich",
+      inputDisabled: "Sitzung abgeschlossen",
+      closeLabel: "Schließen",
+      errorMsg: "Ich kann deine Frage gerade nicht bearbeiten. Bitte versuche es in ein paar Sekunden erneut.",
+      chip1: "Wie wird mein verfügbares Geld berechnet?",
+      chip2: "Warum reserviere ich so viel für Steuern?",
+      chip3: "Was passiert, wenn ich spät zahle?",
+      chip4: "Könnte ich mit Abzügen weniger zahlen?",
+      chip5: "Was frage ich meinen Steuerberater?",
     },
 
     help: {
@@ -4037,6 +4069,14 @@ export const translations = {
       inputPlaceholder: "Écrivez votre question...",
       send: "Envoyer",
       preguntameBtn: "Demandez-moi",
+      inputDisabled: "Session terminée",
+      closeLabel: "Fermer",
+      errorMsg: "Je ne peux pas traiter votre question pour le moment. Veuillez réessayer dans quelques secondes.",
+      chip1: "Comment mon argent disponible est-il calculé ?",
+      chip2: "Pourquoi je réserve autant pour les impôts ?",
+      chip3: "Que se passe-t-il si je paye en retard ?",
+      chip4: "Pourrais-je payer moins avec des déductions ?",
+      chip5: "Que demander à mon comptable ?",
     },
 
     help: {
