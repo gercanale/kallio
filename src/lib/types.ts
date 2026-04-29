@@ -37,6 +37,7 @@ export interface Transaction {
   category: ExpenseCategory;
   confidence: DeductionConfidence;
   isDeductible: boolean;
+  deductibilityRate?: number;    // 0–1 override; if absent, category rule applies
   deductionPromptShown: boolean;
   deductionPromptAnswered: boolean;
   notes?: string;

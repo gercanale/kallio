@@ -13,12 +13,12 @@ import {
   getQuarterDeadlines,
   daysUntilDeadline,
   formatCurrency,
+  quarterDateRange,
 } from "@/lib/tax-engine";
 import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
 import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
-import { SetupWizard } from "@/components/SetupWizard";
 import { BeckhamCountdown } from "@/components/BeckhamCountdown";
 import { PreguntameButton } from "@/components/PreguntameButton";
 
@@ -62,7 +62,6 @@ export default function DashboardPage() {
   const t             = useT();
 
   const [showForm,   setShowForm]   = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
   const [rentaOpen,  setRentaOpen]  = useState(false);
   const [aparted,    setAparted]    = useState(false);
 
@@ -117,6 +116,10 @@ export default function DashboardPage() {
   const nextDL = nextDeadline(currY, now);
   const nextDLAmt = currQSnap.ivaPayable + currQSnap.irpfAdvancePayable;
 
+  // Quarter days remaining (for entry card)
+  const { end: qEnd } = quarterDateRange(currQ, currY);
+  const daysLeft = Math.max(0, Math.ceil((qEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
   // Gastos nudge — how many potential buckets are not yet activated
   const allBuckets     = useMemo(() => getBucketsForActivity(wizardProfile?.activity ?? null), [wizardProfile]);
   const activeCount    = Object.keys(activatedBuckets).length;
@@ -138,7 +141,7 @@ export default function DashboardPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80 }}>
       <Navigation />
 
-      <main style={{ maxWidth: 700, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Beckham banner ─────────────────────────────────────────────── */}
         {isBeckham && wizardProfile?.beckhamStartYear && (
@@ -156,12 +159,6 @@ export default function DashboardPage() {
             {t.dashboard.yearLabel.replace('{{year}}', String(currY))}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setShowWizard(true)}
-              style={{ background: 'transparent', border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              ⚙ {t.simpleView.configure}
-            </button>
             <button
               onClick={() => setShowForm(true)}
               style={{ background: C.INK, color: 'white', border: 'none', borderRadius: 999, padding: '8px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -302,36 +299,31 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── Próximo vencimiento ─────────────────────────────────────────── */}
-        {nextDL && (
-          <div style={{
+        {/* ── Trimestre entry card ─────────────────────────────────────────── */}
+        <div
+          onClick={() => router.push('/trimestre')}
+          style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-            padding: '14px 20px', background: C.CARD, border: `1px solid ${C.BORDER}`,
-            borderRadius: 14, marginBottom: 16,
-          }}>
-            <div>
-              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
-                {t.dashboard.upcomingDeadline}
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>
-                {nextDL.label} · {t.dashboard.deadlineModels}
-                {nextDLAmt > 0 && (
-                  <span style={{ color: C.IVA, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
-                )}
-              </div>
+            padding: '16px 20px', background: C.INK, color: 'white',
+            borderRadius: 14, marginBottom: 20, cursor: 'pointer',
+          }}
+        >
+          <div>
+            <div className="mono" style={{ fontSize: 10, color: C.WARM, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              {currQ}T {currY} · {daysLeft} DÍAS RESTANTES
             </div>
-            <button
-              onClick={() => router.push('/renta')}
-              style={{
-                background: C.INK, color: 'white', border: 'none', borderRadius: 999,
-                padding: '10px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              {t.dashboard.simulateRenta.replace('{{year}}', String(currY))}
-            </button>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>
+              {nextDL ? `A pagar el ${nextDL.label}` : `Trimestre ${currQ}T`}
+              {nextDLAmt > 0 && (
+                <span style={{ color: C.WARM, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: C.WARM, marginTop: 3 }}>
+              M303 · IVA {formatCurrency(currQSnap.ivaPayable)} + M130 · IRPF {formatCurrency(currQSnap.irpfAdvancePayable)}
+            </div>
           </div>
-        )}
+          <span style={{ fontSize: 20, color: C.WARM, flexShrink: 0 }}>→</span>
+        </div>
 
         {/* ── Proyección de Renta ─────────────────────────────────────────── */}
         {hasData && rentaGap > 0 && (
@@ -462,8 +454,7 @@ export default function DashboardPage() {
 
       </main>
 
-      {showForm   && <TransactionForm onClose={() => setShowForm(false)} />}
-      {showWizard && <SetupWizard     onClose={() => setShowWizard(false)} />}
+      {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
     </div>
   );
 }

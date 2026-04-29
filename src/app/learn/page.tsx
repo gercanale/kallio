@@ -42,7 +42,7 @@ export default function LearnPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
       <Navigation />
 
-      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>

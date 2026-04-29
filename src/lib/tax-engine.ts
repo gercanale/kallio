@@ -287,14 +287,14 @@ export function calculateTaxSnapshot(
   const ivaDeductible = expenses.reduce((sum, t) => {
     if (t.ivaRate === 0) return sum;
     const rule = CATEGORY_RULES[t.category];
-    const deductiblePct = rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
+    const deductiblePct = t.deductibilityRate ?? rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
     return sum + ivaAmount(t.amount, t.ivaRate) * deductiblePct;
   }, 0);
 
   // Net deductible expense base (sin IVA, applying partial rules)
   const deductibleExpenses = expenses.reduce((sum, t) => {
     const rule = CATEGORY_RULES[t.category];
-    const deductiblePct = rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
+    const deductiblePct = t.deductibilityRate ?? rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
     const base = netFromGross(t.amount, t.ivaRate);
     return sum + base * deductiblePct;
   }, 0);
@@ -354,7 +354,7 @@ export function calculateTaxSnapshot(
     t.ivaRate === 0 ? s : s + ivaAmount(t.amount, t.ivaRate), 0);
   const ytdDeductibleExpenses = yearExpenses.reduce((s, t) => {
     const rule = CATEGORY_RULES[t.category];
-    const pct = rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
+    const pct = t.deductibilityRate ?? rule.partialRate ?? (rule.fullyDeductible ? 1 : 0);
     return s + netFromGross(t.amount, t.ivaRate) * pct;
   }, 0);
 
@@ -439,11 +439,11 @@ export function calculateYTDSnapshot(
   // ── Expenses ──────────────────────────────────────────────────────────────
   const ivaDeductible = expenses.reduce((s, t) => {
     if (t.ivaRate === 0) return s;
-    const pct = getCategoryDeductibilityPct(t.category);
+    const pct = t.deductibilityRate ?? getCategoryDeductibilityPct(t.category);
     return s + ivaAmount(t.amount, t.ivaRate) * pct;
   }, 0);
   const deductibleExpenses = expenses.reduce((s, t) => {
-    const pct = getCategoryDeductibilityPct(t.category);
+    const pct = t.deductibilityRate ?? getCategoryDeductibilityPct(t.category);
     return s + netFromGross(t.amount, t.ivaRate) * pct;
   }, 0);
 
