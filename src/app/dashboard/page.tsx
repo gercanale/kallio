@@ -19,7 +19,6 @@ import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
 import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
 import { TransactionForm } from "@/components/TransactionForm";
-import { SetupWizard } from "@/components/SetupWizard";
 import { BeckhamCountdown } from "@/components/BeckhamCountdown";
 import { PreguntameButton } from "@/components/PreguntameButton";
 
@@ -63,7 +62,6 @@ export default function DashboardPage() {
   const t             = useT();
 
   const [showForm,   setShowForm]   = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
   const [rentaOpen,  setRentaOpen]  = useState(false);
   const [aparted,    setAparted]    = useState(false);
 
@@ -143,7 +141,7 @@ export default function DashboardPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80 }}>
       <Navigation />
 
-      <main style={{ maxWidth: 700, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Beckham banner ─────────────────────────────────────────────── */}
         {isBeckham && wizardProfile?.beckhamStartYear && (
@@ -161,12 +159,6 @@ export default function DashboardPage() {
             {t.dashboard.yearLabel.replace('{{year}}', String(currY))}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setShowWizard(true)}
-              style={{ background: 'transparent', border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: C.MUTED, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              ⚙ {t.simpleView.configure}
-            </button>
             <button
               onClick={() => setShowForm(true)}
               style={{ background: C.INK, color: 'white', border: 'none', borderRadius: 999, padding: '8px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -462,8 +454,7 @@ export default function DashboardPage() {
 
       </main>
 
-      {showForm   && <TransactionForm onClose={() => setShowForm(false)} />}
-      {showWizard && <SetupWizard     onClose={() => setShowWizard(false)} />}
+      {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
     </div>
   );
 }

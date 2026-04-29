@@ -8,6 +8,8 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
+import { SetupWizard } from "@/components/SetupWizard";
+import { REGIONS } from "@/lib/regional-tax";
 
 const C = {
   BG: '#fdfaf3', INK: '#1a1f2e', MUTED: '#6b6456',
@@ -25,6 +27,8 @@ export default function SettingsPage() {
   const updateName = useKallioStore((s) => s.updateName);
   const updateIrpfAdvanceRate = useKallioStore((s) => s.updateIrpfAdvanceRate);
   const updateNif = useKallioStore((s) => s.updateNif);
+  const wizardProfile = useKallioStore((s) => s.wizardProfile);
+  const language = useKallioStore((s) => s.language);
   const t = useT();
 
   const [editingName, setEditingName] = useState(false);
@@ -43,6 +47,8 @@ export default function SettingsPage() {
   const [nifValue, setNifValue] = useState("");
   const [nifTypeValue, setNifTypeValue] = useState<NifType>("NIF");
   const [savingNif, setSavingNif] = useState(false);
+
+  const [showConfigWizard, setShowConfigWizard] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -159,7 +165,7 @@ export default function SettingsPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
       <Navigation />
 
-      <main style={{ maxWidth: 780, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: C.INK }}>{t.settings.title}</h1>
 
         {/* Profile section */}
@@ -314,6 +320,17 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Configuración de onboarding */}
+        <ConfigCard
+          t={t}
+          wizardProfile={wizardProfile}
+          profile={profile}
+          language={language}
+          cardStyle={cardStyle}
+          cardHeaderStyle={cardHeaderStyle}
+          onEdit={() => setShowConfigWizard(true)}
+        />
+
         {/* IRPF Advance Rate */}
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
@@ -450,6 +467,8 @@ export default function SettingsPage() {
         </div>
       </main>
 
+      {showConfigWizard && <SetupWizard onClose={() => setShowConfigWizard(false)} />}
+
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,31,46,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '0 16px' }}>
@@ -511,6 +530,113 @@ function SettingsRow({ label, value }: { label: string; value: string }) {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: `1px solid ${C.BORDER}` }}>
       <span style={{ fontSize: 14, color: '#6b6456' }}>{label}</span>
       <span style={{ fontSize: 14, fontWeight: 500, color: '#1a1f2e' }}>{value}</span>
+    </div>
+  );
+}
+
+function ConfigCard({
+  t, wizardProfile, profile, language, cardStyle, cardHeaderStyle, onEdit,
+}: {
+  t: ReturnType<typeof import('@/lib/useT').useT>;
+  wizardProfile: import('@/lib/wizard-config').WizardProfile | null;
+  profile: import('@/lib/types').UserProfile;
+  language: string;
+  cardStyle: React.CSSProperties;
+  cardHeaderStyle: React.CSSProperties;
+  onEdit: () => void;
+}) {
+  const ow = t.onboardingWizard;
+
+  const REGIME_LABELS: Record<string, string> = {
+    eds: ow.regimeLabelA,
+    beckham: ow.regimeLabelB,
+    sl: ow.regimeLabelC,
+  };
+
+  const ACTIVITY_LABELS: Record<string, string> = {
+    consultoria_tech: ow.actLabelTech,
+    diseno:           ow.actLabelDesign,
+    formacion:        ow.actLabelTeach,
+    salud:            ow.actLabelHealth,
+    comercio:         ow.actLabelTrade,
+    construccion:     ow.actLabelBuild,
+    transporte:       t.wizard.actTransporte,
+    otro:             ow.actLabelOther,
+  };
+
+  const CLIENTES_LABELS: Record<string, string> = {
+    es_only: ow.clientLabelEs,
+    eu:      ow.clientLabelEs,
+    non_eu:  ow.clientLabelFuera,
+    mix:     ow.clientLabelMix,
+  };
+
+  const LANG_NAMES: Record<string, string> = {
+    es: 'Español', en: 'English', it: 'Italiano', de: 'Deutsch', fr: 'Français',
+  };
+
+  const regimeValue = wizardProfile
+    ? `${REGIME_LABELS[wizardProfile.fiscalRegime] ?? wizardProfile.fiscalRegime}${
+        wizardProfile.fiscalRegime === 'beckham' && wizardProfile.beckhamStartYear
+          ? ` · ${wizardProfile.beckhamStartYear}`
+          : ''
+      }`
+    : '—';
+
+  const activityValue = wizardProfile
+    ? (ACTIVITY_LABELS[wizardProfile.activity] ?? wizardProfile.activity)
+    : '—';
+
+  const clientesValue = profile.clientes
+    ? (CLIENTES_LABELS[profile.clientes] ?? profile.clientes)
+    : '—';
+
+  const regionName = profile.region
+    ? (REGIONS.find(r => r.code === profile.region)?.name ?? profile.region)
+    : '—';
+
+  const incomeValue = profile.ingresoMensual
+    ? `€${profile.ingresoMensual.toLocaleString('es-ES')} / ${ow.incomePerMonth}`
+    : '—';
+
+  const rows: [string, string][] = [
+    [ow.summaryRegime,   regimeValue],
+    [ow.summaryActivity, activityValue],
+    [ow.summaryClients,  clientesValue],
+    [ow.summaryRegion,   regionName],
+    [t.settings.configIncome,    incomeValue],
+    [t.settings.configLanguage,  LANG_NAMES[language] ?? language],
+  ];
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ ...cardHeaderStyle, gap: 12 }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: C.INK, margin: 0, flex: 1 }}>
+          {t.settings.configSectionTitle}
+        </p>
+        <button
+          onClick={onEdit}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: C.MUTED, textDecoration: 'underline', padding: 0 }}
+        >
+          {t.settings.nifEdit}
+        </button>
+      </div>
+      <div style={{ overflow: 'hidden', borderRadius: '0 0 14px 14px' }}>
+        {rows.map(([label, value], i) => (
+          <div
+            key={label}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 20px',
+              borderBottom: i < rows.length - 1 ? `1px solid ${C.BORDER}` : 'none',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: C.MUTED, flexShrink: 0 }}>{label}</span>
+            <span style={{ fontSize: 13, fontWeight: 500, color: C.INK, textAlign: 'right' }}>{value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

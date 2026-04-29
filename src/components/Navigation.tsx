@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText, Receipt } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION } from "@/lib/version";
@@ -55,10 +55,9 @@ export function Navigation() {
   const NAV_ITEMS = [
     { href: "/dashboard",     icon: LayoutDashboard, label: t.nav.dashboard    },
     { href: "/transactions",  icon: ArrowLeftRight,  label: t.nav.transactions },
-    { href: "/gastos",        icon: Receipt,         label: t.nav.gastos       },
     { href: "/renta",         icon: FileText,        label: t.nav.renta        },
-    { href: "/settings",      icon: Settings,        label: t.nav.settings     },
     { href: "/learn",         icon: BookOpen,        label: t.nav.learn        },
+    { href: "/settings",      icon: Settings,        label: t.nav.settings     },
   ];
 
   return (

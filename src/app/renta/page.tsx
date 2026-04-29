@@ -460,7 +460,7 @@ export default function RentaPage() {
         .sidebar-profile-card.active { border-color: #1a1f2e; background: #1a1f2e08; }
       `}</style>
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '72px 20px 40px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '72px 20px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Page header ─────────────────────────────────────────────────────── */}
         <div style={{ marginBottom: 20 }}>

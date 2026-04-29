@@ -19,6 +19,7 @@ import {
 } from "./types";
 import type { WizardProfile } from "./wizard-config";
 import type { Language } from "./i18n";
+import type { GastoBucket } from "./gastos-data";
 import { createClient } from "./supabase";
 import {
   calculateTaxSnapshot,
@@ -209,6 +210,10 @@ interface KallioState {
   // Gastos buckets — which typical expenses are activated + their amounts
   activatedBuckets: Record<string, number>; // id → custom amount (0 = use bucket default)
   setActivatedBucket: (id: string, amount: number | null) => void; // null = deactivate
+  customBuckets: GastoBucket[];
+  hiddenBucketIds: string[];
+  addCustomBucket: (b: GastoBucket) => void;
+  hideBucket: (id: string) => void;
 
   // Historical year data — manual quarterly entries for past years not fully in Kallio
   // Key: "YYYY-Q" e.g. "2025-1". Stores net autónomo income (sin IVA, after expenses) and M130 paid.
@@ -316,6 +321,10 @@ export const useKallioStore = create<KallioState>()(
           if (amount === null) { delete next[id]; } else { next[id] = amount; }
           return { activatedBuckets: next };
         }),
+      customBuckets: [],
+      hiddenBucketIds: [],
+      addCustomBucket: (b) => set((s) => ({ customBuckets: [...s.customBuckets, b] })),
+      hideBucket: (id) => set((s) => ({ hiddenBucketIds: [...s.hiddenBucketIds, id] })),
 
       historicalYearData: {},
       setHistoricalQuarter: (year, q, data) =>
@@ -666,6 +675,8 @@ export const useKallioStore = create<KallioState>()(
         checkerHistory: state.checkerHistory,
         activatedBuckets: state.activatedBuckets,
         historicalYearData: state.historicalYearData,
+        customBuckets: state.customBuckets,
+        hiddenBucketIds: state.hiddenBucketIds,
       }),
     }
   )
