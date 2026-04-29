@@ -425,7 +425,7 @@ export default function RentaPage() {
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80 }}>
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80, overflowX: 'hidden' }}>
       <Navigation />
 
       {/* Responsive sidebar support via embedded style */}
@@ -515,47 +515,54 @@ export default function RentaPage() {
               </div>
             </div>
 
-            {/* Column headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, marginBottom: 6 }}>
-              <div />
-              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Ingresos netos</div>
-              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Gastos deducibles</div>
-              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>M130 pagado</div>
-            </div>
+            {/* Horizontally scrollable table (prevents page-level overflow on mobile) */}
+            <div style={{ overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
+              <div style={{ minWidth: 360 }}>
 
-            {QUARTERS.map(q => {
-              const key = `${year}-${q}`;
-              const d = syncedQData[key] ?? { grossIncome: 0, expenses: 0, m130: 0 };
-              const qLabels = ['ENE–MAR', 'ABR–JUN', 'JUL–SEP', 'OCT–DIC'];
-              return (
-                <div key={q} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '8px 0', borderTop: `1px solid ${C.BORDER}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: C.INK }}>{q}T</span>
-                    <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.04em' }}>{qLabels[q - 1]}</span>
-                  </div>
-                  {(['grossIncome', 'expenses', 'm130'] as const).map(field => (
-                    <div key={field} style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 11, color: C.MUTED, marginRight: 2 }}>€</span>
-                      <input
-                        type="number"
-                        className="amt-input"
-                        value={d[field] || ''}
-                        placeholder="0"
-                        onChange={e => updateQField(q, field, parseFloat(e.target.value) || 0)}
-                        style={{ width: 80, fontSize: 13, textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontVariantNumeric: 'tabular-nums', color: C.INK }}
-                      />
-                    </div>
-                  ))}
+                {/* Column headers */}
+                <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, marginBottom: 6 }}>
+                  <div />
+                  <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Ingresos netos</div>
+                  <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Gastos deducibles</div>
+                  <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>M130 pagado</div>
                 </div>
-              );
-            })}
 
-            {/* Totals row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '10px 0 0', borderTop: `2px solid ${C.INK}`, marginTop: 4 }}>
-              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>TOTAL</div>
-              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.grossIncome)}</div>
-              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.MUTED }}>−{formatCurrency(histTotals.expenses)}</div>
-              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.IRPF }}>{formatCurrency(histTotals.m130)}</div>
+                {QUARTERS.map(q => {
+                  const key = `${year}-${q}`;
+                  const d = syncedQData[key] ?? { grossIncome: 0, expenses: 0, m130: 0 };
+                  const qLabels = ['ENE–MAR', 'ABR–JUN', 'JUL–SEP', 'OCT–DIC'];
+                  return (
+                    <div key={q} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '8px 0', borderTop: `1px solid ${C.BORDER}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.INK }}>{q}T</span>
+                        <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.04em' }}>{qLabels[q - 1]}</span>
+                      </div>
+                      {(['grossIncome', 'expenses', 'm130'] as const).map(field => (
+                        <div key={field} style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: 11, color: C.MUTED, marginRight: 2 }}>€</span>
+                          <input
+                            type="number"
+                            className="amt-input"
+                            value={d[field] || ''}
+                            placeholder="0"
+                            onChange={e => updateQField(q, field, parseFloat(e.target.value) || 0)}
+                            style={{ width: 72, fontSize: 13, textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontVariantNumeric: 'tabular-nums', color: C.INK }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {/* Totals row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '10px 0 0', borderTop: `2px solid ${C.INK}`, marginTop: 4 }}>
+                  <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>TOTAL</div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.grossIncome)}</div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.MUTED }}>−{formatCurrency(histTotals.expenses)}</div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.IRPF }}>{formatCurrency(histTotals.m130)}</div>
+                </div>
+
+              </div>
             </div>
           </div>
         )}
