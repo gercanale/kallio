@@ -387,8 +387,8 @@ function ConfigCard({
 
 function ConfigSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <p style={{ fontSize: 11, fontWeight: 600, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 8px' }}>
+    <div style={{ marginBottom: 14 }}>
+      <p style={{ fontSize: 11, fontWeight: 600, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 6px' }}>
         {label}
       </p>
       {children}
@@ -491,138 +491,144 @@ function ConfigEditModal({
   const pillIdle: React.CSSProperties = { ...pillBase, border: `1px solid ${C.BORDER}`, background: 'transparent', color: C.MUTED };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,31,46,0.5)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 50, padding: '16px', overflowY: 'auto' }}>
-      <div style={{ background: C.CARD, borderRadius: 16, padding: 28, maxWidth: 540, width: '100%', marginTop: 24, marginBottom: 24 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,31,46,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
+      <div style={{ background: C.CARD, borderRadius: 16, maxWidth: 540, width: '100%', maxHeight: 'min(90dvh, 680px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.INK, margin: 0 }}>{t.settings.configSectionTitle}</h2>
+        {/* Sticky header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${C.BORDER}`, flexShrink: 0 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: C.INK, margin: 0 }}>{t.settings.configSectionTitle}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.MUTED, padding: 0 }}>
             <X style={{ width: 18, height: 18 }} />
           </button>
         </div>
 
-        {/* Nombre */}
-        <ConfigSection label="Nombre">
-          <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
-        </ConfigSection>
+        {/* Scrollable content */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
 
-        {/* NIF / NIE / CIF */}
-        <ConfigSection label="Identificación fiscal">
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            {(['NIF', 'NIE', 'CIF', 'DNI'] as NifType[]).map(type => (
-              <button
-                key={type}
-                onClick={() => setNifType(type)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', ...(nifType === type ? { border: `2px solid ${C.INK}`, background: '#f5f0e8', color: C.INK } : { border: `1px solid ${C.BORDER}`, background: 'transparent', color: C.MUTED }) }}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={nif}
-            onChange={e => setNif(e.target.value.toUpperCase())}
-            placeholder="12345678A"
-            style={{ ...inputStyle, textTransform: 'uppercase' }}
-          />
-        </ConfigSection>
+          {/* Nombre */}
+          <ConfigSection label="Nombre">
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
+          </ConfigSection>
 
-        {/* Idioma */}
-        <ConfigSection label={t.settings.configLanguage}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {LANGS.map(l => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                style={{ ...(lang === l.code ? pillActive : pillIdle), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px' }}
-              >
-                <span style={{ fontSize: 16 }}>{l.flag}</span>
-                {l.label}
-              </button>
-            ))}
-          </div>
-        </ConfigSection>
-
-        {/* Régimen */}
-        <ConfigSection label={ow.summaryRegime}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {REGIMES.map(r => (
-              <button key={r.key} onClick={() => setRegime(r.key)} style={{ ...(regime === r.key ? pillActive : pillIdle), padding: '10px 16px', width: '100%' }}>
-                {r.label}
-              </button>
-            ))}
-          </div>
-          {regime === 'beckham' && (
+          {/* NIF / NIE / CIF */}
+          <ConfigSection label="Identificación fiscal">
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+              {(['NIF', 'NIE', 'CIF', 'DNI'] as NifType[]).map(type => (
+                <button
+                  key={type}
+                  onClick={() => setNifType(type)}
+                  style={{ flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', ...(nifType === type ? { border: `2px solid ${C.INK}`, background: '#f5f0e8', color: C.INK } : { border: `1px solid ${C.BORDER}`, background: 'transparent', color: C.MUTED }) }}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
             <input
-              value={beckhamYear}
-              onChange={e => setBeckhamYear(e.target.value)}
-              placeholder="2024"
-              style={{ ...inputStyle, width: 120, marginTop: 10 }}
+              type="text"
+              value={nif}
+              onChange={e => setNif(e.target.value.toUpperCase())}
+              placeholder="12345678A"
+              style={{ ...inputStyle, textTransform: 'uppercase' }}
             />
-          )}
-        </ConfigSection>
+          </ConfigSection>
 
-        {/* Actividad */}
-        <ConfigSection label={ow.summaryActivity}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {ACTIVITIES.map(a => (
-              <button key={a.key} onClick={() => setActivity(a.key)} style={{ ...(activity === a.key ? pillActive : pillIdle), padding: '10px 14px', fontSize: 12 }}>
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </ConfigSection>
+          {/* Idioma */}
+          <ConfigSection label={t.settings.configLanguage}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {LANGS.map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => setLang(l.code)}
+                  style={{ ...(lang === l.code ? pillActive : pillIdle), display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px' }}
+                >
+                  <span style={{ fontSize: 15 }}>{l.flag}</span>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </ConfigSection>
 
-        {/* Clientes */}
-        <ConfigSection label={ow.summaryClients}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {CLIENTES.map(c => (
-              <button key={c.key} onClick={() => setClientesKey(c.key)} style={{ ...(clientesKey === c.key ? pillActive : pillIdle), padding: '10px 16px', width: '100%' }}>
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </ConfigSection>
+          {/* Régimen */}
+          <ConfigSection label={ow.summaryRegime}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {REGIMES.map(r => (
+                <button key={r.key} onClick={() => setRegime(r.key)} style={{ ...(regime === r.key ? pillActive : pillIdle), padding: '8px 14px', width: '100%' }}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            {regime === 'beckham' && (
+              <input
+                value={beckhamYear}
+                onChange={e => setBeckhamYear(e.target.value)}
+                placeholder="2024"
+                style={{ ...inputStyle, width: 110, marginTop: 8 }}
+              />
+            )}
+          </ConfigSection>
 
-        {/* Región */}
-        <ConfigSection label={ow.summaryRegion}>
-          <select
-            value={region}
-            onChange={e => setRegion(e.target.value)}
-            style={{ ...inputStyle, color: region ? C.INK : C.MUTED }}
-          >
-            <option value="">—</option>
-            {REGIONS_SORTED.map(r => (
-              <option key={r.code} value={r.code}>{r.name}</option>
-            ))}
-          </select>
-        </ConfigSection>
+          {/* Actividad */}
+          <ConfigSection label={ow.summaryActivity}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {ACTIVITIES.map(a => (
+                <button key={a.key} onClick={() => setActivity(a.key)} style={{ ...(activity === a.key ? pillActive : pillIdle), padding: '8px 10px', fontSize: 12 }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </ConfigSection>
 
-        {/* Ingreso mensual */}
-        <ConfigSection label={t.settings.configIncome}>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.MUTED, pointerEvents: 'none' }}>€</span>
-            <input
-              type="number"
-              value={ingresoStr}
-              onChange={e => setIngresoStr(e.target.value)}
-              placeholder="0"
-              style={{ ...inputStyle, paddingLeft: 28 }}
-            />
-          </div>
-        </ConfigSection>
+          {/* Clientes */}
+          <ConfigSection label={ow.summaryClients}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {CLIENTES.map(c => (
+                <button key={c.key} onClick={() => setClientesKey(c.key)} style={{ ...(clientesKey === c.key ? pillActive : pillIdle), padding: '8px 14px', width: '100%' }}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </ConfigSection>
 
-        {/* Acciones */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-          <button onClick={onClose} disabled={saving} style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: `1px solid ${C.BORDER}`, background: 'transparent', color: C.MUTED, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}>
+          {/* Región */}
+          <ConfigSection label={ow.summaryRegion}>
+            <select
+              value={region}
+              onChange={e => setRegion(e.target.value)}
+              style={{ ...inputStyle, color: region ? C.INK : C.MUTED }}
+            >
+              <option value="">—</option>
+              {REGIONS_SORTED.map(r => (
+                <option key={r.code} value={r.code}>{r.name}</option>
+              ))}
+            </select>
+          </ConfigSection>
+
+          {/* Ingreso mensual */}
+          <ConfigSection label={t.settings.configIncome}>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.MUTED, pointerEvents: 'none' }}>€</span>
+              <input
+                type="number"
+                value={ingresoStr}
+                onChange={e => setIngresoStr(e.target.value)}
+                placeholder="0"
+                style={{ ...inputStyle, paddingLeft: 28 }}
+              />
+            </div>
+          </ConfigSection>
+
+        </div>
+
+        {/* Sticky footer */}
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.BORDER}`, flexShrink: 0 }}>
+          <button onClick={onClose} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: `1px solid ${C.BORDER}`, background: 'transparent', color: C.MUTED, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}>
             {t.common.cancel}
           </button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', background: C.INK, color: 'white', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: C.INK, color: 'white', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
             {saving ? t.common.loading : t.common.save}
           </button>
         </div>
+
       </div>
     </div>
   );
