@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
+import { translations } from "@/lib/i18n";
 import { Navigation } from "@/components/Navigation";
 import {
   BUCKETS,
@@ -58,19 +59,23 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 // ─── Amount editor ────────────────────────────────────────────────────────────
 function AmountCell({
-  bucket, amount, active, onChange,
+  bucket, amount, active, onChange, activateLabel, editAmountLabel, perMonth, perYear,
 }: {
   bucket: GastoBucket;
   amount: number;
   active: boolean;
   onChange: (v: number) => void;
+  activateLabel: string;
+  editAmountLabel: string;
+  perMonth: string;
+  perYear: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(amount));
 
   if (!active) {
     return (
-      <span style={{ fontSize: 13, color: C.IVA, fontWeight: 500, whiteSpace: 'nowrap' }}>+ activar</span>
+      <span style={{ fontSize: 13, color: C.IVA, fontWeight: 500, whiteSpace: 'nowrap' }}>{activateLabel}</span>
     );
   }
 
@@ -97,7 +102,7 @@ function AmountCell({
     );
   }
 
-  const unitLabel = bucket.unit === 'mes' ? '/mes' : bucket.unit === 'año' ? '/año' : '';
+  const unitLabel = bucket.unit === 'mes' ? perMonth : bucket.unit === 'año' ? perYear : '';
   return (
     <button
       onClick={() => { setDraft(String(amount)); setEditing(true); }}
@@ -106,7 +111,7 @@ function AmountCell({
         fontSize: 13, fontWeight: 600, color: C.INK, fontFamily: 'inherit',
         whiteSpace: 'nowrap',
       }}
-      title="Editar importe"
+      title={editAmountLabel}
     >
       €{fmt(amount)}{unitLabel}
     </button>
@@ -123,6 +128,8 @@ export default function GastosPage() {
   const activatedBuckets   = useKallioStore((s) => s.activatedBuckets);
   const setActivatedBucket = useKallioStore((s) => s.setActivatedBucket);
   const transactions   = useKallioStore((s) => s.transactions);
+  const language       = useKallioStore((s) => s.language);
+  const tg             = translations[language].gastos;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -201,23 +208,23 @@ export default function GastosPage() {
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <span style={{ fontSize: 11, color: C.IVA, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            ¿QUÉ PUEDES DEDUCIR?
+            {tg.pageLabel}
           </span>
           <span className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            AUTÓNOMO · {activityLabel.toUpperCase()}
+            {tg.freelancerLabel} · {activityLabel.toUpperCase()}
           </span>
         </div>
 
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 8px', lineHeight: 1.25 }}>
-          Estos son los gastos{' '}
-          <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>típicos</span>
-          {' '}de alguien como tú.
+          {tg.heading}{' '}
+          <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>{tg.headingItalic}</span>
+          {' '}{tg.headingSuffix}
         </h1>
 
         <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 20px', lineHeight: 1.7 }}>
-          Eres <strong style={{ color: C.INK }}>{activityLabel}</strong>
-          {profile.region ? `, en ${profile.region}` : ''}.
-          {' '}Marca lo que ya tienes — la factura la subes después, o nunca. Te pre-relleno importes razonables.
+          {tg.youAre} <strong style={{ color: C.INK }}>{activityLabel}</strong>
+          {profile.region ? tg.inRegion.replace('{{region}}', profile.region) : ''}.
+          {' '}{tg.markNote}
         </p>
 
         {/* ── Progress bar ─────────────────────────────────────────────── */}
@@ -227,7 +234,7 @@ export default function GastosPage() {
           borderRadius: 12, marginBottom: 28,
         }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: C.INK, whiteSpace: 'nowrap' }}>
-            {activeCount} / {totalBuckets} activados
+            {activeCount} / {totalBuckets} {tg.activated}
           </span>
           <div style={{ flex: 1, height: 6, background: '#e8dfc8', borderRadius: 999, overflow: 'hidden' }}>
             <div style={{
@@ -238,7 +245,7 @@ export default function GastosPage() {
           </div>
           {quarterlyTotal > 0 && (
             <span style={{ fontSize: 12, fontWeight: 600, color: C.OK, whiteSpace: 'nowrap' }}>
-              +€{fmt(quarterlyTotal)} deducidas/trimestre
+              +€{fmt(quarterlyTotal)} {tg.deductedPerQuarter}
             </span>
           )}
         </div>
@@ -295,12 +302,12 @@ export default function GastosPage() {
                           </span>
                           {inTx && !active && (
                             <span style={{ fontSize: 10, background: '#fdf3e0', color: C.IRPF, border: `1px solid ${C.IRPF}44`, borderRadius: 999, padding: '1px 7px', fontWeight: 600 }}>
-                              detectado
+                              {tg.detected}
                             </span>
                           )}
                           {bucket.amortizable && (
                             <span style={{ fontSize: 10, color: C.MUTED, border: `1px solid ${C.BORDER}`, borderRadius: 999, padding: '1px 7px' }}>
-                              amortizable
+                              {tg.amortizable}
                             </span>
                           )}
                         </div>
@@ -330,6 +337,10 @@ export default function GastosPage() {
                           amount={amount}
                           active={active}
                           onChange={(v) => handleAmount(bucket, v)}
+                          activateLabel={tg.activateLabel}
+                          editAmountLabel={tg.editAmount}
+                          perMonth={tg.perMonth}
+                          perYear={tg.perYear}
                         />
                       </div>
                     </div>
@@ -349,11 +360,11 @@ export default function GastosPage() {
           }}>
             <div>
               <div style={{ fontSize: 13, color: C.WARM, marginBottom: 4 }}>
-                {activeCount} gastos activados
+                {tg.expensesActivated.replace('{{count}}', String(activeCount))}
               </div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>
                 +€{fmt(quarterlyTotal)}{' '}
-                <span style={{ fontSize: 14, fontWeight: 400, color: C.WARM }}>deducibles/trimestre</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: C.WARM }}>{tg.deductiblePerQuarter}</span>
               </div>
             </div>
             <button
@@ -364,7 +375,7 @@ export default function GastosPage() {
                 cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
               }}
             >
-              Añadir facturas →
+              {tg.addInvoices}
             </button>
           </div>
         )}

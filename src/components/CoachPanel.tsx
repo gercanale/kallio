@@ -4,10 +4,26 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Send } from "lucide-react";
 import type { TaxSnapshot, CheckerRun } from "@/lib/types";
 import type { WizardProfile } from "@/lib/wizard-config";
+import type { Language } from "@/lib/i18n";
+import { translations } from "@/lib/i18n";
 import { nextDeadline } from "@/lib/tax-engine";
 import { buildCoachContext } from "@/lib/coachContext";
 import { getOpeningMessage, getFallbackResponse, getInitialChips, getNextChips } from "@/lib/coachFallback";
 import type { CoachContext } from "@/lib/coachPrompt";
+
+// ─── Design tokens (match app design system) ─────────────────────────────────
+const C = {
+  BG:     '#fdfaf3',
+  INK:    '#1a1f2e',
+  MUTED:  '#6b6456',
+  BORDER: '#e8dfc8',
+  BORDER_SOFT: '#f0e8d3',
+  CARD:   '#ffffff',
+  IVA:    '#c44536',
+  IRPF:   '#d4a017',
+  OK:     '#5a7a3e',
+  WARM:   '#c9bfa8',
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,47 +39,25 @@ interface CoachPanelProps {
   snapshot: TaxSnapshot;
   wizardProfile: WizardProfile;
   checkerHistory: CheckerRun[];
-}
-
-// ─── Toggle Switch ────────────────────────────────────────────────────────────
-
-function ToggleSwitch({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
-        checked ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-600"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
-      />
-    </button>
-  );
+  language: Language;
 }
 
 // ─── Loading Dots ─────────────────────────────────────────────────────────────
 
 function LoadingDots() {
   return (
-    <div className="flex items-center gap-1 px-4 py-3">
-      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '12px 16px' }}>
+      {[0, 1, 2].map(i => (
+        <span
+          key={i}
+          style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: C.MUTED, display: 'inline-block',
+            animation: 'bounce 1s infinite',
+            animationDelay: `${i * 0.15}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -73,8 +67,12 @@ function LoadingDots() {
 function MessageBubble({ message }: { message: Message }) {
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[80%] bg-teal-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm leading-relaxed">
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{
+          maxWidth: '80%', background: C.INK, color: 'white',
+          borderRadius: '16px 16px 4px 16px',
+          padding: '10px 14px', fontSize: 14, lineHeight: 1.55,
+        }}>
           {message.content}
         </div>
       </div>
@@ -83,8 +81,12 @@ function MessageBubble({ message }: { message: Message }) {
 
   if (message.isError) {
     return (
-      <div className="flex justify-start">
-        <div className="max-w-[85%] bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm leading-relaxed">
+      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <div style={{
+          maxWidth: '85%', background: '#fef2f2', color: C.IVA,
+          borderRadius: '16px 16px 16px 4px', border: `1px solid #fecaca`,
+          padding: '10px 14px', fontSize: 14, lineHeight: 1.55,
+        }}>
           {message.content}
         </div>
       </div>
@@ -92,8 +94,12 @@ function MessageBubble({ message }: { message: Message }) {
   }
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[85%] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm leading-relaxed">
+    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div style={{
+        maxWidth: '85%', background: C.CARD, color: C.INK,
+        borderRadius: '16px 16px 16px 4px', border: `1px solid ${C.BORDER}`,
+        padding: '10px 14px', fontSize: 14, lineHeight: 1.55,
+      }}>
         {message.content}
       </div>
     </div>
@@ -102,7 +108,9 @@ function MessageBubble({ message }: { message: Message }) {
 
 // ─── Main CoachPanel ──────────────────────────────────────────────────────────
 
-export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }: CoachPanelProps) {
+export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory, language }: CoachPanelProps) {
+  const t = translations[language].coach;
+
   const [llmEnabled, setLlmEnabled] = useState(false);
   const [eligible, setEligible] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -115,7 +123,6 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Build context once
   const ctx: CoachContext = buildCoachContext(
     snapshot,
     wizardProfile,
@@ -123,19 +130,11 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
     checkerHistory
   );
 
-  // On mount: fetch eligibility, set opening message and chips
   useEffect(() => {
-    const opening = getOpeningMessage(ctx);
-    setMessages([
-      {
-        id: "opening",
-        role: "assistant",
-        content: opening,
-      },
-    ]);
-    setChips(getInitialChips(ctx));
+    const opening = getOpeningMessage(ctx, language);
+    setMessages([{ id: "opening", role: "assistant", content: opening }]);
+    setChips(getInitialChips(ctx, language));
 
-    // Fetch eligibility
     fetch("/api/coach/eligibility")
       .then((r) => r.json())
       .then((data: { eligible: boolean }) => {
@@ -149,63 +148,46 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Handle LLM toggle
   const handleToggle = useCallback(
     (value: boolean) => {
       setLlmEnabled(value);
       localStorage.setItem("kallio-coach-llm", String(value));
       if (!value) {
-        // Clear conversation when turning off
-        const opening = getOpeningMessage(ctx);
+        const opening = getOpeningMessage(ctx, language);
         setMessages([{ id: "opening", role: "assistant", content: opening }]);
         setSessionCount(0);
         setAnsweredChips([]);
-        setChips(getInitialChips(ctx));
+        setChips(getInitialChips(ctx, language));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ctx]
+    [ctx, language]
   );
 
-  // Send message
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || loading || sessionCount >= 4) return;
 
-      const userMsg: Message = {
-        id: `u-${Date.now()}`,
-        role: "user",
-        content: trimmed,
-      };
-
+      const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: trimmed };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
       setLoading(true);
 
-      // Remove this chip if it was a chip click
       const newAnswered = [...answeredChips, trimmed];
       setAnsweredChips(newAnswered);
 
       try {
         if (!llmEnabled || !eligible) {
-          // Use fallback synchronously
-          const reply = getFallbackResponse(trimmed, ctx);
-          const assistantMsg: Message = {
-            id: `a-${Date.now()}`,
-            role: "assistant",
-            content: reply,
-          };
-          setMessages((prev) => [...prev, assistantMsg]);
+          const reply = getFallbackResponse(trimmed, ctx, language);
+          setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: reply }]);
           setSessionCount((c) => c + 1);
-          setChips(getNextChips(ctx, newAnswered));
+          setChips(getNextChips(ctx, newAnswered, language));
         } else {
-          // Use LLM
           const history = messages
             .filter((m) => m.id !== "opening")
             .map((m) => ({ role: m.role, content: m.content }));
@@ -218,6 +200,7 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
               userMessage: trimmed,
               conversationHistory: history,
               llmEnabled: true,
+              language,
             }),
           });
 
@@ -229,41 +212,34 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
             limitReached?: boolean;
           };
 
-          const replyText =
-            data.reply ?? getFallbackResponse(trimmed, ctx);
-          const assistantMsg: Message = {
-            id: `a-${Date.now()}`,
-            role: "assistant",
-            content: replyText,
+          const replyText = data.reply ?? getFallbackResponse(trimmed, ctx, language);
+          setMessages((prev) => [...prev, {
+            id: `a-${Date.now()}`, role: "assistant", content: replyText,
             isError: data.error === true,
-          };
-          setMessages((prev) => [...prev, assistantMsg]);
+          }]);
           setSessionCount((c) => c + 1);
-          setChips(getNextChips(ctx, newAnswered));
+          setChips(getNextChips(ctx, newAnswered, language));
         }
       } catch {
-        const errorMsg: Message = {
-          id: `e-${Date.now()}`,
-          role: "assistant",
-          content: "En este momento no puedo procesar tu pregunta. Prueba de nuevo en unos segundos.",
-          isError: true,
-        };
-        setMessages((prev) => [...prev, errorMsg]);
+        setMessages((prev) => [...prev, {
+          id: `e-${Date.now()}`, role: "assistant",
+          content: t.errorMsg, isError: true,
+        }]);
       } finally {
         setLoading(false);
         inputRef.current?.focus();
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loading, sessionCount, llmEnabled, eligible, messages, answeredChips, ctx]
+    [loading, sessionCount, llmEnabled, eligible, messages, answeredChips, ctx, language, t]
   );
 
   const handleNewSession = () => {
-    const opening = getOpeningMessage(ctx);
+    const opening = getOpeningMessage(ctx, language);
     setMessages([{ id: "opening", role: "assistant", content: opening }]);
     setSessionCount(0);
     setAnsweredChips([]);
-    setChips(getInitialChips(ctx));
+    setChips(getInitialChips(ctx, language));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -275,65 +251,117 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
 
   return (
     <>
+      {/* Bounce animation */}
+      <style>{`@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}`}</style>
+
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+        style={{ position: 'fixed', inset: 0, background: 'rgba(26,31,46,0.4)', backdropFilter: 'blur(2px)', zIndex: 40 }}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Panel */}
-      <div className="fixed top-0 bottom-0 right-0 w-full sm:w-[440px] z-50 flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700">
+      <div style={{
+        position: 'fixed', top: 0, bottom: 0, right: 0,
+        width: '100%', maxWidth: 440,
+        zIndex: 50, display: 'flex', flexDirection: 'column',
+        background: C.BG,
+        boxShadow: '-4px 0 32px rgba(26,31,46,0.12)',
+        borderLeft: `1px solid ${C.BORDER}`,
+        fontFamily: 'Inter, sans-serif',
+      }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Coach fiscal
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 20px 16px',
+          borderBottom: `1px solid ${C.BORDER}`,
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: 2,
+              background: C.IVA, flexShrink: 0,
+            }} />
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: C.INK, margin: 0 }}>
+              {t.title}
             </h2>
             {eligible && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-400 uppercase tracking-wide">
-                experimental
+              <span style={{
+                fontSize: 9, fontWeight: 600, letterSpacing: '0.1em',
+                textTransform: 'uppercase', padding: '3px 7px',
+                borderRadius: 999, border: `1px solid ${C.BORDER}`,
+                color: C.MUTED,
+              }}>
+                {t.experimental}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Cerrar"
+            aria-label={t.closeLabel}
+            style={{
+              width: 28, height: 28, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', borderRadius: 8, border: 'none',
+              background: 'transparent', color: C.MUTED, cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = C.BORDER_SOFT)}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <X className="w-4 h-4" />
+            <X size={16} />
           </button>
         </div>
 
-        {/* LLM toggle row — only if eligible */}
+        {/* LLM toggle — only if eligible */}
         {eligible && (
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Asistente IA (experimental)
-              </span>
-              <ToggleSwitch checked={llmEnabled} onChange={handleToggle} />
+          <div style={{
+            padding: '12px 20px',
+            borderBottom: `1px solid ${C.BORDER}`,
+            flexShrink: 0,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.INK }}>{t.toggleLabel}</span>
+              {/* Toggle */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={llmEnabled}
+                onClick={() => handleToggle(!llmEnabled)}
+                style={{
+                  position: 'relative', width: 36, height: 20,
+                  borderRadius: 999, border: 'none', cursor: 'pointer',
+                  background: llmEnabled ? C.INK : C.BORDER,
+                  transition: 'background 0.2s', flexShrink: 0,
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: 2,
+                  left: llmEnabled ? 18 : 2,
+                  width: 16, height: 16, borderRadius: '50%',
+                  background: 'white',
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </button>
             </div>
-            {llmEnabled ? (
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Las respuestas del asistente son orientativas y no constituyen asesoramiento fiscal.
-              </p>
-            ) : (
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Respuestas automáticas activas — activa el asistente para respuestas personalizadas.
-              </p>
-            )}
+            <p style={{ fontSize: 11, color: C.MUTED, lineHeight: 1.5, margin: 0 }}>
+              {llmEnabled ? t.toggleOnDisclaimer : t.toggleOffNote}
+            </p>
           </div>
         )}
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
           {loading && (
-            <div className="flex justify-start">
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm">
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{
+                background: C.CARD, border: `1px solid ${C.BORDER}`,
+                borderRadius: '16px 16px 16px 4px',
+              }}>
                 <LoadingDots />
               </div>
             </div>
@@ -341,15 +369,29 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Chips row */}
+        {/* Chips */}
         {chips.length > 0 && sessionCount < 4 && (
-          <div className="px-4 py-2 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-none">
+          <div style={{
+            padding: '8px 16px', display: 'flex', gap: 6,
+            overflowX: 'auto', flexShrink: 0,
+            scrollbarWidth: 'none',
+          }}>
             {chips.map((chip) => (
               <button
                 key={chip}
                 onClick={() => sendMessage(chip)}
                 disabled={loading}
-                className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  flexShrink: 0, fontSize: 12, padding: '6px 12px',
+                  borderRadius: 999, border: `1px solid ${C.BORDER}`,
+                  background: C.CARD, color: C.MUTED,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.5 : 1,
+                  fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+                onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = C.BORDER_SOFT; e.currentTarget.style.color = C.INK; }}}
+                onMouseLeave={e => { e.currentTarget.style.background = C.CARD; e.currentTarget.style.color = C.MUTED; }}
               >
                 {chip}
               </button>
@@ -359,21 +401,36 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
 
         {/* Session limit banner */}
         {sessionCount >= 4 && (
-          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between flex-shrink-0">
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              Sesión completada — abre una nueva sesión para continuar.
+          <div style={{
+            padding: '10px 16px',
+            background: '#fffbeb',
+            borderTop: `1px solid #fde68a`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0,
+          }}>
+            <p style={{ fontSize: 12, color: '#92400e', margin: 0, lineHeight: 1.4 }}>
+              {t.sessionDone}
             </p>
             <button
               onClick={handleNewSession}
-              className="text-xs font-medium text-amber-700 dark:text-amber-400 underline hover:no-underline ml-2 flex-shrink-0"
+              style={{
+                fontSize: 12, fontWeight: 600, color: '#92400e',
+                background: 'none', border: 'none', cursor: 'pointer',
+                textDecoration: 'underline', marginLeft: 8, flexShrink: 0,
+                fontFamily: 'inherit',
+              }}
             >
-              Nueva sesión
+              {t.newSession}
             </button>
           </div>
         )}
 
         {/* Input row */}
-        <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex gap-2 flex-shrink-0">
+        <div style={{
+          padding: '12px 16px',
+          borderTop: `1px solid ${C.BORDER}`,
+          display: 'flex', gap: 8, flexShrink: 0,
+        }}>
           <input
             ref={inputRef}
             type="text"
@@ -381,20 +438,30 @@ export function CoachPanel({ onClose, snapshot, wizardProfile, checkerHistory }:
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading || sessionCount >= 4}
-            placeholder={
-              sessionCount >= 4
-                ? "Sesión completada"
-                : "Escribe tu pregunta..."
-            }
-            className="flex-1 text-sm bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            placeholder={sessionCount >= 4 ? t.inputDisabled : t.inputPlaceholder}
+            style={{
+              flex: 1, fontSize: 14, padding: '9px 14px',
+              borderRadius: 10, border: `1px solid ${C.BORDER}`,
+              background: C.CARD, color: C.INK,
+              fontFamily: 'inherit', outline: 'none',
+              opacity: (loading || sessionCount >= 4) ? 0.5 : 1,
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = C.INK)}
+            onBlur={e => (e.currentTarget.style.borderColor = C.BORDER)}
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading || sessionCount >= 4}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-            aria-label="Enviar"
+            aria-label="Send"
+            style={{
+              width: 38, height: 38, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', borderRadius: 10, border: 'none',
+              background: (!input.trim() || loading || sessionCount >= 4) ? C.BORDER : C.INK,
+              color: 'white', cursor: (!input.trim() || loading || sessionCount >= 4) ? 'not-allowed' : 'pointer',
+              flexShrink: 0, transition: 'background 0.15s',
+            }}
           >
-            <Send className="w-4 h-4" />
+            <Send size={15} />
           </button>
         </div>
       </div>
