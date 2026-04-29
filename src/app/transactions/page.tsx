@@ -42,6 +42,15 @@ const C = {
   OK: '#5a7a3e', CARD: '#ffffff',
 };
 
+// Green = high deductibility (favorable), amber/orange = partial, muted = low
+function deductibilityColor(pct: number): string {
+  if (pct >= 90) return '#3a7d2e'; // strong green
+  if (pct >= 65) return '#5a7a3e'; // olive green
+  if (pct >= 40) return '#c09820'; // amber
+  if (pct >= 15) return '#b87830'; // orange
+  return '#8b6045';                 // muted brown
+}
+
 const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
   software_subscriptions: { bg: '#eef3eb', color: '#3d5a29' },
   hardware_equipment: { bg: '#f0ede8', color: '#4a3f35' },
@@ -80,6 +89,7 @@ const BUCKET_CATEGORY_MAP: Record<string, Transaction["category"]> = {
   cuota_autonomos:    'professional_services',
   seguro_rc:          'insurance',
   cuenta_bancaria:    'bank_fees',
+  ai_tools:           'software_subscriptions',
 };
 
 export default function TransactionsPage() {
@@ -142,9 +152,23 @@ export default function TransactionsPage() {
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 88px', boxSizing: 'border-box' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t.transactions.title}</h1>
-          {activeTab === "movimientos" && (
+        {activeTab === "movimientos" ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t.transactions.title}</h1>
+              <button
+                onClick={() => setActiveTab("gastos")}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 13, color: C.MUTED, fontFamily: 'inherit',
+                  padding: 0, display: 'flex', alignItems: 'center', gap: 4,
+                  textDecoration: 'none',
+                }}
+              >
+                {t.transactions.tabGastosTipicos}
+                <span style={{ fontSize: 11 }}>›</span>
+              </button>
+            </div>
             <button
               onClick={() => openForm("expense")}
               style={{
@@ -157,36 +181,28 @@ export default function TransactionsPage() {
               <Plus size={16} />
               {t.transactions.addButton}
             </button>
-          )}
-        </div>
-
-        {/* Tab strip */}
-        <div style={{ display: 'flex', gap: 4, padding: 4, background: '#f0e8d3', borderRadius: 12, marginBottom: 16 }}>
-          <button
-            onClick={() => setActiveTab("movimientos")}
-            style={{
-              flex: 1, padding: '6px 0', borderRadius: 8, border: 'none',
-              fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              fontFamily: 'inherit', transition: 'background 0.15s, color 0.15s',
-              background: activeTab === "movimientos" ? C.CARD : 'transparent',
-              color: activeTab === "movimientos" ? C.INK : C.MUTED,
-            }}
-          >
-            {t.transactions.tabMovimientos}
-          </button>
-          <button
-            onClick={() => setActiveTab("gastos")}
-            style={{
-              flex: 1, padding: '6px 0', borderRadius: 8, border: 'none',
-              fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              fontFamily: 'inherit', transition: 'background 0.15s, color 0.15s',
-              background: activeTab === "gastos" ? C.CARD : 'transparent',
-              color: activeTab === "gastos" ? C.INK : C.MUTED,
-            }}
-          >
-            {t.transactions.tabGastosTipicos}
-          </button>
-        </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <button
+                onClick={() => setActiveTab("movimientos")}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 13, color: C.MUTED, fontFamily: 'inherit', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                <span style={{ fontSize: 14 }}>‹</span>
+                {t.transactions.title}
+              </button>
+              <span style={{ fontSize: 13, color: C.BORDER }}>·</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.INK }}>
+                {t.transactions.tabGastosTipicos}
+              </span>
+            </div>
+          </div>
+        )}
 
         {activeTab === "movimientos" && (
           <>
@@ -324,19 +340,32 @@ function GastosTipicosPanel() {
   const t = useT();
   const gt = t.transactions.gt;
 
-  const wizardProfile    = useKallioStore((s) => s.wizardProfile);
-  const activatedBuckets = useKallioStore((s) => s.activatedBuckets);
+  const wizardProfile      = useKallioStore((s) => s.wizardProfile);
+  const activatedBuckets   = useKallioStore((s) => s.activatedBuckets);
   const setActivatedBucket = useKallioStore((s) => s.setActivatedBucket);
-  const customBuckets    = useKallioStore((s) => s.customBuckets);
-  const hiddenBucketIds  = useKallioStore((s) => s.hiddenBucketIds);
-  const addCustomBucket  = useKallioStore((s) => s.addCustomBucket);
-  const hideBucket       = useKallioStore((s) => s.hideBucket);
-  const addTransaction   = useKallioStore((s) => s.addTransaction);
+  const customBuckets      = useKallioStore((s) => s.customBuckets);
+  const hiddenBucketIds    = useKallioStore((s) => s.hiddenBucketIds);
+  const addCustomBucket    = useKallioStore((s) => s.addCustomBucket);
+  const hideBucket         = useKallioStore((s) => s.hideBucket);
+  const removeCustomBucket = useKallioStore((s) => s.removeCustomBucket);
+  const updateCustomBucket = useKallioStore((s) => s.updateCustomBucket);
+  const bucketOverrides    = useKallioStore((s) => s.bucketOverrides);
+  const setBucketOverride  = useKallioStore((s) => s.setBucketOverride);
+  const addTransaction     = useKallioStore((s) => s.addTransaction);
 
-  // Modal state
+  // Activation modal state
   const [activatingBucket, setActivatingBucket] = useState<GastoBucket | null>(null);
   const [modalAmount, setModalAmount] = useState("");
   const [modalPct, setModalPct] = useState("");
+
+  // Edit modal state
+  const [editingBucket, setEditingBucket] = useState<GastoBucket | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editPct, setEditPct] = useState("");
+
+  // Delete confirm state (id of bucket pending confirmation)
+  const [deletingBucketId, setDeletingBucketId] = useState<string | null>(null);
 
   // Custom add form state
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -354,17 +383,62 @@ function GastosTipicosPanel() {
 
   const isActive = (b: GastoBucket) => b.id in activatedBuckets;
 
+  const isCustom = (b: GastoBucket) => b.id.startsWith('custom_');
+
+  // Apply label/amount overrides for standard buckets
+  const display = (b: GastoBucket): GastoBucket => {
+    const ov = bucketOverrides[b.id];
+    return ov ? { ...b, label: ov.label, defaultAmount: ov.defaultAmount } : b;
+  };
+
   const suggestedPct = (bucket: GastoBucket) =>
     bucket.deductibility === 'full' ? 100 : Math.round((bucket.partialRate ?? 0.5) * 100);
 
   const handleToggle = (bucket: GastoBucket) => {
+    if (deletingBucketId) { setDeletingBucketId(null); return; }
     if (isActive(bucket)) {
       setActivatedBucket(bucket.id, null);
     } else {
-      setModalAmount(String(bucket.defaultAmount || ""));
+      const d = display(bucket);
+      setModalAmount(String(d.defaultAmount || ""));
       setModalPct(String(suggestedPct(bucket)));
-      setActivatingBucket(bucket);
+      setActivatingBucket(d);
     }
+  };
+
+  const handleOpenEdit = (bucket: GastoBucket) => {
+    const d = display(bucket);
+    setEditLabel(d.label);
+    setEditAmount(String(d.defaultAmount || ""));
+    setEditPct(String(suggestedPct(bucket)));
+    setEditingBucket(bucket);
+  };
+
+  const handleEditSave = () => {
+    if (!editingBucket) return;
+    const newLabel = editLabel.trim() || display(editingBucket).label;
+    const newAmount = parseFloat(editAmount) || display(editingBucket).defaultAmount;
+    const newPct = Math.min(100, Math.max(0, parseFloat(editPct) || suggestedPct(editingBucket)));
+    if (isCustom(editingBucket)) {
+      updateCustomBucket(editingBucket.id, { label: newLabel, defaultAmount: newAmount });
+    } else {
+      setBucketOverride(editingBucket.id, { label: newLabel, defaultAmount: newAmount });
+    }
+    // Update activated amount if active
+    if (isActive(editingBucket)) {
+      setActivatedBucket(editingBucket.id, newAmount);
+    }
+    setEditingBucket(null);
+  };
+
+  const handleDeleteBucket = (bucket: GastoBucket) => {
+    if (isCustom(bucket)) {
+      removeCustomBucket(bucket.id);
+    } else {
+      hideBucket(bucket.id);
+      if (isActive(bucket)) setActivatedBucket(bucket.id, null);
+    }
+    setDeletingBucketId(null);
   };
 
   const handleModalConfirm = () => {
@@ -457,14 +531,16 @@ function GastosTipicosPanel() {
             {/* Items */}
             <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderTop: 'none', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
               {items.map((bucket, idx) => {
+                const d = display(bucket);
                 const active = isActive(bucket);
                 const isLast = idx === items.length - 1;
+                const confirmDelete = deletingBucketId === bucket.id;
 
                 return (
                   <div
                     key={bucket.id}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
+                      display: 'flex', alignItems: 'center', gap: 10,
                       padding: '12px 16px',
                       borderBottom: isLast ? 'none' : `1px solid ${C.BORDER}`,
                       background: active ? '#fafdf8' : C.CARD,
@@ -472,13 +548,15 @@ function GastosTipicosPanel() {
                     }}
                   >
                     {/* Toggle */}
-                    <BucketToggle on={active} onChange={() => handleToggle(bucket)} />
+                    <Tip label={active ? gt.removeTooltip : gt.addedBadge}>
+                      <BucketToggle on={active} onChange={() => handleToggle(bucket)} />
+                    </Tip>
 
                     {/* Label */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 13, fontWeight: 500, color: active ? C.INK : C.MUTED }}>
-                          {bucket.label}
+                          {d.label}
                         </span>
                         {active && (
                           <span style={{
@@ -488,35 +566,52 @@ function GastosTipicosPanel() {
                             {gt.addedBadge}
                           </span>
                         )}
+                        {bucket.hint && (
+                          <Tip label={bucket.hint}>
+                            <HelpCircle size={12} style={{ color: C.BORDER, cursor: 'help', flexShrink: 0 }} />
+                          </Tip>
+                        )}
                       </div>
                     </div>
 
                     {/* Price range */}
                     <div style={{ fontSize: 11, color: C.MUTED, textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {priceRangeLabel(bucket)}
+                      {priceRangeLabel(d)}
                     </div>
 
                     {/* Deductibility badge */}
                     <div style={{
                       fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                      color: bucket.deductibility === 'full' ? C.IVA : C.IRPF,
-                      minWidth: 48, textAlign: 'right',
+                      color: deductibilityColor(bucket.deductibility === 'full' ? 100 : Math.round((bucket.partialRate ?? 0.5) * 100)),
+                      minWidth: 36, textAlign: 'right',
                     }}>
                       {deductibilityLabel(bucket)}
                     </div>
 
-                    {/* Hide button */}
-                    <button
-                      onClick={() => hideBucket(bucket.id)}
-                      title={gt.removeTooltip}
-                      style={{
-                        width: 26, height: 26, borderRadius: 8, border: 'none',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', flexShrink: 0, background: 'transparent', color: C.MUTED,
-                      }}
-                    >
-                      <X size={13} />
-                    </button>
+                    {/* Action buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                      {confirmDelete ? (
+                        <>
+                          <Tip label={t.common.cancel}>
+                            <IconBtn onClick={() => setDeletingBucketId(null)}><X size={13} /></IconBtn>
+                          </Tip>
+                          <Tip label={t.actions.delete}>
+                            <IconBtn onClick={() => handleDeleteBucket(bucket)} activeStyle={{ color: C.IVA }}>
+                              <Trash2 size={13} />
+                            </IconBtn>
+                          </Tip>
+                        </>
+                      ) : (
+                        <>
+                          <Tip label={t.actions.edit}>
+                            <IconBtn onClick={() => handleOpenEdit(bucket)}><Pencil size={13} /></IconBtn>
+                          </Tip>
+                          <Tip label={t.actions.delete}>
+                            <IconBtn onClick={() => setDeletingBucketId(bucket.id)}><Trash2 size={13} /></IconBtn>
+                          </Tip>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -538,18 +633,21 @@ function GastosTipicosPanel() {
             {customBuckets.map((bucket, idx) => {
               const active = isActive(bucket);
               const isLast = idx === customBuckets.length - 1;
+              const confirmDelete = deletingBucketId === bucket.id;
               return (
                 <div
                   key={bucket.id}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
+                    display: 'flex', alignItems: 'center', gap: 10,
                     padding: '12px 16px',
                     borderBottom: isLast ? 'none' : `1px solid ${C.BORDER}`,
                     background: active ? '#fafdf8' : C.CARD,
                     transition: 'background 0.15s',
                   }}
                 >
-                  <BucketToggle on={active} onChange={() => handleToggle(bucket)} />
+                  <Tip label={active ? gt.removeTooltip : gt.addedBadge}>
+                    <BucketToggle on={active} onChange={() => handleToggle(bucket)} />
+                  </Tip>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: 13, fontWeight: 500, color: active ? C.INK : C.MUTED }}>
                       {bucket.label}
@@ -566,20 +664,32 @@ function GastosTipicosPanel() {
                   <div style={{ fontSize: 11, color: C.MUTED, whiteSpace: 'nowrap', flexShrink: 0 }}>
                     €{bucket.defaultAmount}/mes
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.IVA, minWidth: 48, textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: deductibilityColor(100), minWidth: 36, textAlign: 'right', flexShrink: 0 }}>
                     100%
                   </div>
-                  <button
-                    onClick={() => hideBucket(bucket.id)}
-                    title={gt.removeTooltip}
-                    style={{
-                      width: 26, height: 26, borderRadius: 8, border: 'none',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', flexShrink: 0, background: 'transparent', color: C.MUTED,
-                    }}
-                  >
-                    <X size={13} />
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                    {confirmDelete ? (
+                      <>
+                        <Tip label={t.common.cancel}>
+                          <IconBtn onClick={() => setDeletingBucketId(null)}><X size={13} /></IconBtn>
+                        </Tip>
+                        <Tip label={t.actions.delete}>
+                          <IconBtn onClick={() => handleDeleteBucket(bucket)} activeStyle={{ color: C.IVA }}>
+                            <Trash2 size={13} />
+                          </IconBtn>
+                        </Tip>
+                      </>
+                    ) : (
+                      <>
+                        <Tip label={t.actions.edit}>
+                          <IconBtn onClick={() => handleOpenEdit(bucket)}><Pencil size={13} /></IconBtn>
+                        </Tip>
+                        <Tip label={t.actions.delete}>
+                          <IconBtn onClick={() => setDeletingBucketId(bucket.id)}><Trash2 size={13} /></IconBtn>
+                        </Tip>
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -650,6 +760,116 @@ function GastosTipicosPanel() {
             >
               {gt.customSave}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit bucket modal */}
+      {editingBucket && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(26,31,46,0.45)',
+          }}
+          onClick={() => setEditingBucket(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: C.CARD, borderRadius: 16, padding: '24px',
+              width: '100%', maxWidth: 360, margin: '0 16px',
+              boxShadow: '0 16px 48px rgba(26,31,46,0.18)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: C.INK, margin: 0 }}>
+                {t.actions.edit}
+              </p>
+              <button
+                onClick={() => setEditingBucket(null)}
+                title={t.common.cancel}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.MUTED, padding: 0 }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.MUTED, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {gt.customLabelPlaceholder}
+            </label>
+            <input
+              type="text"
+              value={editLabel}
+              onChange={(e) => setEditLabel(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '10px 14px', border: `1px solid ${C.BORDER}`,
+                borderRadius: 10, fontSize: 14, fontFamily: 'inherit',
+                background: C.BG, color: C.INK, outline: 'none', marginBottom: 14,
+              }}
+            />
+
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.MUTED, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Importe (€)
+            </label>
+            <input
+              type="number"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '10px 14px', border: `1px solid ${C.BORDER}`,
+                borderRadius: 10, fontSize: 14, fontFamily: 'inherit',
+                background: C.BG, color: C.INK, outline: 'none', marginBottom: 14,
+              }}
+            />
+
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.MUTED, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              % deducible
+            </label>
+            <div style={{ position: 'relative', marginBottom: 20 }}>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={editPct}
+                onChange={(e) => setEditPct(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  padding: '10px 36px 10px 14px', border: `1px solid ${C.BORDER}`,
+                  borderRadius: 10, fontSize: 14, fontFamily: 'inherit',
+                  background: C.BG, color: C.INK, outline: 'none',
+                }}
+              />
+              <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.MUTED, pointerEvents: 'none' }}>%</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setEditingBucket(null)}
+                title={t.common.cancel}
+                style={{
+                  flex: 1, padding: '10px 0', border: `1px solid ${C.BORDER}`,
+                  borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: 'inherit', background: 'transparent', color: C.MUTED,
+                }}
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleEditSave}
+                title={t.common.save}
+                style={{
+                  flex: 1, padding: '10px 0', background: C.INK, color: 'white',
+                  border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {t.common.save}
+              </button>
+            </div>
           </div>
         </div>
       )}

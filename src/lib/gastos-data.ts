@@ -111,6 +111,16 @@ export const BUCKETS: GastoBucket[] = [
     deductibility: 'full',
     activities: ['diseno'],
   },
+  {
+    id: 'ai_tools',
+    group: 'digital',
+    groupDesc: 'Claramente afectos a tu actividad',
+    label: 'AI · ChatGPT · Claude · Gemini',
+    hint: 'Suscripciones a modelos de IA para el trabajo',
+    priceRangeLow: 20, priceRangeHigh: 100, unit: 'mes', defaultAmount: 40,
+    deductibility: 'full',
+    activities: 'all',
+  },
 
   // ── EQUIPAMIENTO ─────────────────────────────────────────────────────────────
   {

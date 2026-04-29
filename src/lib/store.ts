@@ -214,6 +214,10 @@ interface KallioState {
   hiddenBucketIds: string[];
   addCustomBucket: (b: GastoBucket) => void;
   hideBucket: (id: string) => void;
+  removeCustomBucket: (id: string) => void;
+  updateCustomBucket: (id: string, updates: Partial<GastoBucket>) => void;
+  bucketOverrides: Record<string, { label: string; defaultAmount: number }>;
+  setBucketOverride: (id: string, override: { label: string; defaultAmount: number } | null) => void;
 
   // Historical year data — manual quarterly entries for past years not fully in Kallio
   // Key: "YYYY-Q" e.g. "2025-1". Stores net autónomo income (sin IVA, after expenses) and M130 paid.
@@ -325,6 +329,20 @@ export const useKallioStore = create<KallioState>()(
       hiddenBucketIds: [],
       addCustomBucket: (b) => set((s) => ({ customBuckets: [...s.customBuckets, b] })),
       hideBucket: (id) => set((s) => ({ hiddenBucketIds: [...s.hiddenBucketIds, id] })),
+      removeCustomBucket: (id) => set((s) => {
+        const next = { ...s.activatedBuckets };
+        delete next[id];
+        return { customBuckets: s.customBuckets.filter(b => b.id !== id), activatedBuckets: next };
+      }),
+      updateCustomBucket: (id, updates) => set((s) => ({
+        customBuckets: s.customBuckets.map(b => b.id === id ? { ...b, ...updates } : b),
+      })),
+      bucketOverrides: {},
+      setBucketOverride: (id, override) => set((s) => {
+        const next = { ...s.bucketOverrides };
+        if (override === null) { delete next[id]; } else { next[id] = override; }
+        return { bucketOverrides: next };
+      }),
 
       historicalYearData: {},
       setHistoricalQuarter: (year, q, data) =>
@@ -677,6 +695,7 @@ export const useKallioStore = create<KallioState>()(
         historicalYearData: state.historicalYearData,
         customBuckets: state.customBuckets,
         hiddenBucketIds: state.hiddenBucketIds,
+        bucketOverrides: state.bucketOverrides,
       }),
     }
   )
