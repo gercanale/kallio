@@ -61,7 +61,7 @@ export function HelpButton() {
       <button
         onClick={() => setOpen(true)}
         aria-label={ht.buttonLabel}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-teal-700 active:scale-95 sm:bottom-6 sm:right-6"
+        className="fixed top-[10px] right-[82px] z-40 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-teal-700 active:scale-95 sm:top-auto sm:bottom-6 sm:right-6"
       >
         <MessageCircleQuestion size={18} className="shrink-0" />
         <span className="hidden sm:inline">{ht.buttonLabel}</span>
