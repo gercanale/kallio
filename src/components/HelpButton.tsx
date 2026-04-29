@@ -61,10 +61,12 @@ export function HelpButton() {
       <button
         onClick={() => setOpen(true)}
         aria-label={ht.buttonLabel}
-        className="fixed top-[10px] right-[82px] z-40 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-teal-700 active:scale-95 sm:top-auto sm:bottom-6 sm:right-6"
+        className="fixed top-[10px] right-[82px] z-40 flex items-center gap-1.5 rounded-full cursor-pointer transition-all active:scale-95
+          bg-white border border-[#e8dfc8] text-[#6b6456] px-[10px] py-[5px] shadow-[0_1px_4px_rgba(26,31,46,0.07)] font-semibold
+          sm:top-auto sm:bottom-6 sm:right-6 sm:bg-teal-600 sm:border-0 sm:text-white sm:px-4 sm:py-3 sm:shadow-lg sm:hover:bg-teal-700"
       >
-        <MessageCircleQuestion size={18} className="shrink-0" />
-        <span className="hidden sm:inline">{ht.buttonLabel}</span>
+        <MessageCircleQuestion className="shrink-0 w-[15px] h-[15px] sm:w-[18px] sm:h-[18px]" />
+        <span className="hidden sm:inline text-sm font-medium">{ht.buttonLabel}</span>
       </button>
 
       {/* Modal backdrop + dialog */}
