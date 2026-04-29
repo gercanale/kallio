@@ -154,37 +154,39 @@ export default function TransactionsPage() {
         {/* Header */}
         {activeTab === "movimientos" ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
-              <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t.transactions.title}</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t.transactions.title}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 onClick={() => setActiveTab("gastos")}
+                title={t.transactions.tabGastosTipicos}
                 style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 13, color: C.MUTED, fontFamily: 'inherit',
-                  padding: 0, display: 'flex', alignItems: 'center', gap: 4,
-                  textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'transparent', border: `1px solid ${C.BORDER}`,
+                  borderRadius: 10, padding: '9px 14px', fontSize: 13,
+                  fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                  color: C.INK,
                 }}
               >
+                <Sparkles size={13} style={{ color: C.IRPF }} />
                 {t.transactions.tabGastosTipicos}
-                <span style={{ fontSize: 11 }}>›</span>
+              </button>
+              <button
+                onClick={() => openForm("expense")}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: C.INK, color: 'white', border: 'none',
+                  borderRadius: 10, padding: '10px 16px', fontSize: 14,
+                  fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                <Plus size={16} />
+                {t.transactions.addButton}
               </button>
             </div>
-            <button
-              onClick={() => openForm("expense")}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: C.INK, color: 'white', border: 'none',
-                borderRadius: 10, padding: '10px 16px', fontSize: 14,
-                fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              <Plus size={16} />
-              {t.transactions.addButton}
-            </button>
           </div>
         ) : (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button
                 onClick={() => setActiveTab("movimientos")}
                 style={{
@@ -193,11 +195,11 @@ export default function TransactionsPage() {
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}
               >
-                <span style={{ fontSize: 14 }}>‹</span>
-                {t.transactions.title}
+                ‹ {t.transactions.title}
               </button>
-              <span style={{ fontSize: 13, color: C.BORDER }}>·</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.INK }}>
+              <span style={{ color: C.BORDER }}>·</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: C.INK, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={14} style={{ color: C.IRPF }} />
                 {t.transactions.tabGastosTipicos}
               </span>
             </div>
