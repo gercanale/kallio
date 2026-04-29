@@ -23,7 +23,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { calculateYTDSnapshot, nowInSpain, formatCurrency } from "@/lib/tax-engine";
+import { calculateYTDSnapshot, calculateTaxSnapshot, nowInSpain, formatCurrency, quarterDateRange } from "@/lib/tax-engine";
 import { Navigation } from "@/components/Navigation";
 
 // ─── Design tokens (Direction A) ─────────────────────────────────────────────
@@ -254,9 +254,11 @@ function calcFullIRPF(params: {
 export default function RentaPage() {
   const router        = useRouter();
   const hydrated      = useHydrated();
-  const storeProfile  = useKallioStore((s) => s.profile);
-  const sessionActive = useKallioStore((s) => s.sessionActive);
-  const transactions  = useKallioStore((s) => s.transactions);
+  const storeProfile       = useKallioStore((s) => s.profile);
+  const sessionActive      = useKallioStore((s) => s.sessionActive);
+  const transactions       = useKallioStore((s) => s.transactions);
+  const historicalYearData = useKallioStore((s) => s.historicalYearData);
+  const setHistoricalQuarter = useKallioStore((s) => s.setHistoricalQuarter);
 
   // ── Guard ────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -266,15 +268,82 @@ export default function RentaPage() {
   }, [hydrated, sessionActive, storeProfile.onboardingComplete, router]);
 
   // ── Year context ─────────────────────────────────────────────────────────────
-  const now   = nowInSpain();
-  const year  = now.getFullYear();     // e.g. 2026
-  const nextY = year + 1;             // e.g. 2027
+  const now        = nowInSpain();
+  const currentYear = now.getFullYear();                        // e.g. 2026
+  const prevYear    = currentYear - 1;                          // e.g. 2025
+  const inDeclarationPeriod = now.getMonth() < 7;              // Jan–Jul: filing prev year
+  const defaultYear = inDeclarationPeriod ? prevYear : currentYear;
 
-  // ── YTD snapshot from the store (autónomo income only) ───────────────────────
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const isPrevYear = selectedYear !== currentYear;
+
+  const year  = selectedYear;
+  const nextY = year + 1;
+
+  // ── YTD snapshot (current year) ───────────────────────────────────────────────
   const snapshot = useMemo(() => {
     if (!hydrated) return null;
-    return calculateYTDSnapshot(transactions, storeProfile, year);
+    return calculateYTDSnapshot(transactions, storeProfile, currentYear);
+  }, [transactions, storeProfile, currentYear, hydrated]);
+
+  // ── Historical quarterly data ─────────────────────────────────────────────────
+  // For a past year: user can enter Q1-Q4 data manually (or pre-populated from transactions).
+  // Fall back: try to compute from transactions filtered to that year.
+  const QUARTERS = [1, 2, 3, 4] as const;
+
+  // Get per-quarter transaction-based snapshot for the selected year
+  const txQuarterSnaps = useMemo(() => {
+    if (!hydrated) return null;
+    return QUARTERS.map(q => calculateTaxSnapshot(transactions, storeProfile, q, year));
   }, [transactions, storeProfile, year, hydrated]);
+
+  // Editable quarterly state — keyed "YYYY-Q"
+  // Initial value: from store if saved, else from transaction snapshot
+  const getQData = (q: number) => {
+    const key = `${year}-${q}`;
+    if (historicalYearData[key]) return historicalYearData[key];
+    const snap = txQuarterSnaps?.[q - 1];
+    if (!snap) return { grossIncome: 0, expenses: 0, m130: 0 };
+    // net income from autónomo (sin IVA, after deductible expenses)
+    return {
+      grossIncome: Math.round(snap.ytdNetIncome * 100) / 100,
+      expenses:    Math.round(snap.deductibleExpenses * 100) / 100,
+      m130:        Math.round(snap.irpfAdvancePayable * 100) / 100,
+    };
+  };
+
+  // Local editable state for historical quarters (only used when isPrevYear)
+  const [qData, setQData] = useState<Record<string, { grossIncome: number; expenses: number; m130: number }>>({});
+
+  // Sync qData from store/transactions when year changes
+  const syncedQData = useMemo(() => {
+    const result: Record<string, { grossIncome: number; expenses: number; m130: number }> = {};
+    for (const q of QUARTERS) {
+      const key = `${year}-${q}`;
+      result[key] = qData[key] ?? getQData(q);
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, historicalYearData, txQuarterSnaps]);
+
+  const updateQField = (q: number, field: 'grossIncome' | 'expenses' | 'm130', value: number) => {
+    const key = `${year}-${q}`;
+    const updated = { ...syncedQData[key], [field]: value };
+    setQData(prev => ({ ...prev, [key]: updated }));
+    setHistoricalQuarter(year, q, updated);
+  };
+
+  // Totals from the 4 quarters (for past year calculation)
+  const histTotals = useMemo(() => {
+    let grossIncome = 0, expenses = 0, m130 = 0;
+    for (const q of QUARTERS) {
+      const d = syncedQData[`${year}-${q}`] ?? { grossIncome: 0, expenses: 0, m130: 0 };
+      grossIncome += d.grossIncome;
+      expenses    += d.expenses;
+      m130        += d.m130;
+    }
+    return { grossIncome, expenses, m130, net: Math.max(0, grossIncome - expenses) };
+  }, [syncedQData, year]);
 
   // ── Profile / region state ───────────────────────────────────────────────────
   const [profile,       setProfileId]   = useState<string>('autonomo');
@@ -321,8 +390,9 @@ export default function RentaPage() {
   };
 
   // ── Derived calculations ─────────────────────────────────────────────────────
-  const autonomoNet = snapshot?.projectedAnnualNetIncome ?? 0;
-  const alreadyPaid = snapshot?.irpfPaidViaAdvances ?? 0;
+  // For past years: use historical quarterly totals. For current year: use live snapshot.
+  const autonomoNet = isPrevYear ? histTotals.net : (snapshot?.projectedAnnualNetIncome ?? 0);
+  const alreadyPaid = isPrevYear ? histTotals.m130 : (snapshot?.irpfPaidViaAdvances ?? 0);
 
   const regionDeds    = REGIONAL_DEDS[region] ?? [];
   const regionDedsTotal = regionDeds
@@ -393,14 +463,102 @@ export default function RentaPage() {
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '72px 20px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Page header ─────────────────────────────────────────────────────── */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 4px' }}>
-            Renta {year} · A declarar Jun {nextY}
-          </h1>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
+              Renta {year} · A declarar Jun {nextY}
+            </h1>
+            {/* Year selector tabs */}
+            <div style={{ display: 'flex', gap: 4, background: '#f0ead8', borderRadius: 10, padding: 3 }}>
+              {[prevYear, currentYear].map(y => (
+                <button
+                  key={y}
+                  onClick={() => setSelectedYear(y)}
+                  style={{
+                    padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    background: selectedYear === y ? C.INK : 'transparent',
+                    color: selectedYear === y ? 'white' : C.MUTED,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {y}{y === prevYear && inDeclarationPeriod ? ' ★' : ''}
+                </button>
+              ))}
+            </div>
+          </div>
           <p style={{ fontSize: 14, color: C.MUTED, margin: 0 }}>
             Lo que <em className="serif" style={{ fontStyle: 'italic', color: C.INK }}>de verdad</em> te tocará pagar en junio depende de todo esto.
+            {isPrevYear && (
+              <span style={{ marginLeft: 8, fontSize: 12, color: C.IVA, fontWeight: 600 }}>
+                · Declaración {year} — introduce tus datos trimestrales abajo
+              </span>
+            )}
           </p>
         </div>
+
+        {/* ── Quarterly data entry (past years only) ──────────────────────────── */}
+        {isPrevYear && (
+          <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div className="mono" style={{ fontSize: 10, color: C.IRPF, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>
+                  DATOS DE {year} · ACTIVIDAD AUTÓNOMA
+                </div>
+                <p style={{ fontSize: 12, color: C.MUTED, margin: 0 }}>
+                  Introduce los datos de cada trimestre de tu M130. Pre-rellenado desde tus facturas en Kallio si las tienes.
+                </p>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 12, color: C.MUTED }}>Total neto</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.net)}</div>
+              </div>
+            </div>
+
+            {/* Column headers */}
+            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, marginBottom: 6 }}>
+              <div />
+              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Ingresos netos</div>
+              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Gastos deducibles</div>
+              <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>M130 pagado</div>
+            </div>
+
+            {QUARTERS.map(q => {
+              const key = `${year}-${q}`;
+              const d = syncedQData[key] ?? { grossIncome: 0, expenses: 0, m130: 0 };
+              const qLabels = ['ENE–MAR', 'ABR–JUN', 'JUL–SEP', 'OCT–DIC'];
+              return (
+                <div key={q} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '8px 0', borderTop: `1px solid ${C.BORDER}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: C.INK }}>{q}T</span>
+                    <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.04em' }}>{qLabels[q - 1]}</span>
+                  </div>
+                  {(['grossIncome', 'expenses', 'm130'] as const).map(field => (
+                    <div key={field} style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: 11, color: C.MUTED, marginRight: 2 }}>€</span>
+                      <input
+                        type="number"
+                        className="amt-input"
+                        value={d[field] || ''}
+                        placeholder="0"
+                        onChange={e => updateQField(q, field, parseFloat(e.target.value) || 0)}
+                        style={{ width: 80, fontSize: 13, textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontVariantNumeric: 'tabular-nums', color: C.INK }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+
+            {/* Totals row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '10px 0 0', borderTop: `2px solid ${C.INK}`, marginTop: 4 }}>
+              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>TOTAL</div>
+              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.grossIncome)}</div>
+              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.MUTED }}>−{formatCurrency(histTotals.expenses)}</div>
+              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.IRPF }}>{formatCurrency(histTotals.m130)}</div>
+            </div>
+          </div>
+        )}
 
         {/* ── Profile pills (mobile only) ──────────────────────────────────────── */}
         <div className="renta-pills-row" style={{ overflowX: 'auto', display: 'flex', gap: 8, paddingBottom: 12, marginBottom: 16, WebkitOverflowScrolling: 'touch' }}>

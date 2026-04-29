@@ -210,6 +210,11 @@ interface KallioState {
   activatedBuckets: Record<string, number>; // id → custom amount (0 = use bucket default)
   setActivatedBucket: (id: string, amount: number | null) => void; // null = deactivate
 
+  // Historical year data — manual quarterly entries for past years not fully in Kallio
+  // Key: "YYYY-Q" e.g. "2025-1". Stores net autónomo income (sin IVA, after expenses) and M130 paid.
+  historicalYearData: Record<string, { grossIncome: number; expenses: number; m130: number }>;
+  setHistoricalQuarter: (year: number, q: number, data: { grossIncome: number; expenses: number; m130: number }) => void;
+
   // Derived selectors (computed on call)
   getTaxSnapshot: (quarter?: number, year?: number) => TaxSnapshot;
   getQuarterStatus: (quarter: number, year: number) => QuarterStatus;
@@ -311,6 +316,15 @@ export const useKallioStore = create<KallioState>()(
           if (amount === null) { delete next[id]; } else { next[id] = amount; }
           return { activatedBuckets: next };
         }),
+
+      historicalYearData: {},
+      setHistoricalQuarter: (year, q, data) =>
+        set((s) => ({
+          historicalYearData: {
+            ...s.historicalYearData,
+            [`${year}-${q}`]: data,
+          },
+        })),
 
       // ── Profile ────────────────────────────────────────────────────────────
       setProfile: (updates) =>
@@ -651,6 +665,7 @@ export const useKallioStore = create<KallioState>()(
         dashboardMode: state.dashboardMode,
         checkerHistory: state.checkerHistory,
         activatedBuckets: state.activatedBuckets,
+        historicalYearData: state.historicalYearData,
       }),
     }
   )
