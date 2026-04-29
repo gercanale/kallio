@@ -13,6 +13,7 @@ import {
   getQuarterDeadlines,
   daysUntilDeadline,
   formatCurrency,
+  quarterDateRange,
 } from "@/lib/tax-engine";
 import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
 import type { ActivityKey } from "@/lib/wizard-config";
@@ -37,6 +38,57 @@ const C = {
 };
 
 const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
+
+// ─── Weekly bar chart ─────────────────────────────────────────────────────────
+function WeeklyBars({
+  transactions,
+  qStart,
+  qEnd,
+  now,
+}: {
+  transactions: Array<{ type: string; amount: number; date: string }>;
+  qStart: Date;
+  qEnd: Date;
+  now: Date;
+}) {
+  const MONTHS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const weeks: Array<{ income: number; isPast: boolean }> = [];
+  let ws = new Date(qStart);
+  while (ws < qEnd) {
+    const we = new Date(ws);
+    we.setDate(we.getDate() + 7);
+    const income = transactions
+      .filter(t => t.type === 'income')
+      .filter(t => { const d = new Date(t.date); return d >= ws && d < we; })
+      .reduce((s, t) => s + t.amount, 0);
+    weeks.push({ income, isPast: we <= now });
+    ws = new Date(we);
+  }
+  const maxIncome = Math.max(...weeks.map(w => w.income), 1);
+  const firstMonth = MONTHS[qStart.getMonth()];
+  const midMonth   = MONTHS[new Date((qStart.getTime() + qEnd.getTime()) / 2).getMonth()];
+  const lastMonth  = MONTHS[qEnd.getMonth()];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 72 }}>
+        {weeks.map((w, i) => (
+          <div key={i} style={{
+            flex: 1,
+            height: w.income > 0 ? `${Math.max((w.income / maxIncome) * 100, 8)}%` : '3px',
+            background: w.isPast ? C.INK : `${C.IVA}99`,
+            borderRadius: '2px 2px 0 0',
+          }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+        <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>S1 · {firstMonth}</span>
+        <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>{midMonth}</span>
+        <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>{lastMonth} · S13</span>
+      </div>
+    </div>
+  );
+}
 
 // ─── Next deadline helper ─────────────────────────────────────────────────────
 function nextDeadline(year: number, now: Date) {
@@ -117,6 +169,15 @@ export default function DashboardPage() {
   // Next deadline
   const nextDL = nextDeadline(currY, now);
   const nextDLAmt = currQSnap.ivaPayable + currQSnap.irpfAdvancePayable;
+
+  // Quarter date range + days remaining
+  const { start: qStart, end: qEnd } = quarterDateRange(currQ, currY);
+  const daysLeft = Math.max(0, Math.ceil((qEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const qGross     = currQSnap.grossIncome;
+  const qSpendable = currQSnap.trueSpendableBalance;
+  const qHasData   = qGross > 0;
+  const qTotal     = currQSnap.totalTaxReserve;
+  const qPctOf     = (n: number) => qGross > 0 ? `${Math.round((n / qGross) * 100)}%` : '—';
 
   // Gastos nudge — how many potential buckets are not yet activated
   const allBuckets     = useMemo(() => getBucketsForActivity(wizardProfile?.activity ?? null), [wizardProfile]);
@@ -246,7 +307,7 @@ export default function DashboardPage() {
             },
             {
               dot: C.IRPF, dashed: true,
-              label: 'IRPF estimado restante',
+              label: 'IRPF acumulado a pagar en renta anual',
               value: irpfGap,
               pct: `proyección · ~${pctOf(irpfGap)}`,
               sub: irpfGap > 0
@@ -299,36 +360,157 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── Próximo vencimiento ─────────────────────────────────────────── */}
-        {nextDL && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-            padding: '14px 20px', background: C.CARD, border: `1px solid ${C.BORDER}`,
-            borderRadius: 14, marginBottom: 16,
-          }}>
-            <div>
-              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>
-                PRÓXIMO VENCIMIENTO
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>
-                {nextDL.label} · Modelo 130 + 303
-                {nextDLAmt > 0 && (
-                  <span style={{ color: C.IVA, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
-                )}
-              </div>
-            </div>
+        {/* ── Trimestre section ────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 24 }}>
+
+          {/* Quarter header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: C.IVA, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {currQ}T {currY} · EN CURSO · {daysLeft} DÍAS RESTANTES
+            </span>
             <button
               onClick={() => router.push('/renta')}
-              style={{
-                background: C.INK, color: 'white', border: 'none', borderRadius: 999,
-                padding: '10px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
-              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: C.MUTED, fontFamily: 'inherit', padding: 0 }}
             >
-              Simular Renta {currY} →
+              Simular Renta →
             </button>
           </div>
-        )}
+
+          {/* Facturado este trimestre */}
+          {qHasData ? (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 16, color: C.INK, margin: '0 0 2px', lineHeight: 1.4 }}>
+                Facturado este trimestre <strong>€{fmt(qGross)},</strong>
+              </p>
+              <p style={{ fontSize: 20, fontWeight: 500, margin: 0, lineHeight: 1.3 }}>
+                tuyos:{' '}
+                <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>€{fmt(Math.max(0, qSpendable))}</span>
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontSize: 14, color: C.MUTED, margin: '0 0 20px' }}>Sin facturas este trimestre aún.</p>
+          )}
+
+          {/* Dark payment card */}
+          {nextDL && (
+            <div style={{ background: C.INK, color: 'white', borderRadius: 14, padding: '20px 24px', marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: C.WARM, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>
+                A PAGAR EL {nextDL.label.toUpperCase()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                    €{fmt(nextDLAmt)}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.WARM, marginTop: 8 }}>
+                    M303 · IVA {formatCurrency(currQSnap.ivaPayable)} + M130 · IRPF {formatCurrency(currQSnap.irpfAdvancePayable)}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div className="mono" style={{ fontSize: 9, color: C.WARM, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+                    YA RESERVADO
+                  </div>
+                  <div style={{ fontSize: 13, color: aparted ? C.OK : C.WARM, fontWeight: 600 }}>
+                    {aparted ? '✓ 100% cubierto' : `${formatCurrency(nextDLAmt)} pendiente`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Weekly bar chart */}
+          {qHasData && (
+            <div style={{ marginBottom: 20 }}>
+              <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>
+                INGRESOS POR SEMANA
+              </div>
+              <WeeklyBars transactions={transactions} qStart={qStart} qEnd={qEnd} now={now} />
+            </div>
+          )}
+
+          {/* Quarterly 4-row breakdown */}
+          <div style={{ borderTop: `1px solid ${C.BORDER}` }}>
+            {[
+              {
+                dot: C.INK, dashed: false,
+                label: 'Tuyo',
+                value: Math.max(0, qSpendable),
+                pct: qPctOf(Math.max(0, qSpendable)),
+                sub: 'Neto disponible este trimestre tras impuestos y gastos.',
+              },
+              {
+                dot: C.IVA, dashed: false,
+                label: 'IVA (M303)',
+                value: currQSnap.ivaPayable,
+                pct: qPctOf(currQSnap.ivaPayable),
+                sub: 'IVA repercutido menos IVA soportado de gastos deducibles.',
+              },
+              {
+                dot: C.IRPF, dashed: false,
+                label: 'IRPF adelantado (M130)',
+                value: currQSnap.irpfAdvancePayable,
+                pct: qPctOf(currQSnap.irpfAdvancePayable),
+                sub: 'Pago fraccionado del trimestre al 20% del rendimiento neto.',
+              },
+              {
+                dot: C.IRPF, dashed: true,
+                label: 'IRPF acumulado a pagar en renta anual',
+                value: irpfGap,
+                pct: `~${pctOf(irpfGap)}`,
+                sub: irpfGap > 0
+                  ? `Estimado al cierre del año. En la Renta ${currY} (jun ${currY + 1}) quedarán ~${formatCurrency(irpfGap)} por regularizar.`
+                  : 'Tus anticipos cubren el IRPF estimado para este año.',
+              },
+            ].map(({ dot, dashed, label, value, pct, sub }, i) => (
+              <div key={label} style={{
+                display: 'grid', gridTemplateColumns: '16px 1fr auto auto', gap: '0 12px',
+                padding: '12px 0', borderBottom: i < 3 ? `1px solid ${C.BORDER}` : 'none', alignItems: 'start',
+              }}>
+                <div style={{
+                  width: 11, height: 11, borderRadius: 3, marginTop: 3, flexShrink: 0,
+                  background: dashed ? 'transparent' : dot,
+                  border: dashed ? `2px dashed ${dot}` : 'none',
+                }} />
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: C.INK }}>{label}</span>
+                  <p style={{ fontSize: 11, color: C.MUTED, margin: '2px 0 0', lineHeight: 1.5 }}>{sub}</p>
+                </div>
+                <div className="mono" style={{ fontSize: 11, color: C.MUTED, textAlign: 'right', paddingTop: 2, whiteSpace: 'nowrap' }}>{pct}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', paddingTop: 1, whiteSpace: 'nowrap' }}>
+                  {formatCurrency(value)}
+                </div>
+              </div>
+            ))}
+
+            {/* Deductions summary */}
+            {(currQSnap.ivaDeductible > 0 || currQSnap.deductibleExpenses > 0) && (
+              <div style={{
+                marginTop: 12, padding: '12px 16px', background: '#f0f5ed',
+                border: `1px solid #c8ddc0`, borderRadius: 10,
+              }}>
+                <div className="mono" style={{ fontSize: 10, color: C.OK, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
+                  DEDUCCIONES ACTIVADAS ESTE TRIMESTRE
+                </div>
+                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  {currQSnap.ivaDeductible > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 2 }}>IVA soportado recuperable</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.OK }}>−{formatCurrency(currQSnap.ivaDeductible)}</div>
+                      <div style={{ fontSize: 10, color: C.MUTED }}>reduce tu M303</div>
+                    </div>
+                  )}
+                  {currQSnap.deductibleExpenses > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 2 }}>Gastos deducibles IRPF</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.OK }}>−{formatCurrency(currQSnap.deductibleExpenses)}</div>
+                      <div style={{ fontSize: 10, color: C.MUTED }}>reducen base M130</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ── Proyección de Renta ─────────────────────────────────────────── */}
         {hasData && rentaGap > 0 && (
