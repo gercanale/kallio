@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircleQuestion, X, Send, CheckCircle } from "lucide-react";
 import { useT } from "@/lib/useT";
+import { useKallioStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase";
 
 type Status = "idle" | "sending" | "success" | "error";
@@ -10,6 +11,7 @@ type Status = "idle" | "sending" | "success" | "error";
 export function HelpButton() {
   const t = useT();
   const ht = t.help;
+  const sessionActive = useKallioStore((s) => s.sessionActive);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -54,6 +56,8 @@ export function HelpButton() {
 
   const remaining = 500 - message.length;
   const overLimit = remaining < 0;
+
+  if (!sessionActive) return null;
 
   return (
     <>
