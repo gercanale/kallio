@@ -143,7 +143,7 @@ export default function TrimesterPage() {
     <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK, paddingBottom: 80 }}>
       <Navigation />
 
-      <main style={{ maxWidth: 700, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '72px 24px 40px', boxSizing: 'border-box' }}>
 
         {/* ── Page header ──────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText, Receipt } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION } from "@/lib/version";
@@ -55,10 +55,9 @@ export function Navigation() {
   const NAV_ITEMS = [
     { href: "/dashboard",     icon: LayoutDashboard, label: t.nav.dashboard    },
     { href: "/transactions",  icon: ArrowLeftRight,  label: t.nav.transactions },
-    { href: "/gastos",        icon: Receipt,         label: t.nav.gastos       },
     { href: "/renta",         icon: FileText,        label: t.nav.renta        },
-    { href: "/settings",      icon: Settings,        label: t.nav.settings     },
     { href: "/learn",         icon: BookOpen,        label: t.nav.learn        },
+    { href: "/settings",      icon: Settings,        label: t.nav.settings     },
   ];
 
   return (
@@ -154,6 +153,24 @@ export function Navigation() {
         </div>
       </header>
 
+      {/* ── Mobile language button — top right, avoids bottom-nav overlap ── */}
+      <button
+        onClick={cycleLang}
+        className="flex sm:hidden"
+        style={{
+          position: 'fixed', top: 10, right: 14, zIndex: 41,
+          alignItems: 'center', gap: 4,
+          background: C.BG, border: `1px solid ${C.BORDER}`,
+          borderRadius: 999, padding: '5px 10px',
+          cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 12, fontWeight: 600, color: C.MUTED,
+          boxShadow: '0 1px 4px rgba(26,31,46,0.07)',
+        }}
+      >
+        <span style={{ fontSize: 15 }}>{currentLang.flag}</span>
+        <span>{currentLang.short}</span>
+      </button>
+
       {/* ── Mobile bottom bar ────────────────────────────────────────────── */}
       <nav
         className="flex sm:hidden"
@@ -182,17 +199,6 @@ export function Navigation() {
             </Link>
           );
         })}
-        <button
-          onClick={cycleLang}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            padding: '6px 12px', background: 'transparent', border: 'none', cursor: 'pointer',
-            fontSize: 10, fontWeight: 600, color: C.MUTED, fontFamily: 'inherit',
-          }}
-        >
-          <span style={{ fontSize: 17 }}>{currentLang.flag}</span>
-          <span>{currentLang.short}</span>
-        </button>
       </nav>
     </>
   );
