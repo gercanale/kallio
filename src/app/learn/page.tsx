@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, ExternalLink, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, BookOpen, Search } from 'lucide-react';
+import { useKallioStore } from '@/lib/store';
+import { translations } from '@/lib/i18n';
+import { Navigation } from '@/components/Navigation';
+import { getAllExplanations, LEARN_GROUPS, type ConceptKey } from '@/lib/tax-explanations';
 
 const C = {
   BG: '#fdfaf3',
@@ -14,6 +18,8 @@ const C = {
   CARD: '#ffffff',
   WARM: '#c9bfa8',
 };
+
+// ─── Guide types ───────────────────────────────────────────────────────────────
 
 interface Callout {
   label: string;
@@ -38,6 +44,8 @@ interface Chapter {
   tagline: string;
   sections: Section[];
 }
+
+// ─── Guide content ─────────────────────────────────────────────────────────────
 
 const CHAPTERS: Chapter[] = [
   {
@@ -271,7 +279,7 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'valencia-intro',
       title: 'Comunitat Valenciana: visión general',
       body: [
-        'La Comunitat Valenciana ofrece un catálogo de deducciones autonómicas que complementan las estatales. A partir de 2025 se han incorporado nuevas deducciones por gastos de salud. Estas deducciones se aplican sobre la cuota autonómica, reduciendo directamente lo que pagas, no solo la base.',
+        'La Comunitat Valenciana ofrece un catálogo de deducciones autonómicas que complementan las estatales. A partir de 2025 se han incorporado nuevas deducciones por gastos de salud. Estas deducciones se aplican sobre la cuota autonómica, reduciendo directamente lo que pagas.',
       ],
       link: {
         label: 'Manual IRPF 2025 – Deducciones Comunitat Valenciana (AEAT) →',
@@ -283,22 +291,21 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       title: 'Salud: dental, mental y óptica (nueva 2025)',
       body: [
         'Desde 2025, la Comunitat Valenciana permite deducir el 30% de los gastos de salud no cubiertos por la Seguridad Social, con un máximo de €150 anuales por contribuyente.',
-        'Incluye: tratamientos dentales (ortodoncia, implantes, empastes privados), gafas y lentillas con receta, y consultas de psicología o psiquiatría no reembolsadas.',
-        'Los gastos deben estar justificados con factura y no pueden haber sido ya deducidos en la base estatal.',
+        'Incluye: tratamientos dentales, gafas y lentillas con receta, y consultas de psicología o psiquiatría no reembolsadas.',
       ],
       callouts: [
         { label: 'Deducción', value: '30% gastos salud', color: C.OK },
-        { label: 'Tope por contribuyente', value: '€150/año', color: C.OK },
+        { label: 'Tope', value: '€150 / año', color: C.OK },
         { label: 'Aplica desde', value: '2025', color: C.INK },
       ],
-      tip: 'Guarda todas las facturas de dentista, óptica y psicólogo del año. El tope es €150, pero el ahorro a tu tipo marginal autonómico puede ser notable.',
+      tip: 'Guarda todas las facturas de dentista, óptica y psicólogo del año.',
     },
     {
       id: 'valencia-deportes',
       title: 'Actividades deportivas',
       body: [
         'Puedes deducir el 30% de los gastos en actividades físicas y deportivas (gym, clases, federaciones), con un máximo de €150 anuales.',
-        'Aplica tanto para ti como para tus hijos menores si los gastos corren a tu cargo. Los gastos del contribuyente y los de hijos se computan por separado.',
+        'Aplica tanto para ti como para tus hijos menores si los gastos corren a tu cargo.',
       ],
       callouts: [
         { label: 'Deducción', value: '30%', color: C.OK },
@@ -309,8 +316,8 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'valencia-alquiler',
       title: 'Alquiler de vivienda habitual (<35 años)',
       body: [
-        'Si tienes menos de 35 años y pagas alquiler por tu vivienda habitual, puedes deducir el 15% de lo pagado durante el año, con un tope de €550 anuales (o €700 si tienes discapacidad).',
-        'Requisito: la base imponible total no puede superar €25.000 (individual) o €40.000 (conjunta). También aplica para mayores de 65 años.',
+        'Si tienes menos de 35 años y pagas alquiler por tu vivienda habitual, puedes deducir el 15% de lo pagado, con un tope de €550 anuales.',
+        'Requisito: la base imponible total no puede superar €25.000 (individual) o €40.000 (conjunta).',
       ],
       callouts: [
         { label: 'Deducción', value: '15% del alquiler', color: C.OK },
@@ -323,8 +330,8 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       title: 'Familia y conciliación',
       body: [
         'Nacimiento o adopción: €270 por cada hijo nacido o adoptado en el ejercicio.',
-        'Familia numerosa: €300 si eres familia numerosa general; €600 si eres familia numerosa especial.',
-        'Gastos de guardería o 1er ciclo de educación infantil: 15% de las cantidades satisfechas, límite €270 anuales.',
+        'Familia numerosa: €300 general; €600 especial.',
+        'Gastos de guardería: 15% de las cantidades satisfechas, límite €270 anuales.',
         'Cuidado de ascendientes: €179 por ascendiente mayor de 70 años que conviva contigo.',
       ],
       callouts: [
@@ -337,7 +344,7 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'valencia-energia',
       title: 'Energía renovable y vehículo eléctrico',
       body: [
-        'Instalación de paneles solares o mejoras de eficiencia energética en vivienda habitual: 20% de la inversión, tope €8.000 anuales.',
+        'Instalación de paneles solares o mejoras de eficiencia energética: 20% de la inversión, tope €8.000 anuales.',
         'Adquisición de vehículo eléctrico o híbrido enchufable nuevo: 10% del precio, tope €4.000.',
       ],
       callouts: [
@@ -379,11 +386,9 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'madrid-intro',
       title: 'Comunidad de Madrid: ventaja fiscal',
       body: [
-        'Madrid es la comunidad con menor presión fiscal autonómica de España. Aplica una bonificación del 25% sobre la cuota íntegra autonómica, lo que reduce significativamente el tipo efectivo total respecto a otras comunidades.',
+        'Madrid es la comunidad con menor presión fiscal autonómica de España. Aplica una bonificación del 25% sobre la cuota íntegra autonómica, reduciendo significativamente el tipo efectivo.',
       ],
-      callouts: [
-        { label: 'Bonificación cuota autonómica', value: '25%', color: C.OK },
-      ],
+      callouts: [{ label: 'Bonificación cuota autonómica', value: '25%', color: C.OK }],
     },
     {
       id: 'madrid-deducciones',
@@ -392,7 +397,6 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
         'Nacimiento o adopción: €600 por el primero, €750 por el segundo, €900 por el tercero y siguientes.',
         'Alquiler de vivienda habitual: 20% para menores de 35 años. Tope €840.',
         'Inversión en empresas nuevas o jóvenes: 20% de la inversión, máx. €4.000.',
-        'Donativos: 15% adicional al tramo estatal para los primeros €150 donados.',
       ],
       callouts: [
         { label: 'Nacimiento 1er hijo', value: '€600', color: C.OK },
@@ -406,7 +410,7 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'andalucia-intro',
       title: 'Andalucía: escala autonómica propia',
       body: [
-        'Andalucía aprobó en 2023 su propia escala autonómica del IRPF con tipos inferiores a los estatales, acercándose a Madrid en términos de presión fiscal para los tramos medios y altos.',
+        'Andalucía aprobó en 2023 su propia escala autonómica del IRPF con tipos inferiores a los estatales, acercándose a Madrid en términos de presión fiscal.',
       ],
     },
     {
@@ -416,7 +420,6 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
         'Compra de vivienda nueva por jóvenes: 3% si eres menor de 35 años y la vivienda es nueva (máx. €1.800).',
         'Gastos educativos: 15% de gastos en escolaridad, libros y uniformes de hijos en educación obligatoria (máx. €150 por hijo).',
         'Asistencia a personas mayores dependientes: €100 por ascendiente mayor de 75 años a cargo.',
-        'Donaciones para investigación biomédica: 20%.',
       ],
       callouts: [
         { label: 'Vivienda nueva <35 años', value: '3%, máx. €1.800', color: C.OK },
@@ -429,14 +432,11 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'pais-vasco-intro',
       title: 'País Vasco: régimen foral propio',
       body: [
-        'El País Vasco (y Navarra) tienen régimen foral propio. Los territorios históricos (Álava, Gipuzkoa, Bizkaia) tienen sus propias normativas de IRPF, sus propios tramos, y recaudan directamente sin pasar por la AEAT.',
-        'Si vives o trabajas en el País Vasco, los modelos son diferentes y los cálculos de Kallio pueden no ser exactos. Consulta siempre con un gestor especializado en régimen foral.',
+        'El País Vasco (y Navarra) tienen régimen foral propio. Los territorios históricos (Álava, Gipuzkoa, Bizkaia) tienen sus propias normativas de IRPF y recaudan directamente sin pasar por la AEAT.',
+        'Si vives o trabajas en el País Vasco, los cálculos de Kallio pueden no ser exactos. Consulta siempre con un gestor especializado en régimen foral.',
       ],
-      warning: 'Kallio está optimizado para el régimen común de tributación. Si resides en País Vasco o Navarra, los cálculos pueden no aplicar directamente a tu situación.',
-      link: {
-        label: 'Hacienda Foral de Bizkaia →',
-        href: 'https://www.bizkaia.eus/ogasuna',
-      },
+      warning: 'Kallio está optimizado para el régimen común de tributación. Si resides en País Vasco o Navarra, consulta con un gestor especializado.',
+      link: { label: 'Hacienda Foral de Bizkaia →', href: 'https://www.bizkaia.eus/ogasuna' },
     },
   ],
   otro: [
@@ -444,8 +444,7 @@ const REGIONAL_CONTENT: Record<RegionKey, Section[]> = {
       id: 'otro-intro',
       title: 'Deducciones de tu comunidad autónoma',
       body: [
-        'Cada comunidad autónoma tiene su propio catálogo de deducciones que complementan las estatales. Las diferencias pueden ser significativas, especialmente en alquiler, familia y vivienda.',
-        'La AEAT publica anualmente el manual práctico del IRPF con un capítulo específico por comunidad. Es la fuente más fiable y actualizada.',
+        'Cada comunidad autónoma tiene su propio catálogo de deducciones que complementan las estatales. La AEAT publica anualmente el manual práctico del IRPF con un capítulo específico por comunidad.',
       ],
       link: {
         label: 'Manual IRPF 2025 – Deducciones autonómicas (AEAT) →',
@@ -463,6 +462,8 @@ const REGION_LABELS: Record<RegionKey, string> = {
   pais_vasco: 'País Vasco',
   otro: 'Otra',
 };
+
+// ─── Section block (guide) ─────────────────────────────────────────────────────
 
 function SectionBlock({ section, defaultOpen = false }: { section: Section; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -527,31 +528,15 @@ function SectionBlock({ section, defaultOpen = false }: { section: Section; defa
           )}
 
           {section.tip && (
-            <div style={{
-              background: '#f0f7eb',
-              border: `1px solid ${C.OK}`,
-              borderRadius: 10,
-              padding: '11px 14px',
-              marginTop: 12,
-            }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.OK, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Tip{' '}
-              </span>
+            <div style={{ background: '#f0f7eb', border: `1px solid ${C.OK}`, borderRadius: 10, padding: '11px 14px', marginTop: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.OK, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tip </span>
               <span style={{ fontSize: 13, color: C.INK }}>{section.tip}</span>
             </div>
           )}
 
           {section.warning && (
-            <div style={{
-              background: '#fef9e7',
-              border: `1px solid ${C.IRPF}`,
-              borderRadius: 10,
-              padding: '11px 14px',
-              marginTop: 12,
-            }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.IRPF, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Atención{' '}
-              </span>
+            <div style={{ background: '#fef9e7', border: `1px solid ${C.IRPF}`, borderRadius: 10, padding: '11px 14px', marginTop: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.IRPF, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Atención </span>
               <span style={{ fontSize: 13, color: C.INK }}>{section.warning}</span>
             </div>
           )}
@@ -584,7 +569,9 @@ function SectionBlock({ section, defaultOpen = false }: { section: Section; defa
   );
 }
 
-export default function LearnPage() {
+// ─── Guide tab ─────────────────────────────────────────────────────────────────
+
+function GuideTab() {
   const [selectedChapter, setSelectedChapter] = useState('basico');
   const [selectedRegion, setSelectedRegion] = useState<RegionKey>('valencia');
 
@@ -597,158 +584,297 @@ export default function LearnPage() {
   const nextChapter = CHAPTERS[currentIndex + 1];
 
   return (
-    <div style={{ minHeight: '100vh', background: C.BG, padding: '24px 16px 80px' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div>
+      {/* Chapter nav */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+        {CHAPTERS.map((ch) => {
+          const active = ch.id === selectedChapter;
+          return (
+            <button
+              key={ch.id}
+              onClick={() => setSelectedChapter(ch.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '13px 16px',
+                borderRadius: 12,
+                border: `1.5px solid ${active ? C.INK : C.BORDER}`,
+                background: active ? C.INK : C.CARD,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: active ? C.WARM : C.MUTED, minWidth: 22 }}>
+                {ch.num}
+              </span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: active ? '#fff' : C.INK }}>{ch.label}</div>
+                <div style={{ fontSize: 12, color: active ? C.WARM : C.MUTED, marginTop: 1 }}>{ch.tagline}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Region selector (chapter 05 only) */}
+      {chapter.id === 'region' && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: C.MUTED, marginBottom: 10 }}>Selecciona tu comunidad autónoma:</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {(Object.keys(REGION_LABELS) as RegionKey[]).map((rk) => {
+              const sel = rk === selectedRegion;
+              return (
+                <button
+                  key={rk}
+                  onClick={() => setSelectedRegion(rk)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 20,
+                    border: `1.5px solid ${sel ? C.INK : C.BORDER}`,
+                    background: sel ? C.INK : C.CARD,
+                    color: sel ? '#fff' : C.INK,
+                    fontSize: 13,
+                    fontWeight: sel ? 700 : 400,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {REGION_LABELS[rk]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Chapter content */}
+      <div style={{ background: C.CARD, borderRadius: 16, border: `1px solid ${C.BORDER}`, padding: '20px 20px 8px', marginBottom: 20 }}>
+        <div className="mono" style={{ fontSize: 10, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+          Capítulo {chapter.num}
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: C.INK, margin: '0 0 3px' }}>{chapter.label}</h2>
+        <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 16px', lineHeight: 1.5 }}>{chapter.tagline}</p>
+        <div>
+          {sections.map((section, i) => (
+            <SectionBlock key={section.id} section={section} defaultOpen={i === 0} />
+          ))}
+        </div>
+      </div>
+
+      {/* Next chapter card */}
+      {nextChapter && (
+        <button
+          onClick={() => {
+            setSelectedChapter(nextChapter.id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 20px',
+            borderRadius: 14,
+            border: `1.5px dashed ${C.BORDER}`,
+            background: 'transparent',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 3 }}>Siguiente capítulo</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.INK }}>{nextChapter.num} · {nextChapter.label}</div>
+            <div style={{ fontSize: 12, color: C.MUTED, marginTop: 1 }}>{nextChapter.tagline}</div>
+          </div>
+          <span style={{ fontSize: 20, color: C.MUTED }}>→</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Glossary tab (German's original content) ─────────────────────────────────
+
+function GlossaryTab() {
+  const language = useKallioStore((s) => s.language);
+  const tl = translations[language].learn;
+  const explanations = getAllExplanations(language === 'es' ? 'es' : 'en');
+
+  const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<ConceptKey | null>(null);
+
+  const toggle = (key: ConceptKey) => setExpanded((prev) => (prev === key ? null : key));
+
+  const searchLower = search.toLowerCase();
+  const matchesConcept = (key: ConceptKey) => {
+    if (!searchLower) return true;
+    const exp = explanations[key];
+    return exp.title.toLowerCase().includes(searchLower) || exp.body.toLowerCase().includes(searchLower);
+  };
+
+  const visibleGroups = LEARN_GROUPS.map((g) => ({
+    ...g,
+    concepts: g.concepts.filter(matchesConcept),
+  })).filter((g) => g.concepts.length > 0);
+
+  return (
+    <div>
+      {/* Search */}
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.MUTED }} />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={tl.searchPlaceholder}
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+            padding: '10px 14px 10px 38px', fontSize: 14, color: C.INK,
+            fontFamily: 'inherit', outline: 'none',
+          }}
+        />
+      </div>
+
+      {/* Groups */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {visibleGroups.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 0', color: C.MUTED }}>
+            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📖</div>
+            <p style={{ fontSize: 14 }}>{tl.noResults}</p>
+          </div>
+        )}
+
+        {visibleGroups.map((group) => (
+          <section key={group.key}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 18 }}>{group.icon}</span>
+              <span className="mono" style={{ fontSize: 11, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+                {language === 'es' ? group.titleES : group.titleEN}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {group.concepts.map((key) => {
+                const exp = explanations[key];
+                const isOpen = expanded === key;
+                return (
+                  <div key={key} style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => toggle(key)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '14px 20px', background: 'transparent', border: 'none',
+                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 600, color: C.INK }}>{exp.title}</span>
+                      {isOpen
+                        ? <ChevronUp size={16} style={{ color: C.MUTED, flexShrink: 0 }} />
+                        : <ChevronDown size={16} style={{ color: C.MUTED, flexShrink: 0 }} />}
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: '0 20px 16px', borderTop: `1px solid ${C.BORDER}`, paddingTop: 14 }}>
+                        <p style={{ fontSize: 14, color: C.MUTED, lineHeight: 1.7, marginBottom: exp.example ? 12 : 0 }}>
+                          {exp.body}
+                        </p>
+                        {exp.example && (
+                          <div style={{ background: '#eef3eb', borderRadius: 10, padding: '10px 14px', border: '1px solid #c8ddc0' }}>
+                            <p style={{ fontSize: 13, color: '#3d5a29', lineHeight: 1.6 }}>
+                              <span style={{ fontWeight: 600 }}>{tl.exampleLabel}</span>
+                              {exp.example}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* Footer note */}
+      <div style={{ marginTop: 32, background: '#f0e8d3', borderRadius: 12, padding: '14px 20px' }}>
+        <p style={{ fontSize: 12, color: C.MUTED, lineHeight: 1.6, textAlign: 'center' }}>{tl.disclaimer}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
+type Tab = 'guide' | 'glossary';
+
+export default function LearnPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('guide');
+
+  return (
+    <div style={{ minHeight: '100dvh', background: C.BG, fontFamily: 'Inter, sans-serif', color: C.INK }}>
+      <Navigation />
+
+      <main style={{ maxWidth: 680, margin: '0 auto', padding: '80px 16px 88px', boxSizing: 'border-box' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <BookOpen size={15} color={C.MUTED} />
             <span className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              GUÍA FISCAL
+              APRENDE
             </span>
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.INK, margin: 0, lineHeight: 1.2 }}>
             Entiende tus impuestos
           </h1>
           <p style={{ fontSize: 14, color: C.MUTED, marginTop: 6, lineHeight: 1.5 }}>
-            Una guía clara para autónomos. Sin jerga innecesaria.
+            Una guía clara y un glosario de conceptos fiscales para autónomos.
           </p>
         </div>
 
-        {/* Chapter nav */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
-          {CHAPTERS.map((ch) => {
-            const active = ch.id === selectedChapter;
+        {/* Tab switcher */}
+        <div style={{
+          display: 'flex',
+          gap: 4,
+          background: C.CARD,
+          border: `1px solid ${C.BORDER}`,
+          borderRadius: 12,
+          padding: 4,
+          marginBottom: 28,
+        }}>
+          {([
+            { key: 'guide', label: '📖 Guía paso a paso' },
+            { key: 'glossary', label: '🔍 Glosario fiscal' },
+          ] as { key: Tab; label: string }[]).map(({ key, label }) => {
+            const active = activeTab === key;
             return (
               <button
-                key={ch.id}
-                onClick={() => setSelectedChapter(ch.id)}
+                key={key}
+                onClick={() => setActiveTab(key)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '13px 16px',
-                  borderRadius: 12,
-                  border: `1.5px solid ${active ? C.INK : C.BORDER}`,
-                  background: active ? C.INK : C.CARD,
+                  flex: 1,
+                  padding: '9px 12px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: active ? C.INK : 'transparent',
+                  color: active ? '#fff' : C.MUTED,
+                  fontSize: 13,
+                  fontWeight: active ? 700 : 500,
                   cursor: 'pointer',
-                  textAlign: 'left',
+                  fontFamily: 'inherit',
                 }}
               >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: active ? C.WARM : C.MUTED,
-                    minWidth: 22,
-                  }}
-                >
-                  {ch.num}
-                </span>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: active ? '#fff' : C.INK }}>
-                    {ch.label}
-                  </div>
-                  <div style={{ fontSize: 12, color: active ? C.WARM : C.MUTED, marginTop: 1 }}>
-                    {ch.tagline}
-                  </div>
-                </div>
+                {label}
               </button>
             );
           })}
         </div>
 
-        {/* Region selector (chapter 05 only) */}
-        {chapter.id === 'region' && (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, color: C.MUTED, marginBottom: 10 }}>
-              Selecciona tu comunidad autónoma:
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {(Object.keys(REGION_LABELS) as RegionKey[]).map((rk) => {
-                const sel = rk === selectedRegion;
-                return (
-                  <button
-                    key={rk}
-                    onClick={() => setSelectedRegion(rk)}
-                    style={{
-                      padding: '7px 14px',
-                      borderRadius: 20,
-                      border: `1.5px solid ${sel ? C.INK : C.BORDER}`,
-                      background: sel ? C.INK : C.CARD,
-                      color: sel ? '#fff' : C.INK,
-                      fontSize: 13,
-                      fontWeight: sel ? 700 : 400,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {REGION_LABELS[rk]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Tab content */}
+        {activeTab === 'guide' ? <GuideTab /> : <GlossaryTab />}
 
-        {/* Chapter content */}
-        <div style={{
-          background: C.CARD,
-          borderRadius: 16,
-          border: `1px solid ${C.BORDER}`,
-          padding: '20px 20px 8px',
-          marginBottom: 20,
-        }}>
-          <div className="mono" style={{ fontSize: 10, color: C.MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-            Capítulo {chapter.num}
-          </div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: C.INK, margin: '0 0 3px' }}>
-            {chapter.label}
-          </h2>
-          <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 16px', lineHeight: 1.5 }}>
-            {chapter.tagline}
-          </p>
-
-          <div>
-            {sections.map((section, i) => (
-              <SectionBlock key={section.id} section={section} defaultOpen={i === 0} />
-            ))}
-          </div>
-        </div>
-
-        {/* Next chapter card */}
-        {nextChapter && (
-          <button
-            onClick={() => {
-              setSelectedChapter(nextChapter.id);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderRadius: 14,
-              border: `1.5px dashed ${C.BORDER}`,
-              background: 'transparent',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 3 }}>Siguiente capítulo</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.INK }}>
-                {nextChapter.num} · {nextChapter.label}
-              </div>
-              <div style={{ fontSize: 12, color: C.MUTED, marginTop: 1 }}>{nextChapter.tagline}</div>
-            </div>
-            <span style={{ fontSize: 20, color: C.MUTED }}>→</span>
-          </button>
-        )}
-
-      </div>
+      </main>
     </div>
   );
 }
