@@ -25,6 +25,7 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { calculateYTDSnapshot, calculateTaxSnapshot, nowInSpain, formatCurrency, quarterDateRange } from "@/lib/tax-engine";
 import { Navigation } from "@/components/Navigation";
+import { PrivacyAmount, usePrivacyMask } from "@/components/PrivacyAmount";
 
 // ─── Design tokens (Direction A) ─────────────────────────────────────────────
 
@@ -259,6 +260,7 @@ export default function RentaPage() {
   const transactions       = useKallioStore((s) => s.transactions);
   const historicalYearData = useKallioStore((s) => s.historicalYearData);
   const setHistoricalQuarter = useKallioStore((s) => s.setHistoricalQuarter);
+  const mask = usePrivacyMask();
 
   // ── Guard ────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -511,7 +513,7 @@ export default function RentaPage() {
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontSize: 12, color: C.MUTED }}>Total neto</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.net)}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.INK }}><PrivacyAmount value={formatCurrency(histTotals.net)} /></div>
               </div>
             </div>
 
@@ -557,9 +559,9 @@ export default function RentaPage() {
                 {/* Totals row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr', gap: 8, padding: '10px 0 0', borderTop: `2px solid ${C.INK}`, marginTop: 4 }}>
                   <div className="mono" style={{ fontSize: 10, color: C.MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>TOTAL</div>
-                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.INK }}>{formatCurrency(histTotals.grossIncome)}</div>
-                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.MUTED }}>−{formatCurrency(histTotals.expenses)}</div>
-                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.IRPF }}>{formatCurrency(histTotals.m130)}</div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.INK }}><PrivacyAmount value={formatCurrency(histTotals.grossIncome)} /></div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.MUTED }}>−<PrivacyAmount value={formatCurrency(histTotals.expenses)} /></div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: C.IRPF }}><PrivacyAmount value={formatCurrency(histTotals.m130)} /></div>
                 </div>
 
               </div>
@@ -647,7 +649,7 @@ export default function RentaPage() {
             }}>
               <MetricCell
                 label="Base imponible"
-                value={formatCurrency(calc.totalBase)}
+                value={mask(formatCurrency(calc.totalBase))}
                 color={C.WARM}
               />
               <MetricCell
@@ -659,8 +661,8 @@ export default function RentaPage() {
               <MetricCell
                 label={`A pagar · Jun ${nextY}`}
                 value={calc.aPagar > 0
-                  ? formatCurrency(calc.aPagar)
-                  : `Devuelven ${formatCurrency(Math.abs(calc.aPagar))}`}
+                  ? mask(formatCurrency(calc.aPagar))
+                  : `Devuelven ${mask(formatCurrency(Math.abs(calc.aPagar)))}`}
                 color={calc.aPagar > 0 ? '#e8784a' : '#9ec77c'}
                 right
               />
@@ -685,7 +687,7 @@ export default function RentaPage() {
                     label="Alquiler (bruto anual)"
                     value={rental}
                     onChange={setRental}
-                    note={rental > 0 ? `Neto declarado: ${formatCurrency(rental * 0.4)} (−60% reducción)` : undefined}
+                    note={rental > 0 ? `Neto declarado: ${mask(formatCurrency(rental * 0.4))} (−60% reducción)` : undefined}
                   />
                   <IncomeRow
                     label="Dividendos"
@@ -709,11 +711,11 @@ export default function RentaPage() {
                   <div style={{ borderTop: `1px solid ${C.BORDER}`, marginTop: 12, paddingTop: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <span style={{ fontSize: 12, color: C.MUTED }}>Base general</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(calc.generalBase)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}><PrivacyAmount value={formatCurrency(calc.generalBase)} /></span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 12, color: C.MUTED }}>Base ahorro</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(calc.savingsBase)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}><PrivacyAmount value={formatCurrency(calc.savingsBase)} /></span>
                     </div>
                   </div>
                 </div>
@@ -726,7 +728,7 @@ export default function RentaPage() {
                     label="Plan de pensiones (aportación)"
                     value={pension}
                     onChange={setPension}
-                    note={pension > 0 ? `Reducción efectiva: ${formatCurrency(Math.min(pension, 1500))} (máx €1.500)` : undefined}
+                    note={pension > 0 ? `Reducción efectiva: ${mask(formatCurrency(Math.min(pension, 1500)))} (máx €1.500)` : undefined}
                     accent={C.OK}
                   />
 
@@ -736,9 +738,9 @@ export default function RentaPage() {
                       <div style={{ fontSize: 13, color: C.INK }}>Hijos a cargo</div>
                       {children > 0 && (
                         <div style={{ fontSize: 11, color: C.OK }}>
-                          Mínimo familiar +{formatCurrency(
+                          Mínimo familiar +{mask(formatCurrency(
                             (children >= 1 ? 2400 : 0) + (children >= 2 ? 2700 : 0) + (children >= 3 ? 4000 : 0)
-                          )}
+                          ))}
                         </div>
                       )}
                     </div>
@@ -760,7 +762,7 @@ export default function RentaPage() {
                     <div>
                       <div style={{ fontSize: 13, color: C.INK }}>Ascendientes a cargo</div>
                       {depParents > 0 && (
-                        <div style={{ fontSize: 11, color: C.OK }}>Mínimo familiar +{formatCurrency(1150 * depParents)}</div>
+                        <div style={{ fontSize: 11, color: C.OK }}>Mínimo familiar +{mask(formatCurrency(1150 * depParents))}</div>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -780,7 +782,7 @@ export default function RentaPage() {
                   {(children > 0 || depParents > 0 || pension > 0) && (
                     <div style={{ marginTop: 10, padding: '8px 12px', background: '#f4faf0', borderRadius: 8, display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: 12, color: C.OK }}>Mínimo personal y familiar</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.OK }}>{formatCurrency(calc.minimo)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.OK }}><PrivacyAmount value={formatCurrency(calc.minimo)} /></span>
                     </div>
                   )}
                 </div>
@@ -826,7 +828,7 @@ export default function RentaPage() {
                             </div>
                             {d.amount > 0 && (
                               <div style={{ fontSize: 13, fontWeight: 600, color: isChecked ? C.OK : C.MUTED, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                −{formatCurrency(d.amount)}
+                                −<PrivacyAmount value={formatCurrency(d.amount)} />
                               </div>
                             )}
                           </div>
@@ -837,7 +839,7 @@ export default function RentaPage() {
                       {regionDedsTotal > 0 && (
                         <div style={{ borderTop: `1px solid ${C.BORDER}`, marginTop: 12, paddingTop: 10, display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: 12, color: C.MUTED }}>Total deducciones autonómicas</span>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: C.OK }}>−{formatCurrency(regionDedsTotal)}</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: C.OK }}>−<PrivacyAmount value={formatCurrency(regionDedsTotal)} /></span>
                         </div>
                       )}
                     </>
@@ -848,11 +850,11 @@ export default function RentaPage() {
                 <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '18px 20px', marginTop: 16 }}>
                   <SectionLabel label="Cuota" />
 
-                  <CalcRow label="Cuota íntegra"          value={formatCurrency(calc.cuotaIntegra)} />
+                  <CalcRow label="Cuota íntegra"          value={mask(formatCurrency(calc.cuotaIntegra))} />
                   {regionDedsTotal > 0 && (
-                    <CalcRow label="− Deducciones autonómicas" value={`−${formatCurrency(regionDedsTotal)}`} accent={C.OK} />
+                    <CalcRow label="− Deducciones autonómicas" value={`−${mask(formatCurrency(regionDedsTotal))}`} accent={C.OK} />
                   )}
-                  <CalcRow label="Cuota líquida"          value={formatCurrency(calc.cuotaLiquida)} bold />
+                  <CalcRow label="Cuota líquida"          value={mask(formatCurrency(calc.cuotaLiquida))} bold />
                   <CalcRow label="Tipo marginal"           value={`${(calc.marginalRate * 100).toFixed(0)}%`} muted />
                 </div>
               </div>
@@ -880,7 +882,7 @@ export default function RentaPage() {
                 </div>
               </div>
               <div style={{ fontSize: 22, fontWeight: 700, color: C.INK, fontVariantNumeric: 'tabular-nums' }}>
-                {formatCurrency(alreadyPaid)}
+                <PrivacyAmount value={formatCurrency(alreadyPaid)} />
               </div>
             </div>
 
@@ -1021,7 +1023,7 @@ function IncomeRow({
         <span style={{ fontSize: 13, color: C.INK, flex: 1, paddingRight: 8 }}>{label}</span>
         {readOnly ? (
           <span style={{ fontSize: 14, fontWeight: 600, color: accent ?? C.INK, fontVariantNumeric: 'tabular-nums' }}>
-            {value > 0 ? formatCurrency(value) : <span style={{ color: C.MUTED, fontWeight: 400, fontSize: 12 }}>del tracker</span>}
+            {value > 0 ? <PrivacyAmount value={formatCurrency(value)} /> : <span style={{ color: C.MUTED, fontWeight: 400, fontSize: 12 }}>del tracker</span>}
           </span>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
