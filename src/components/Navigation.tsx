@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Settings, BookOpen, LogOut, FileText, Eye, EyeOff } from "lucide-react";
 import { useKallioStore } from "@/lib/store";
 import { useT } from "@/lib/useT";
 import { APP_VERSION } from "@/lib/version";
@@ -30,7 +30,9 @@ export function Navigation() {
   const router    = useRouter();
   const language  = useKallioStore((s) => s.language);
   const setLanguage = useKallioStore((s) => s.setLanguage);
-  const signOut   = useKallioStore((s) => s.signOut);
+  const signOut         = useKallioStore((s) => s.signOut);
+  const privacyMode     = useKallioStore((s) => s.privacyMode);
+  const togglePrivacy   = useKallioStore((s) => s.togglePrivacyMode);
   const t         = useT();
 
   const [langOpen, setLangOpen] = useState(false);
@@ -144,6 +146,14 @@ export function Navigation() {
           </div>
 
           <button
+            onClick={togglePrivacy}
+            title={privacyMode ? "Mostrar valores" : "Ocultar valores"}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: privacyMode ? C.IVA : C.MUTED, display: 'flex', alignItems: 'center' }}
+          >
+            {privacyMode ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+
+          <button
             onClick={handleSignOut}
             title={t.settings.signOut}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.MUTED, display: 'flex', alignItems: 'center' }}
@@ -153,23 +163,40 @@ export function Navigation() {
         </div>
       </header>
 
-      {/* ── Mobile language button — top right, avoids bottom-nav overlap ── */}
-      <button
-        onClick={cycleLang}
+      {/* ── Mobile top-right controls ────────────────────────────────────── */}
+      <div
         className="flex sm:hidden"
-        style={{
-          position: 'fixed', top: 10, right: 14, zIndex: 41,
-          alignItems: 'center', gap: 4,
-          background: C.BG, border: `1px solid ${C.BORDER}`,
-          borderRadius: 999, padding: '5px 10px',
-          cursor: 'pointer', fontFamily: 'inherit',
-          fontSize: 12, fontWeight: 600, color: C.MUTED,
-          boxShadow: '0 1px 4px rgba(26,31,46,0.07)',
-        }}
+        style={{ position: 'fixed', top: 10, right: 14, zIndex: 41, alignItems: 'center', gap: 6 }}
       >
-        <span style={{ fontSize: 15 }}>{currentLang.flag}</span>
-        <span>{currentLang.short}</span>
-      </button>
+        <button
+          onClick={togglePrivacy}
+          title={privacyMode ? "Mostrar valores" : "Ocultar valores"}
+          style={{
+            background: privacyMode ? '#fef2f2' : C.BG,
+            border: `1px solid ${privacyMode ? '#fca5a5' : C.BORDER}`,
+            borderRadius: 999, padding: '5px 8px',
+            cursor: 'pointer', display: 'flex', alignItems: 'center',
+            color: privacyMode ? C.IVA : C.MUTED,
+            boxShadow: '0 1px 4px rgba(26,31,46,0.07)',
+          }}
+        >
+          {privacyMode ? <EyeOff size={13} /> : <Eye size={13} />}
+        </button>
+        <button
+          onClick={cycleLang}
+          style={{
+            alignItems: 'center', gap: 4, display: 'flex',
+            background: C.BG, border: `1px solid ${C.BORDER}`,
+            borderRadius: 999, padding: '5px 10px',
+            cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 12, fontWeight: 600, color: C.MUTED,
+            boxShadow: '0 1px 4px rgba(26,31,46,0.07)',
+          }}
+        >
+          <span style={{ fontSize: 15 }}>{currentLang.flag}</span>
+          <span>{currentLang.short}</span>
+        </button>
+      </div>
 
       {/* ── Mobile bottom bar ────────────────────────────────────────────── */}
       <nav
