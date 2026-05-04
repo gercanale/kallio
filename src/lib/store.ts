@@ -167,6 +167,9 @@ interface KallioState {
   // Supabase auth
   loadUserData: () => Promise<void>;
 
+  privacyMode: boolean;
+  togglePrivacyMode: () => void;
+
   language: Language;
   setLanguage: (lang: Language) => void;
 
@@ -302,6 +305,9 @@ export const useKallioStore = create<KallioState>()(
           set({ _hasHydrated: true });
         }
       },
+
+      privacyMode: false,
+      togglePrivacyMode: () => set((s) => ({ privacyMode: !s.privacyMode })),
 
       language: "es" as Language,
       setLanguage: (lang) => set({ language: lang }),
@@ -686,6 +692,7 @@ export const useKallioStore = create<KallioState>()(
       version: 1,
       // Persist language, filed quarters, wizard profile and dashboard mode
       partialize: (state) => ({
+        privacyMode: state.privacyMode,
         language: state.language,
         filedQuarters: state.filedQuarters,
         wizardProfile: state.wizardProfile,

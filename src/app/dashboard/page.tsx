@@ -18,6 +18,7 @@ import {
 import { getBucketsForActivity, quarterlyDeductible } from "@/lib/gastos-data";
 import type { ActivityKey } from "@/lib/wizard-config";
 import { Navigation } from "@/components/Navigation";
+import { PrivacyAmount, usePrivacyMask } from "@/components/PrivacyAmount";
 import { TransactionForm } from "@/components/TransactionForm";
 import { BeckhamCountdown } from "@/components/BeckhamCountdown";
 import { PreguntameButton } from "@/components/PreguntameButton";
@@ -60,6 +61,8 @@ export default function DashboardPage() {
   const checkerHistory      = useKallioStore((s) => s.checkerHistory);
   const activatedBuckets    = useKallioStore((s) => s.activatedBuckets);
   const t             = useT();
+
+  const mask = usePrivacyMask();
 
   const [showForm,   setShowForm]   = useState(false);
   const [rentaOpen,  setRentaOpen]  = useState(false);
@@ -172,7 +175,7 @@ export default function DashboardPage() {
         {hasData ? (
           <>
             <p style={{ fontSize: 18, color: C.INK, margin: '0 0 4px', lineHeight: 1.4, fontWeight: 400 }}>
-              {t.dashboard.billedThis.replace('{{amount}}', fmt(gross))}
+              {t.dashboard.billedThis.replace('{{amount}}', mask(fmt(gross)))}
             </p>
             <p style={{ fontSize: 22, fontWeight: 500, margin: '0 0 8px', lineHeight: 1.3 }}>
               {t.dashboard.yoursReally}{' '}
@@ -180,7 +183,7 @@ export default function DashboardPage() {
             </p>
 
             <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', margin: '8px 0 6px', fontVariantNumeric: 'tabular-nums' }}>
-              {fmt(spendable)}€
+              {mask(fmt(spendable))}€
             </div>
 
             <p style={{ fontSize: 13, color: C.MUTED, margin: '0 0 24px' }}>
@@ -196,7 +199,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>€0</span>
-              <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>€{fmt(gross)}</span>
+              <span className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.06em' }}>€{mask(fmt(gross))}</span>
             </div>
           </>
         ) : (
@@ -249,7 +252,7 @@ export default function DashboardPage() {
                 ? t.dashboard.bucketIrpfGapSubBad
                     .replace('{{year}}', String(currY))
                     .replace('{{yearNext}}', String(currY + 1))
-                    .replace('{{amount}}', formatCurrency(irpfGap))
+                    .replace('{{amount}}', mask(formatCurrency(irpfGap)))
                     .replace('{{rate}}', String(Math.round(effRate * 100)))
                 : t.dashboard.bucketIrpfGapSubOk,
               tag: null,
@@ -293,7 +296,7 @@ export default function DashboardPage() {
 
               {/* Amount */}
               <div style={{ fontSize: 17, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', paddingTop: 1, whiteSpace: 'nowrap' }}>
-                {formatCurrency(value)}
+                <PrivacyAmount value={formatCurrency(value)} />
               </div>
             </div>
           ))}
@@ -315,11 +318,11 @@ export default function DashboardPage() {
             <div style={{ fontSize: 15, fontWeight: 600 }}>
               {nextDL ? `A pagar el ${nextDL.label}` : `Trimestre ${currQ}T`}
               {nextDLAmt > 0 && (
-                <span style={{ color: C.WARM, marginLeft: 8 }}>· {formatCurrency(nextDLAmt)}</span>
+                <span style={{ color: C.WARM, marginLeft: 8 }}>· <PrivacyAmount value={formatCurrency(nextDLAmt)} /></span>
               )}
             </div>
             <div style={{ fontSize: 12, color: C.WARM, marginTop: 3 }}>
-              M303 · IVA {formatCurrency(currQSnap.ivaPayable)} + M130 · IRPF {formatCurrency(currQSnap.irpfAdvancePayable)}
+              M303 · IVA <PrivacyAmount value={formatCurrency(currQSnap.ivaPayable)} /> + M130 · IRPF <PrivacyAmount value={formatCurrency(currQSnap.irpfAdvancePayable)} />
             </div>
           </div>
           <span style={{ fontSize: 20, color: C.WARM, flexShrink: 0 }}>→</span>
@@ -348,18 +351,18 @@ export default function DashboardPage() {
               <div style={{ padding: '16px 20px 20px', background: C.CARD, borderTop: `1px solid ${C.BORDER}` }}>
                 <p style={{ fontSize: 14, color: C.INK, lineHeight: 1.7, margin: '0 0 20px' }}>
                   {t.dashboard.rentaBody
-                    .replace('{{amount}}', fmt(projectedYE))
+                    .replace('{{amount}}', mask(fmt(projectedYE)))
                     .replace('{{year}}', String(currY))
                     .replace('{{yearNext}}', String(currY + 1))
-                    .replace('~{{gap}}', `~${formatCurrency(rentaGap)}`)}
+                    .replace('~{{gap}}', `~${mask(formatCurrency(rentaGap))}`)}
                 </p>
 
                 {/* Three metric chips */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
                   {[
-                    { label: t.dashboard.rentaMetricYELabel, value: `€${fmt(projectedYE)}`, sub: t.dashboard.rentaMetricYESub, color: C.INK },
+                    { label: t.dashboard.rentaMetricYELabel, value: `€${mask(fmt(projectedYE))}`, sub: t.dashboard.rentaMetricYESub, color: C.INK },
                     { label: t.dashboard.rentaMetricRateLabel, value: `~${Math.round(effRate * 100)}%`, sub: t.dashboard.rentaMetricRateSub.replace('{{pct}}', String(Math.round(advRate * 100))), color: C.IRPF },
-                    { label: t.dashboard.rentaMetricOwedLabel, value: formatCurrency(rentaGap), sub: t.dashboard.rentaMetricOwedSub, color: C.IVA },
+                    { label: t.dashboard.rentaMetricOwedLabel, value: mask(formatCurrency(rentaGap)), sub: t.dashboard.rentaMetricOwedSub, color: C.IVA },
                   ].map(({ label, value, sub, color }) => (
                     <div key={label} style={{ background: '#fdfaf3', border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: '12px 14px' }}>
                       <div className="mono" style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
@@ -380,8 +383,8 @@ export default function DashboardPage() {
                     }}
                   >
                     {aparted
-                      ? t.dashboard.apartDone.replace('{{amount}}', formatCurrency(rentaGap))
-                      : t.dashboard.apartAuto.replace('{{amount}}', formatCurrency(rentaGap))}
+                      ? t.dashboard.apartDone.replace('{{amount}}', mask(formatCurrency(rentaGap)))
+                      : t.dashboard.apartAuto.replace('{{amount}}', mask(formatCurrency(rentaGap)))}
                   </button>
                   <button
                     onClick={() => router.push('/renta')}
@@ -416,7 +419,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>
                 {t.dashboard.untappedDesc.replace('{{count}}', String(untappedCount))}
                 {untappedSaving > 0 && (
-                  <span style={{ color: C.OK, marginLeft: 8 }}>{t.dashboard.untappedSaving.replace('{{amount}}', fmt(untappedSaving))}</span>
+                  <span style={{ color: C.OK, marginLeft: 8 }}>{t.dashboard.untappedSaving.replace('{{amount}}', mask(fmt(untappedSaving)))}</span>
                 )}
               </div>
             </div>

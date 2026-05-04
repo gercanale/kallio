@@ -177,7 +177,9 @@ export async function POST(req: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { email, lang } = await req.json();
 
-  if (!email || typeof email !== "string") {
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!email || typeof email !== "string" || !EMAIL_REGEX.test(email)) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 

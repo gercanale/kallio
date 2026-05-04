@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 function buildHtml(userEmail: string | null, message: string): string {
   const now = new Date().toLocaleString("es-ES", {
     timeZone: "Europe/Madrid",
@@ -42,7 +53,7 @@ function buildHtml(userEmail: string | null, message: string): string {
               <tr>
                 <td style="background:#f0fdfa;border-left:3px solid #0d9488;border-radius:0 8px 8px 0;padding:14px 16px;">
                   <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#0f766e;text-transform:uppercase;letter-spacing:0.6px;">Usuario</p>
-                  <p style="margin:0;font-size:14px;color:#0f172a;font-weight:500;">${userEmail ?? "<em style='color:#94a3b8;font-style:normal;'>No identificado</em>"}</p>
+                  <p style="margin:0;font-size:14px;color:#0f172a;font-weight:500;">${userEmail ? escapeHtml(userEmail) : "<em style='color:#94a3b8;font-style:normal;'>No identificado</em>"}</p>
                 </td>
               </tr>
             </table>
@@ -57,7 +68,7 @@ function buildHtml(userEmail: string | null, message: string): string {
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
               <tr>
                 <td align="center">
-                  <a href="mailto:${userEmail ?? ""}" style="display:inline-block;background:#0d9488;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">
+                  <a href="mailto:${userEmail ? encodeURIComponent(userEmail) : ""}" style="display:inline-block;background:#0d9488;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">
                     Responder al usuario →
                   </a>
                 </td>
@@ -91,6 +102,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
+  const safeEmail =
+    typeof userEmail === "string" && EMAIL_REGEX.test(userEmail) ? userEmail : null;
+
   const trimmed = message.trim().slice(0, 500);
   if (trimmed.length === 0) {
     return NextResponse.json({ error: "Empty message" }, { status: 400 });
@@ -99,10 +113,10 @@ export async function POST(req: NextRequest) {
   const { error } = await resend.emails.send({
     from: "Kallio Help <hello@kallio.tax>",
     to: "gercanale@gmail.com",
-    replyTo: userEmail || undefined,
-    subject: `Kallio – Ayuda${userEmail ? ` · ${userEmail}` : ""}`,
-    html: buildHtml(userEmail, trimmed),
-    text: `Nueva solicitud de ayuda en Kallio\n\nUsuario: ${userEmail || "No identificado"}\n\nMensaje:\n${trimmed}`,
+    replyTo: safeEmail || undefined,
+    subject: `Kallio – Ayuda${safeEmail ? ` · ${safeEmail}` : ""}`,
+    html: buildHtml(safeEmail, trimmed),
+    text: `Nueva solicitud de ayuda en Kallio\n\nUsuario: ${safeEmail || "No identificado"}\n\nMensaje:\n${trimmed}`,
   });
 
   if (error) {

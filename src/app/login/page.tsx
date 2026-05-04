@@ -45,7 +45,7 @@ export default function LoginPage() {
         options: { emailRedirectTo: `${window.location.origin}/login` },
       });
       if (error) {
-        setError(error.message);
+        setError(t.auth.signupFailed);
       } else {
         setSuccessMsg(t.auth.checkEmail);
       }

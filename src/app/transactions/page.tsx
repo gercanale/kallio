@@ -23,6 +23,7 @@ import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useT } from "@/lib/useT";
 import { Navigation } from "@/components/Navigation";
+import { PrivacyAmount } from "@/components/PrivacyAmount";
 import { TransactionForm } from "@/components/TransactionForm";
 import { ExplainDrawer } from "@/components/ExplainDrawer";
 import { formatCurrency, formatDate } from "@/lib/tax-engine";
@@ -216,7 +217,7 @@ export default function TransactionsPage() {
                   <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.incomeLabel}</span>
                 </div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: C.OK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-                  {formatCurrency(totalIncome)}
+                  <PrivacyAmount value={formatCurrency(totalIncome)} />
                 </p>
               </div>
               <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
@@ -225,7 +226,7 @@ export default function TransactionsPage() {
                   <span style={{ fontSize: 11, color: C.MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.transactions.expenseLabel}</span>
                 </div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: C.IVA, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-                  {formatCurrency(totalExpenses)}
+                  <PrivacyAmount value={formatCurrency(totalExpenses)} />
                 </p>
               </div>
               <div style={{ background: C.CARD, border: `1px solid ${C.BORDER}`, borderRadius: 14, padding: '12px 14px' }}>
@@ -1105,7 +1106,7 @@ function TransactionRow({
           fontSize: 14, fontWeight: 700, margin: 0, fontVariantNumeric: 'tabular-nums',
           color: isIncome ? C.OK : C.IVA,
         }}>
-          {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
+          {isIncome ? "+" : "−"}<PrivacyAmount value={formatCurrency(tx.amount)} />
         </p>
         <p style={{ fontSize: 12, color: C.MUTED, margin: '2px 0 0' }}>{vatLabel} {tx.ivaRate}%</p>
       </div>

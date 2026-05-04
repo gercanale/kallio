@@ -9,6 +9,7 @@ import type { TaxSnapshot, CheckerRun } from "@/lib/types";
 import type { WizardProfile } from "@/lib/wizard-config";
 import { BeckhamCountdown } from "./BeckhamCountdown";
 import { PreguntameButton } from "./PreguntameButton";
+import { PrivacyAmount, usePrivacyMask } from "./PrivacyAmount";
 
 interface SimpleViewProps {
   snapshot: TaxSnapshot;
@@ -102,6 +103,7 @@ function LearnMoreModal({ onClose }: { onClose: () => void }) {
 export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerHistory }: SimpleViewProps) {
   const t = useT();
   const sv = t.simpleView;
+  const mask = usePrivacyMask();
 
   const [showLearn, setShowLearn] = useState(false);
 
@@ -187,7 +189,7 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerH
 
           {/* Hero number — min 28px = text-3xl */}
           <p className="text-4xl font-extrabold text-slate-900 dark:text-slate-100 tabular-nums mb-4">
-            {formatCurrency(trueSpendableBalance)}
+            <PrivacyAmount value={formatCurrency(trueSpendableBalance)} />
           </p>
 
           {/* Bar */}
@@ -207,13 +209,13 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerH
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               <span className="text-slate-600 dark:text-slate-300 font-medium">
-                {formatCurrency(trueSpendableBalance)} {sv.available}
+                <PrivacyAmount value={formatCurrency(trueSpendableBalance)} /> {sv.available}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
               <span className="text-slate-600 dark:text-slate-300 font-medium">
-                {formatCurrency(totalTaxReserve)} {sv.reservedTax}
+                <PrivacyAmount value={formatCurrency(totalTaxReserve)} /> {sv.reservedTax}
               </span>
             </div>
           </div>
@@ -236,7 +238,7 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerH
               <InfoButton text={sv.reserveModal} />
             </div>
             <p className="text-2xl font-bold text-red-600 dark:text-red-400 tabular-nums mb-1">
-              {formatCurrency(totalTaxReserve)}
+              <PrivacyAmount value={formatCurrency(totalTaxReserve)} />
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {wizardProfile.fiscalRegime === 'beckham' ? sv.reserveSubtextBeckham : sv.reserveSubtext}
@@ -268,16 +270,16 @@ export function SimpleView({ snapshot, wizardProfile, onAddTransaction, checkerH
               <p className="text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
                 {wizardProfile.fiscalRegime === 'beckham'
                   ? interp(sv.projectionBeckham, {
-                      monthly: formatCurrency(monthlyProjected).replace("€", "").trim(),
+                      monthly: mask(formatCurrency(monthlyProjected).replace("€", "").trim()),
                     })
                   : wizardProfile.incomeStability === "stable"
                   ? interp(sv.projectionStable, {
-                      monthly: formatCurrency(monthlyProjected).replace("€", "").trim(),
-                      gap: formatCurrency(yearEndIRPFGap).replace("€", "").trim(),
+                      monthly: mask(formatCurrency(monthlyProjected).replace("€", "").trim()),
+                      gap: mask(formatCurrency(yearEndIRPFGap).replace("€", "").trim()),
                     })
                   : interp(sv.projectionVariable, {
-                      low: formatCurrency(gapLow).replace("€", "").trim(),
-                      high: formatCurrency(gapHigh).replace("€", "").trim(),
+                      low: mask(formatCurrency(gapLow).replace("€", "").trim()),
+                      high: mask(formatCurrency(gapHigh).replace("€", "").trim()),
                     })
                 }
               </p>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useKallioStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Navigation } from "@/components/Navigation";
+import { PrivacyAmount, usePrivacyMask } from "@/components/PrivacyAmount";
 import {
   calculateTaxSnapshot,
   currentQuarter,
@@ -124,6 +125,8 @@ export default function TrimesterPage() {
     : null;
   const isPast = deadlineDate ? deadlineDate < now : false;
 
+  const mask = usePrivacyMask();
+
   const totalDue    = snap.ivaPayable + snap.irpfAdvancePayable;
   const hasData     = snap.grossIncome > 0;
   const spendable   = Math.max(0, snap.trueSpendableBalance);
@@ -183,11 +186,11 @@ export default function TrimesterPage() {
         {hasData ? (
           <div style={{ marginBottom: 20 }}>
             <p style={{ fontSize: 17, color: C.INK, margin: '0 0 2px', lineHeight: 1.4 }}>
-              Facturado este trimestre <strong>€{fmt(snap.grossIncome)},</strong>
+              Facturado este trimestre <strong>€{mask(fmt(snap.grossIncome))},</strong>
             </p>
             <p style={{ fontSize: 22, fontWeight: 500, margin: 0, lineHeight: 1.3 }}>
               tuyos:{' '}
-              <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>€{fmt(spendable)}</span>
+              <span className="serif" style={{ fontStyle: 'italic', fontWeight: 400 }}>€{mask(fmt(spendable))}</span>
             </p>
           </div>
         ) : (
@@ -205,10 +208,10 @@ export default function TrimesterPage() {
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
-                  €{fmt(totalDue)}
+                  €{mask(fmt(totalDue))}
                 </div>
                 <div style={{ fontSize: 12, color: C.WARM, marginTop: 8 }}>
-                  M303 · IVA {formatCurrency(snap.ivaPayable)} + M130 · IRPF {formatCurrency(snap.irpfAdvancePayable)}
+                  M303 · IVA <PrivacyAmount value={formatCurrency(snap.ivaPayable)} /> + M130 · IRPF <PrivacyAmount value={formatCurrency(snap.irpfAdvancePayable)} />
                 </div>
               </div>
               {isPast && (
@@ -263,7 +266,7 @@ export default function TrimesterPage() {
               value: snap.yearEndIRPFGap,
               pct: `~${pctOf(snap.yearEndIRPFGap)}`,
               sub: snap.yearEndIRPFGap > 0
-                ? `Estimado al cierre del año. En la Renta ${currY} (jun ${currY + 1}) quedarán ~${formatCurrency(snap.yearEndIRPFGap)} por regularizar.`
+                ? `Estimado al cierre del año. En la Renta ${currY} (jun ${currY + 1}) quedarán ~${mask(formatCurrency(snap.yearEndIRPFGap))} por regularizar.`
                 : 'Tus anticipos cubren el IRPF estimado para este año.',
             },
           ].map(({ dot, dashed, label, value, pct, sub }, i) => (
@@ -282,7 +285,7 @@ export default function TrimesterPage() {
               </div>
               <div className="mono" style={{ fontSize: 11, color: C.MUTED, textAlign: 'right', paddingTop: 2, whiteSpace: 'nowrap' }}>{pct}</div>
               <div style={{ fontSize: 16, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', paddingTop: 1, whiteSpace: 'nowrap' }}>
-                {formatCurrency(value)}
+                <PrivacyAmount value={formatCurrency(value)} />
               </div>
             </div>
           ))}
@@ -301,14 +304,14 @@ export default function TrimesterPage() {
               {snap.ivaDeductible > 0 && (
                 <div>
                   <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 3 }}>IVA soportado recuperable</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.OK }}>−{formatCurrency(snap.ivaDeductible)}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.OK }}>−<PrivacyAmount value={formatCurrency(snap.ivaDeductible)} /></div>
                   <div style={{ fontSize: 10, color: C.MUTED, marginTop: 2 }}>reduce tu M303</div>
                 </div>
               )}
               {snap.deductibleExpenses > 0 && (
                 <div>
                   <div style={{ fontSize: 11, color: C.MUTED, marginBottom: 3 }}>Gastos deducibles IRPF</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.OK }}>−{formatCurrency(snap.deductibleExpenses)}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.OK }}>−<PrivacyAmount value={formatCurrency(snap.deductibleExpenses)} /></div>
                   <div style={{ fontSize: 10, color: C.MUTED, marginTop: 2 }}>reducen base M130</div>
                 </div>
               )}

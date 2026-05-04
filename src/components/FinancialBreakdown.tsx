@@ -5,6 +5,7 @@ import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Sparkles, Tag } 
 import { useT } from "@/lib/useT";
 import { formatCurrency, getCategoryDeductibilityPct, ivaAmount, netFromGross } from "@/lib/tax-engine";
 import { TaxTooltip } from "@/components/TaxTooltip";
+import { PrivacyAmount } from "@/components/PrivacyAmount";
 import type { Transaction, TaxSnapshot } from "@/lib/types";
 
 interface FinancialBreakdownProps {
@@ -88,7 +89,7 @@ function IncomeTab({ transactions, snapshot }: { transactions: Transaction[]; sn
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{name}</p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums flex-shrink-0">
-                      {formatCurrency(amount)}
+                      <PrivacyAmount value={formatCurrency(amount)} />
                     </p>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -213,7 +214,7 @@ function ExpensesTab({ transactions, snapshot }: { transactions: Transaction[]; 
                       )}
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums flex-shrink-0">
-                      {formatCurrency(gross)}
+                      <PrivacyAmount value={formatCurrency(gross)} />
                     </p>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -240,7 +241,7 @@ function ExpensesTab({ transactions, snapshot }: { transactions: Transaction[]; 
             <span className="text-xs text-teal-800 dark:text-teal-300 font-medium">{tb.vatRecovered}</span>
           </div>
           <span className="text-sm font-bold text-teal-700 dark:text-teal-300 tabular-nums">
-            {formatCurrency(vatRecoverable)}
+            <PrivacyAmount value={formatCurrency(vatRecoverable)} />
           </span>
         </div>
       )}
@@ -267,7 +268,7 @@ function StatCard({
     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
       <div className="flex items-center gap-1 mb-1.5">{icon}</div>
       <p className={`text-sm font-bold tabular-nums leading-tight ${color}`}>
-        {formatCurrency(value)}
+        <PrivacyAmount value={formatCurrency(value)} />
       </p>
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-tight flex items-center">
         {label}{tooltip && <TaxTooltip concept={tooltip} />}
