@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     if (authError) {
       console.error("listUsers error:", authError);
-      return NextResponse.json({ error: authError.message }, { status: 500 });
+      return NextResponse.json({ error: "Failed to list users" }, { status: 500 });
     }
 
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.name]));

@@ -475,6 +475,7 @@ export const translations = {
       loading: "Cargando...",
       invalidCredentials: "Email o contraseña incorrectos",
       checkEmail: "Revisa tu email para confirmar la cuenta",
+      signupFailed: "No se pudo crear la cuenta. Intentá con otro email.",
     },
     faq: {
       title: "Preguntas Frecuentes",
@@ -1389,6 +1390,7 @@ export const translations = {
       loading: "Loading...",
       invalidCredentials: "Incorrect email or password",
       checkEmail: "Check your email to confirm your account",
+      signupFailed: "Could not create account. Try with a different email.",
     },
     faq: {
       title: "FAQ",
@@ -2297,6 +2299,7 @@ export const translations = {
       loading: "Caricamento...",
       invalidCredentials: "Email o password errati",
       checkEmail: "Controlla la tua email per confermare l'account",
+      signupFailed: "Impossibile creare l'account. Prova con un'altra email.",
     },
     faq: {
       title: "FAQ",
@@ -3206,6 +3209,7 @@ export const translations = {
       loading: "Laden...",
       invalidCredentials: "Falsche E-Mail oder falsches Passwort",
       checkEmail: "Prüfe deine E-Mail, um dein Konto zu bestätigen",
+      signupFailed: "Konto konnte nicht erstellt werden. Versuche eine andere E-Mail.",
     },
     faq: {
       title: "FAQ",
@@ -4115,6 +4119,7 @@ export const translations = {
       loading: "Chargement...",
       invalidCredentials: "E-mail ou mot de passe incorrect",
       checkEmail: "Vérifiez votre e-mail pour confirmer votre compte",
+      signupFailed: "Impossible de créer le compte. Essayez avec une autre adresse e-mail.",
     },
     faq: {
       title: "FAQ",

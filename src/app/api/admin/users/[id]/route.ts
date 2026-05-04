@@ -14,7 +14,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ban_duration: banned ? "876600h" : "none",
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 
@@ -27,6 +27,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const admin = createAdminClient();
 
   const { error } = await admin.auth.admin.deleteUser(id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
